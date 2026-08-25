@@ -15,56 +15,38 @@ declare global {
 }
 
 export function useFacebook() {
-  const config = useRuntimeConfig()
   const playerStore = usePlayerStore()
   const gameStore = useGameStore()
 
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  function loadSdk(): Promise<void> {
-    return new Promise((resolve) => {
-      if (window.FB) {
-        resolve()
-        return
-      }
-      window.fbAsyncInit = () => {
-        window.FB.init({
-          appId: config.public.facebookAppId,
-          cookie: true,
-          xfbml: false,
-          version: 'v19.0',
-        })
-        resolve()
-      }
-      const script = document.createElement('script')
-      script.src = 'https://connect.facebook.net/fr_FR/sdk.js'
-      script.async = true
-      script.defer = true
-      document.head.appendChild(script)
-    })
-  }
-
   async function login() {
     isLoading.value = true
     error.value = null
 
     try {
-      await loadSdk()
+      // SDK is already initialized by plugins/facebook-sdk.client.ts
+      if (!window.FB) {
+        throw new Error('Le SDK Facebook n\'est pas encore chargé. Veuillez réessayer.')
+      }
 
       const accessToken = await new Promise<string>((resolve, reject) => {
         window.FB.login((response) => {
           if (response.authResponse?.accessToken) {
             resolve(response.authResponse.accessToken)
           } else {
-            reject(new Error('Facebook login cancelled or failed'))
+            reject(new Error('Connexion Facebook annulée'))
           }
         }, {
           scope: [
-            'public_profile', 'email',
-            'user_education_history', 'user_work_history',
-            'user_birthday', 'user_location', 'user_hometown',
-            'user_likes', 'user_about_me',
+            'public_profile',
+            'user_education_history',
+            'user_work_history',
+            'user_birthday',
+            'user_location',
+            'user_hometown',
+            'user_likes',
           ].join(','),
         })
       })

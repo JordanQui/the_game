@@ -1,4 +1,5 @@
-import { Client, Environment } from 'squareup'
+import pkg from 'square'
+const { Client, Environment } = pkg
 import { loadColonne } from '~/utils/colonne-loader'
 
 export default defineEventHandler(async (event) => {
