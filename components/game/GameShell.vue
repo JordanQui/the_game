@@ -4,17 +4,26 @@ import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { usePaywall } from '~/composables/usePaywall'
 import { useImageGen } from '~/composables/useImageGen'
+import { useSceneCommands } from '~/composables/useSceneCommands'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
 const { handlePlayerInput, retryLastTurn } = useNarrative()
 const { checkPaywallTrigger, mentionsExit } = usePaywall()
 const { generateSceneImage } = useImageGen()
+const { isCommand, run: runSceneCommand } = useSceneCommands()
 
 /** Les PNJ prennent de la place sur petit écran : repliés par défaut. */
 const showNpcs = ref(false)
 
 async function onCommand(input: string) {
+  // Le canal '#' parle au scénario, pas au modèle : il passe avant tout le
+  // reste et rien ne part chez gpt-4o.
+  if (isCommand(input)) {
+    runSceneCommand(input)
+    return
+  }
+
   if (checkPaywallTrigger(input)) {
     const gate = playerStore.scene?.paywall.gate_text
     if (gate) gameStore.addNarrativeEntry('narration', gate)
@@ -35,6 +44,14 @@ async function onCommand(input: string) {
 function retryImage() {
   const scene = playerStore.scene
   if (!scene) return
+
+  // Illustration figée : il n'y a rien à regénérer, on la repose.
+  if (scene.static_image) {
+    gameStore.setSceneImage(scene.static_image)
+    gameStore.finishSceneImage()
+    return
+  }
+
   void generateSceneImage({
     sceneId: scene.scene_id,
     placeName: scene.place.name,
@@ -46,8 +63,10 @@ function retryImage() {
 
 <template>
   <div class="flex flex-col h-[100dvh] bg-ink-900">
-    <!-- Illustration : plafonnée pour laisser le texte respirer sur mobile -->
-    <div class="shrink-0 max-h-[38dvh] sm:max-h-[45dvh] overflow-hidden">
+    <!-- Mobile : le 16/9 de SceneImage donne la hauteur, plein cadre.
+         Desktop : hauteur imposée, sinon l'aspect-ratio la calcule depuis la
+         largeur, déborde du cadre et on n'en voit que la tranche du haut. -->
+    <div class="shrink-0 sm:h-[45dvh]">
       <SceneImage
         :src="gameStore.currentSceneImageUrl"
         :loading="gameStore.sceneImageLoading"

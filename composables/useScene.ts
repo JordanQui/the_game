@@ -50,8 +50,18 @@ export function useScene() {
     }
   }
 
-  /** Phase 2. Non bloquant : on joue déjà pendant que l'image se dessine. */
+  /**
+   * Phase 2. Non bloquant : on joue déjà pendant que l'image se dessine.
+   * Une scène à illustration figée saute l'étape — rien n'est généré, donc
+   * rien n'est facturé, et l'image est là immédiatement.
+   */
   function loadSceneImage(res: SceneTextResponse) {
+    if (res.static_image) {
+      gameStore.setSceneImage(res.static_image)
+      gameStore.finishSceneImage()
+      return Promise.resolve(res.static_image)
+    }
+
     return generateSceneImage({
       sceneId: res.scene_id,
       placeName: res.place.name,

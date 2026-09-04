@@ -100,6 +100,8 @@ export class SceneRuntime {
   get artDirection() { return this.scene.art_direction }
   get turn() { return this.scene.turn }
   get fallbacks() { return this.scene.error_fallbacks }
+  /** Illustration figée de la scène, ou null si elle doit être générée. */
+  get staticImage() { return this.scene.static_image ?? null }
 
   /** Message utilisateur envoyé à gpt-4o pour produire la scène. */
   buildGenerationPrompt(user: UserProfile): string {
@@ -258,6 +260,7 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
         palette: scene.palette,
         decor: scene.decor,
       }),
+      static_image: this.staticImage,
       palette_audit: {
         adjusted: audit.adjusted,
         original_dominant: audit.original_dominant,

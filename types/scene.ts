@@ -89,6 +89,8 @@ export interface SceneTextResponse extends GeneratedScene {
   /** Prompt assemblé côté serveur. Renvoyé pour information/debug uniquement :
    *  /api/scene/image le reconstruit et n'accepte jamais un prompt du client. */
   image_prompt: string
+  /** Chemin d'une illustration figée, ou null si la scène doit la générer. */
+  static_image: string | null
   paywall: ScenePaywall
   /** Trace de la correction d'accent appliquée côté serveur. */
   palette_audit: {

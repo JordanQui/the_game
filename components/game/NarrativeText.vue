@@ -30,7 +30,7 @@ watch(
         :class="{
           'narrative-text text-parchment/90 text-[15px] sm:text-sm leading-relaxed whitespace-pre-line': entry.type === 'narration',
           'pl-4 border-l-2 border-amber-700/60 text-amber-200 text-sm italic': entry.type === 'npc_speech',
-          'text-amber-500/70 text-xs uppercase tracking-widest': entry.type === 'system',
+          'text-amber-500/70 text-xs uppercase tracking-widest whitespace-pre-line': entry.type === 'system',
           'text-ink-400 text-xs font-mono': entry.type === 'player_command',
         }"
       >

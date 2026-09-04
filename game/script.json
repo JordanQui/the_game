@@ -168,6 +168,7 @@
       "is_paywall_gate": true,
       "image_setting": "Interior of a medieval fantasy tavern",
       "focal_element": "the heavy closed exit door on the right side",
+      "static_image": "/scenes/auberge.png",
       "naming": {
         "instruction": "Invente le nom de l'auberge en français, 2 à 5 mots, forme « L'Auberge de ... » ou « À l'Enseigne du ... » ou « Le/La ... ». Il doit dériver métaphoriquement du lieu d'origine du joueur ou d'un tournant de sa vie, jamais littéralement. Aucun nom de marque, d'entreprise ou de ville réelle.",
         "sources": [

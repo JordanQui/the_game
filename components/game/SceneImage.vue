@@ -32,7 +32,7 @@ const message = computed(() => {
 </script>
 
 <template>
-  <div class="relative w-full aspect-[16/9] overflow-hidden bg-ink-900">
+  <div class="relative w-full aspect-[16/9] sm:aspect-auto sm:h-full overflow-hidden bg-ink-900">
     <div v-if="!src" class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6">
       <div v-if="loading" class="absolute inset-0 shimmer-bg" />
       <p
@@ -58,7 +58,7 @@ const message = computed(() => {
         v-if="src"
         :src="src"
         alt="Illustration de la scène"
-        class="w-full h-full object-cover"
+        class="w-full h-full object-center object-cover sm:object-contain"
       />
     </Transition>
 

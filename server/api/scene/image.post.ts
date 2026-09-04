@@ -25,6 +25,19 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
   const runtime = await ScriptRuntime.load()
   const scene = runtime.scene(body.scene_id)
 
+  // Illustration figée : on sort avant même de construire le client OpenAI.
+  // C'est ce qui rend le « toujours fixe » vrai quel que soit l'appelant, et
+  // ce qui garantit qu'aucun crédit image ne part pour cette scène.
+  if (scene.staticImage) {
+    return {
+      image: scene.staticImage,
+      model: 'static',
+      format: 'png',
+      bytes: 0,
+      elapsed_ms: 0,
+    }
+  }
+
   const prompt = scene.buildImagePrompt({
     place_name: body.place_name,
     palette: body.palette,

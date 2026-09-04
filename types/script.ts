@@ -128,6 +128,8 @@ export interface SceneScript {
   is_paywall_gate: boolean
   image_setting: string
   focal_element: string
+  /** Illustration figée, servie depuis public/. Court-circuite la génération. */
+  static_image?: string
   naming: { instruction: string; sources: string[] }
   decor_slots: DecorSlot[]
   npcs: { count: number; instruction: string; source: string }
