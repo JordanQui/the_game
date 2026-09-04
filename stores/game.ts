@@ -8,9 +8,15 @@ export const useGameStore = defineStore('game', {
     narrativeHistory: [] as NarrativeEntry[],
     turnCount: 0,
     currentSceneImageUrl: null as string | null,
+    sceneImageLoading: false,
+    sceneImageError: null as string | null,
     activeNpcId: null as string | null,
     paywallTriggered: false,
     conversationHistory: [] as Array<{ role: 'user' | 'assistant'; content: string }>,
+    /** Dernière commande jouée, pour pouvoir relancer un tour qui a échoué. */
+    lastCommand: null as string | null,
+    lastMode: null as import('~/types/scene').TurnMode | null,
+    turnError: null as string | null,
   }),
 
   getters: {
@@ -18,7 +24,7 @@ export const useGameStore = defineStore('game', {
       state.narrativeHistory[state.narrativeHistory.length - 1] ?? null,
     isInputDisabled: (state) =>
       state.playingSubState === 'narrative_streaming' ||
-      state.playingSubState === 'image_loading',
+      state.playingSubState === 'npc_dialogue',
   },
 
   actions: {
@@ -28,6 +34,29 @@ export const useGameStore = defineStore('game', {
 
     setPlayingSubState(subState: PlayingSubState) {
       this.playingSubState = subState
+    },
+
+    setLastCommand(input: string) {
+      this.lastCommand = input
+    },
+
+    setLastMode(mode: import('~/types/scene').TurnMode | null) {
+      this.lastMode = mode
+    },
+
+    setTurnError(message: string) {
+      this.turnError = message
+      // Un tour en échec ne doit jamais laisser la saisie verrouillée.
+      this.playingSubState = 'awaiting_input'
+    },
+
+    clearTurnError() {
+      this.turnError = null
+    },
+
+    /** Retire l'entrée en cours de rédaction quand le tour a échoué. */
+    removeLastNarrativeEntry() {
+      this.narrativeHistory.pop()
     },
 
     addNarrativeEntry(type: NarrativeEntryType, text: string, npcName?: string) {
@@ -49,6 +78,21 @@ export const useGameStore = defineStore('game', {
 
     setSceneImage(url: string) {
       this.currentSceneImageUrl = url
+      this.sceneImageError = null
+    },
+
+    startSceneImage() {
+      this.sceneImageLoading = true
+      this.sceneImageError = null
+    },
+
+    failSceneImage(message: string) {
+      this.sceneImageLoading = false
+      this.sceneImageError = message
+    },
+
+    finishSceneImage() {
+      this.sceneImageLoading = false
     },
 
     setActiveNpc(npcId: string | null) {
@@ -75,9 +119,14 @@ export const useGameStore = defineStore('game', {
       this.narrativeHistory = []
       this.turnCount = 0
       this.currentSceneImageUrl = null
+      this.sceneImageLoading = false
+      this.sceneImageError = null
       this.activeNpcId = null
       this.paywallTriggered = false
       this.conversationHistory = []
+      this.lastCommand = null
+      this.lastMode = null
+      this.turnError = null
     },
   },
 })

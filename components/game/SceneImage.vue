@@ -1,33 +1,68 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   src: string | null
   loading?: boolean
-  fallbackText?: string
+  error?: string | null
 }>()
+
+defineEmits<{ retry: [] }>()
+
+// La génération prend ~30 s. Sans compteur, l'écran passe pour figé.
+const elapsed = ref(0)
+let timer: ReturnType<typeof setInterval> | null = null
+
+function stopTimer() {
+  if (timer) { clearInterval(timer); timer = null }
+}
+
+watch(() => props.loading, (isLoading) => {
+  stopTimer()
+  if (!isLoading) return
+  elapsed.value = 0
+  timer = setInterval(() => { elapsed.value += 1 }, 1000)
+}, { immediate: true })
+
+onUnmounted(stopTimer)
+
+const message = computed(() => {
+  if (props.error) return 'L\'image ne s\'est pas formée. Le texte, lui, tient toujours.'
+  if (props.loading) return 'La brume du soir voile encore la salle...'
+  return 'La salle attend d\'être dessinée.'
+})
 </script>
 
 <template>
   <div class="relative w-full aspect-[16/9] overflow-hidden bg-ink-900">
-    <!-- Loading shimmer -->
-    <div v-if="loading || !src" class="absolute inset-0 flex items-center justify-center">
-      <div class="absolute inset-0 shimmer-bg" />
-      <p class="relative z-10 text-amber-600/60 font-serif text-sm italic animate-flicker">
-        {{ fallbackText ?? 'La brume du soir voile momentanément la vue...' }}
+    <div v-if="!src" class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6">
+      <div v-if="loading" class="absolute inset-0 shimmer-bg" />
+      <p
+        class="relative z-10 text-center font-serif text-xs sm:text-sm italic"
+        :class="error ? 'text-red-400/50' : 'text-amber-600/60 animate-flicker'"
+      >
+        {{ message }}
       </p>
+      <p v-if="loading" class="relative z-10 text-ink-400 text-[11px] font-mono tabular-nums">
+        {{ elapsed }}s — environ 30s
+      </p>
+      <button
+        v-if="error"
+        class="relative z-10 text-amber-500/80 hover:text-amber-300 text-[11px] uppercase tracking-wider border border-amber-800/50 px-3 py-1 transition-colors"
+        @click="$emit('retry')"
+      >
+        Réessayer
+      </button>
     </div>
 
-    <!-- Scene image -->
     <Transition name="fade-in">
       <img
         v-if="src"
         :src="src"
-        alt="Scène du jeu"
+        alt="Illustration de la scène"
         class="w-full h-full object-cover"
       />
     </Transition>
 
-    <!-- Bottom gradient overlay -->
-    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-ink-900 to-transparent pointer-events-none" />
+    <div class="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-ink-900 to-transparent pointer-events-none" />
   </div>
 </template>
 

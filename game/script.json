@@ -16,33 +16,34 @@
   },
   "defaults": {
     "art_direction": {
-      "render": "flat vector illustration",
-      "rule_60_30_10": {
-        "enabled": true,
-        "dominant_pct": 60,
-        "secondary_pct": 30,
+      "render": "1990s Dark Deco animated series cel painting",
+      "tonal_ratio": {
+        "dominant_pct": 70,
+        "secondary_pct": 20,
         "accent_pct": 10,
-        "description": "Exactement trois couleurs. La dominante couvre ~60% de la surface (fonds, murs, sol), la secondaire ~30% (mobilier, architecture, silhouettes), l'accent ~10% (toutes les sources de lumière et l'issue de la scène)."
+        "description": "Trois couleurs en hiérarchie Dark Deco. L'ombre occupe ~70% de la surface, l'architecture en lumière indirecte ~20%, la lumière elle-même ~10%. Ce n'est pas le 60:30:10 classique : peindre sur fond noir donne mécaniquement plus de place à l'ombre, et chercher à remonter le ton moyen aplatit l'image."
       },
       "constraints": [
-        "flat vector illustration, geometric shapes, clean crisp edges",
-        "limited palette of exactly three colors, no gradients, no texture noise",
-        "bold silhouettes, high contrast, poster-like composition",
-        "wide cinematic framing, eye-level"
+        "painted as if on black paper, in the Dark Deco style of the 1990s Batman animated series",
+        "Art Deco architecture, bold angular geometry, strong verticals, stylised proportions",
+        "flat cel-shaded color, no gradients, no texture, no rendering — pure filled shapes",
+        "heavy black shadows swallowing whole areas, powerful silhouettes, minimal interior detail",
+        "single dramatic light source casting long hard-edged shadows, film noir staging",
+        "wide cinematic framing, low horizon, eye-level"
       ],
-      "negative": "photorealistic, oil painting, 3d render, gradients, drop shadows, anime, manga, cartoon mascot, watermark, signature, lettering, written words, text, letters, numbers, blurry, cluttered, more than three colors",
+      "negative": "photorealistic, oil painting, 3d render, gradients, soft shading, airbrush, watercolor, pastel, cheerful, bright daylight, anime, manga, chibi, cartoon mascot, cluttered detail, realistic texture, cross-hatching, watermark, signature, lettering, written words, text, letters, numbers, blurry, more than three colors",
       "image_model": "gpt-image-2",
       "image_fallback_model": "gpt-image-1",
       "image_size": "1536x1024",
       "image_quality": "low",
       "image_format": "webp",
       "accent_reserved_for": "exit and every light source",
-      "accent_note": "L'accent (10%) porte l'issue de la scène ET toutes les sources de lumière. Réserver l'accent à la seule porte le fait tomber sous 4% en pratique : il faut lui donner assez de surface pour tenir son rang.",
-      "portrait_prompt_template": "Flat vector portrait illustration of a medieval fantasy character, bust framing, facing the viewer: {{appearance}}. STRICT three-color palette, absolutely no other color: {{dominant_hex}} ({{dominant_name}}) as the flat background filling about 60 percent; {{secondary_hex}} ({{secondary_name}}) for skin, clothing and hair shapes, about 30 percent; {{accent_hex}} ({{accent_name}}) for about 10 percent, on highlights, jewellery and the rim light. {{constraints}}. No text, no lettering, no numbers anywhere.",
-      "image_prompt_template": "Flat vector illustration. {{setting}} named {{scene_name}}. Wide cinematic view at eye level. STRICT three-color palette, absolutely no other color and no shade in between: {{dominant_hex}} ({{dominant_name}}) fills about 60 percent of the canvas as walls, floor, ceiling and background; {{secondary_hex}} ({{secondary_name}}) fills about 30 percent as furniture, wooden structure, architecture and character silhouettes; {{accent_hex}} ({{accent_name}}) fills a clear 10 percent and is used for ALL light sources at once — the hearth fire, hanging lanterns, candle flames, window glow, metal fittings — and above all for {{focal_element}}, which is the brightest area of the image. Scene contains: {{decor_line}}. {{constraints}}. No text, no lettering, no numbers anywhere."
+      "accent_note": "L'accent (10%) est la lumière de la scène. C'est la seule part du ratio qui doit être tenue au chiffre près : c'est elle qui fait lire l'image. Le partage entre ombre et ton moyen peut dériver, le style l'impose.",
+      "portrait_prompt_template": "Character portrait in the DARK DECO style of the 1990s Batman animated series: flat cel-shaded shapes, hard angular jaw and features, heavy black shadow across half the face, dramatic single light source, bust framing. {{appearance}}. STRICT three-color palette, nothing else: {{dominant_hex}} ({{dominant_name}}) as the flat dark background, about 70 percent; {{secondary_hex}} ({{secondary_name}}) for the shadowed side of the face, hair and clothing, about 20 percent; {{accent_hex}} ({{accent_name}}) as large solid shapes on the lit side of the face and the rim light, about 10 percent. {{constraints}}. No text, no lettering, no numbers anywhere.",
+      "image_prompt_template": "{{setting}} named {{scene_name}}, drawn in the DARK DECO style of the 1990s Batman animated series: painted on black paper, Art Deco architecture, bold angular geometry, flat cel-shaded shapes with hard edges, heavy black shadows, dramatic film-noir lighting from a single source. Wide cinematic view at eye level.\n\nSTRICT THREE-COLOR PALETTE. These three colors and nothing else — no tints, no shades, no blends:\n1. {{dominant_hex}} ({{dominant_name}}) — about 70 percent: the deep shadowed ground of the image, walls, ceiling, floor, everything not lit.\n2. {{secondary_hex}} ({{secondary_name}}) — about 20 percent: architecture, beams, furniture and character silhouettes catching indirect light.\n3. {{accent_hex}} ({{accent_name}}) — a full 10 percent, the ONLY light in the scene.\n\nTHE ACCENT IS THE MOST IMPORTANT INSTRUCTION. {{accent_hex}} is the light itself and must blaze out of the darkness. Fill it as LARGE SOLID SHAPES, never thin outlines — thin lines make it vanish. Paint entirely in {{accent_hex}}: {{focal_element}}, the whole fire in the hearth, the hard-edged shafts and pools of light it throws across the floor, every lantern and candle flame, and the glow through every window. Everything the light touches is {{accent_hex}}; everything else is shadow. Roughly one tenth of the image must be pure {{accent_hex}}. If in doubt, use more, not less.\n\nScene contains: {{decor_line}}.\n{{constraints}}. No text, no lettering, no numbers anywhere."
     },
     "palette_derivation": {
-      "instruction": "Choisis exactement trois couleurs à partir du joueur. La dominante (60%) traduit l'ambiance de son lieu d'origine ou de vie. La secondaire (30%) traduit son métier ou sa formation. L'accent (10%) traduit sa passion la plus intense et doit être nettement plus lumineux que les deux autres. Hex saturés, fortement contrastés entre eux, lisibles en aplat.",
+      "instruction": "Choisis exactement trois couleurs à partir du joueur, dans une logique Dark Deco (série animée Batman des années 90) : une nuit profonde percée par une seule lumière.\n- Dominante (70%) : l'ombre du lieu, dérivée de l'ambiance de sa ville d'origine ou de vie. TRÈS SOMBRE et sourde, proche du noir teinté.\n- Secondaire (20%) : l'architecture éclairée indirectement, dérivée de son métier ou de sa formation. Ton MOYEN, ni noir ni clair.\n- Accent (10%) : la lumière elle-même, dérivée de sa passion la plus intense. Couleur franchement CHROMATIQUE et VIVE — saturation élevée, teinte identifiable au premier coup d'oeil. Interdits absolus : blanc, blanc cassé, crème, beige, ivoire, gris, noir, pastel, désaturé. Teinte franchement éloignée de celles de la dominante et de la secondaire sur la roue chromatique.",
       "sources": {
         "dominant": [
           "origin.hometown",
@@ -79,7 +80,8 @@
       "max_words": 90,
       "system_prompt_template": "Tu es le narrateur de {{scene_title}} — {{place_name}}, dans un jeu d'aventure textuel médiéval-fantastique en français.\n\nJoueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nPersonnages présents : {{npc_list}}\n\n{{narrative_instruction}}\n\nRègles absolues :\n- Réponds toujours en français.\n- Ne dépasse jamais {{max_words}} mots.\n- N'invente aucune sortie : la seule issue de ce lieu est {{exit_label}}.\n- Ne fais jamais franchir cette sortie au joueur, quoi qu'il tape.\n- Ne brise jamais le quatrième mur, ne mentionne jamais que tu es une IA.",
       "ambient_prompt": "Le joueur tape : « {{player_input}} ». Réponds par 1 à 2 phrases de narration à la deuxième personne du singulier, dans le style du jeu textuel des années 80. Décris ce qui se passe ou ce qu'il découvre. Nomme explicitement tout nouvel objet manipulable. Pas de dialogue direct, pas de question au joueur.",
-      "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français légèrement médiéval, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}."
+      "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français légèrement médiéval, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.",
+      "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers la porte de façon détournée : un courant d'air froid sous le battant, une rumeur venue du dehors, un habitué qui jette un regard vers elle, la lumière qui filtre par l'interstice.\nRappelle que cette porte est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre."
     },
     "generation": {
       "model": "gpt-4o",
@@ -96,13 +98,13 @@
           "dominant": {
             "hex": "#RRGGBB",
             "name": "string",
-            "coverage_pct": 60,
+            "coverage_pct": 70,
             "rationale": "string"
           },
           "secondary": {
             "hex": "#RRGGBB",
             "name": "string",
-            "coverage_pct": 30,
+            "coverage_pct": 20,
             "rationale": "string"
           },
           "accent": {
@@ -254,21 +256,42 @@
           "keywords": [
             "sortir",
             "sors",
+            "sort",
+            "sortons",
             "quitter",
             "quitte",
+            "quittons",
             "partir",
             "pars",
+            "partons",
             "dehors",
             "porte",
+            "seuil",
+            "issue",
+            "franchir",
+            "franchis",
+            "m en aller",
+            "je m en vais",
             "ouvrir la porte",
+            "pousser la porte",
+            "ouvre la porte",
+            "pousse la porte",
+            "s en aller",
+            "fuir",
+            "fuis",
+            "echapper",
+            "echappe",
+            "la nuit",
+            "au dehors",
             "exit",
             "leave",
             "out",
             "outside",
+            "door",
             "north",
             "nord"
           ],
-          "min_turns_before_trigger": 3,
+          "min_turns_before_trigger": 2,
           "leads_to": "PAYWALL"
         }
       ]

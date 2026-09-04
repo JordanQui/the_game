@@ -18,8 +18,12 @@ export interface Progression {
   order: string[]
 }
 
-export interface Rule603010 {
-  enabled: boolean
+/**
+ * Répartition tonale visée. Volontairement pas 60:30:10 : le Dark Deco peint
+ * sur fond noir, l'ombre y prend mécaniquement plus de place. Seule la part
+ * d'accent doit être tenue au chiffre près.
+ */
+export interface TonalRatio {
   dominant_pct: number
   secondary_pct: number
   accent_pct: number
@@ -28,7 +32,7 @@ export interface Rule603010 {
 
 export interface ArtDirection {
   render: string
-  rule_60_30_10: Rule603010
+  tonal_ratio: TonalRatio
   constraints: string[]
   negative: string
   image_model: string
@@ -61,6 +65,7 @@ export interface TurnRules {
   system_prompt_template: string
   ambient_prompt: string
   npc_dialogue_prompt: string
+  exit_nudge_prompt: string
 }
 
 export interface GenerationConfig {

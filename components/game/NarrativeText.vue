@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import type { NarrativeEntry } from '~/types/game'
 
-defineProps<{ entries: NarrativeEntry[] }>()
+const props = defineProps<{ entries: NarrativeEntry[] }>()
 
 const scrollContainer = ref<HTMLElement | null>(null)
 
-watch(() => scrollContainer.value, () => {
+function scrollToBottom() {
   nextTick(() => {
-    if (scrollContainer.value) {
-      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
-    }
+    const el = scrollContainer.value
+    if (el) el.scrollTop = el.scrollHeight
   })
-}, { deep: true })
+}
+
+// Surveiller la ref de l'élément ne déclenchait jamais rien : elle ne change
+// qu'au montage. Il faut suivre le contenu, texte en cours de frappe compris.
+watch(
+  () => [props.entries.length, props.entries[props.entries.length - 1]?.text] as const,
+  scrollToBottom,
+  { immediate: true }
+)
 </script>
 
 <template>

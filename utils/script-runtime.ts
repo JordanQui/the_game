@@ -13,9 +13,12 @@ import type {
   DecorElement,
   TurnContext,
   SceneNPC,
+  TurnMode,
 } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
 import { interpolate } from '~/utils/prompt-builder'
+import { matchesKeyword } from '~/utils/text-match'
+import { enforceAccentVisibility } from '~/utils/palette'
 
 const fileCache = new Map<string, unknown>()
 
@@ -234,8 +237,22 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
   assembleText(generated: GeneratedScene): SceneTextResponse {
     const exit = this.scene.exits[0]
 
+    // Le modèle produit des couleurs qui ne tiennent pas la hiérarchie Dark Deco.
+    // On les recale avant d'en dériver quoi que ce soit.
+    const audit = enforceAccentVisibility(generated.palette)
+
+    // Les parts affichées viennent du script, jamais du modèle : il renvoie
+    // volontiers 60/30/10 par habitude, quel que soit le ratio demandé.
+    const ratio = this.scene.art_direction.tonal_ratio
+    const palette: ScenePalette = {
+      dominant: { ...audit.palette.dominant, coverage_pct: ratio.dominant_pct },
+      secondary: { ...audit.palette.secondary, coverage_pct: ratio.secondary_pct },
+      accent: { ...audit.palette.accent, coverage_pct: ratio.accent_pct },
+    }
+    const scene = { ...generated, palette }
+
     // Les interactables obligatoires sont réinjectés même si le modèle les a oubliés.
-    const interactables = [...(generated.interactables ?? [])]
+    const interactables = [...(scene.interactables ?? [])]
     for (const forced of this.scene.interactables.always_include) {
       const existing = interactables.find(i => i.id === forced.id)
       if (existing) existing.triggers_paywall = forced.triggers_paywall
@@ -243,22 +260,31 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     }
 
     const vars = {
-      quest_title: generated.quest.title,
-      quest_artifact: generated.quest.artifact,
-      place_name: generated.place.name,
+      quest_title: scene.quest.title,
+      quest_artifact: scene.quest.artifact,
+      place_name: scene.place.name,
     }
 
     return {
-      ...generated,
+      ...scene,
       interactables,
       scene_id: this.scene.id,
       scene_title: this.scene.title,
       script_version: this.script.version,
       image_prompt: this.buildImagePrompt({
-        place_name: generated.place.name,
-        palette: generated.palette,
-        decor: generated.decor,
+        place_name: scene.place.name,
+        palette: scene.palette,
+        decor: scene.decor,
       }),
+      palette_audit: {
+        adjusted: audit.adjusted,
+        original_dominant: audit.original_dominant,
+        original_secondary: audit.original_secondary,
+        original_accent: audit.original_accent,
+        contrast_vs_dominant: Number(audit.contrast_vs_dominant.toFixed(2)),
+        contrast_vs_secondary: Number(audit.contrast_vs_secondary.toFixed(2)),
+        base_contrast: Number(audit.base_contrast.toFixed(2)),
+      },
       paywall: {
         gate_text: interpolate(this.script.paywall.gate_text, vars),
         cta: interpolate(this.script.paywall.cta, vars),
@@ -294,9 +320,19 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     })
   }
 
-  /** Prompt utilisateur : réaction d'ambiance, ou réplique d'un PNJ. */
-  buildTurnUserPrompt(ctx: TurnContext, input: string, npc?: SceneNPC): string {
+  /** Prompt utilisateur : ambiance, relance vers la sortie, ou réplique d'un PNJ. */
+  buildTurnUserPrompt(ctx: TurnContext, input: string, npc?: SceneNPC, mode?: TurnMode): string {
     const t = this.scene.turn
+
+    if (mode === 'exit_nudge') {
+      return interpolate(t.exit_nudge_prompt, {
+        player_input: input,
+        exit_label: this.scene.exits[0]?.label ?? 'la porte',
+        quest_artifact: ctx.quest.artifact,
+        quest_title: ctx.quest.title,
+      })
+    }
+
     if (!npc) return interpolate(t.ambient_prompt, { player_input: input })
 
     return interpolate(t.npc_dialogue_prompt, {
@@ -309,12 +345,16 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     })
   }
 
+  /** Le joueur parle-t-il de sortir, quel que soit le nombre de tours joués ? */
+  mentionsExit(input: string): boolean {
+    return this.scene.exits.some(exit => matchesKeyword(input, exit.keywords))
+  }
+
   /** La commande du joueur déclenche-t-elle une sortie ? */
   matchExit(input: string, turnCount: number): SceneExit | null {
-    const lower = input.toLowerCase()
     for (const exit of this.scene.exits) {
       if (turnCount < exit.min_turns_before_trigger) continue
-      if (exit.keywords.some(kw => lower.includes(kw))) return exit
+      if (matchesKeyword(input, exit.keywords)) return exit
     }
     return null
   }

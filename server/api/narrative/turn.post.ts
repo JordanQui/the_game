@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const runtime = await ScriptRuntime.load()
   const scene = runtime.scene(body.sceneId)
 
-  const npc = body.npcId
+  const npc = body.npcId && body.mode !== 'exit_nudge'
     ? body.context.npcs?.find(n => n.id === body.npcId)
     : undefined
 
@@ -34,24 +34,36 @@ export default defineEventHandler(async (event) => {
     messages: [
       { role: 'system', content: scene.buildTurnSystemPrompt(body.context) },
       ...buildConversationHistory(body.history ?? []),
-      { role: 'user', content: scene.buildTurnUserPrompt(body.context, body.input, npc) },
+      { role: 'user', content: scene.buildTurnUserPrompt(body.context, body.input, npc, body.mode) },
     ],
   })
 
   setResponseHeader(event, 'Content-Type', 'text/event-stream')
   setResponseHeader(event, 'Cache-Control', 'no-cache')
   setResponseHeader(event, 'Connection', 'keep-alive')
+  setResponseHeader(event, 'X-Accel-Buffering', 'no')
 
-  return sendStream(event, async (writer) => {
-    try {
-      for await (const chunk of stream) {
-        const delta = chunk.choices[0]?.delta?.content
-        if (delta) writer.write(`data: ${JSON.stringify({ text: delta })}\n\n`)
+  const encoder = new TextEncoder()
+
+  // h3 attend un vrai stream : lui passer une fonction lève « Invalid stream provided ».
+  const sse = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (payload: unknown) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`))
+
+      try {
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta?.content
+          if (delta) send({ text: delta })
+        }
+      } catch {
+        send({ text: scene.fallbacks.narrative_error })
       }
-    } catch {
-      writer.write(`data: ${JSON.stringify({ text: scene.fallbacks.narrative_error })}\n\n`)
-    }
-    writer.write('data: [DONE]\n\n')
-    writer.close()
+
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+      controller.close()
+    },
   })
+
+  return sendStream(event, sse)
 })

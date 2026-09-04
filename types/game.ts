@@ -8,9 +8,9 @@ export type GameScreen =
   | 'payment_processing'
   | 'payment_success'
 
+// L'image a son propre état dans le store : elle ne doit pas bloquer la saisie.
 export type PlayingSubState =
   | 'narrative_streaming'
-  | 'image_loading'
   | 'awaiting_input'
   | 'npc_dialogue'
 

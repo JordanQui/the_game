@@ -1,7 +1,11 @@
 import type { SceneTextResponse } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
 import { useGameStore } from '~/stores/game'
+import { usePlayerStore } from '~/stores/player'
 import { useImageGen } from '~/composables/useImageGen'
+
+/** La génération de scène tourne autour de 15-20 s ; au-delà, c'est perdu. */
+const SCENE_TEXT_TIMEOUT_MS = 90_000
 
 /**
  * Orchestre le pipeline découplé.
@@ -13,6 +17,7 @@ import { useImageGen } from '~/composables/useImageGen'
  */
 export function useScene() {
   const gameStore = useGameStore()
+  const playerStore = usePlayerStore()
   const { generateSceneImage } = useImageGen()
 
   const scene = ref<SceneTextResponse | null>(null)
@@ -27,13 +32,18 @@ export function useScene() {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
         body: { sceneId, user },
+        signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })
       scene.value = res
+      playerStore.setScene(res)
       gameStore.addNarrativeEntry('narration', res.scene_text)
       gameStore.setPlayingSubState('awaiting_input')
       return res
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Impossible de charger la scène'
+      const aborted = err instanceof DOMException && err.name === 'TimeoutError'
+      error.value = aborted
+        ? 'Le monde a mis trop de temps à se dessiner.'
+        : err instanceof Error ? err.message : 'Impossible de charger la scène'
       return null
     } finally {
       isLoadingText.value = false

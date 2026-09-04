@@ -16,12 +16,16 @@ const messages = [
 const currentMessage = ref(messages[0])
 let interval: ReturnType<typeof setInterval> | null = null
 
-onMounted(async () => {
+function startMessages() {
   let i = 0
   interval = setInterval(() => {
     i = (i + 1) % messages.length
     currentMessage.value = messages[i]
   }, 2500)
+}
+
+async function build() {
+  startMessages()
 
   // Phase 1 : le texte. Bloquant, c'est lui qui rend la scène jouable.
   const scene = await loadSceneText(undefined, playerStore.profile ?? undefined)
@@ -33,7 +37,9 @@ onMounted(async () => {
 
   // Phase 2 : l'image, en tâche de fond. On joue déjà.
   void loadSceneImage(scene).then(() => playerStore.markImageReady())
-})
+}
+
+onMounted(build)
 
 onUnmounted(() => { if (interval) clearInterval(interval) })
 </script>
@@ -64,7 +70,10 @@ onUnmounted(() => { if (interval) clearInterval(interval) })
         </div>
       </div>
 
-      <p v-if="error" class="text-red-400/80 text-xs">{{ error }}</p>
+      <div v-if="error" class="space-y-3 pt-2">
+        <p class="text-red-400/80 text-xs">{{ error }}</p>
+        <GlowButton class="w-full" @click="build">Réessayer</GlowButton>
+      </div>
     </div>
   </div>
 </template>

@@ -90,6 +90,16 @@ export interface SceneTextResponse extends GeneratedScene {
    *  /api/scene/image le reconstruit et n'accepte jamais un prompt du client. */
   image_prompt: string
   paywall: ScenePaywall
+  /** Trace de la correction d'accent appliquée côté serveur. */
+  palette_audit: {
+    adjusted: boolean
+    original_dominant: string
+    original_secondary: string
+    original_accent: string
+    contrast_vs_dominant: number
+    contrast_vs_secondary: number
+    base_contrast: number
+  }
 }
 
 /** Requête de la phase 2. Volontairement pas de prompt libre. */
@@ -119,10 +129,14 @@ export interface TurnContext {
   npcs: SceneNPC[]
 }
 
+/** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */
+export type TurnMode = 'ambient' | 'npc' | 'exit_nudge'
+
 export interface TurnRequest {
   sceneId?: string
   context: TurnContext
   input: string
+  mode?: TurnMode
   /** Si renseigné, c'est ce PNJ qui répond au lieu du narrateur. */
   npcId?: string
   history?: Array<{ role: 'user' | 'assistant'; content: string }>

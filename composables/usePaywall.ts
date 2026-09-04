@@ -1,6 +1,7 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { usePaymentStore } from '~/stores/payment'
+import { matchesKeyword } from '~/utils/text-match'
 
 declare global {
   interface Window {
@@ -31,8 +32,14 @@ export function usePaywall() {
     const paywall = playerStore.scene?.paywall
     if (!paywall) return false
     if (gameStore.turnCount < paywall.min_turns_before_trigger) return false
-    const lower = input.toLowerCase()
-    return paywall.exit_keywords.some(kw => lower.includes(kw))
+    return matchesKeyword(input, paywall.exit_keywords)
+  }
+
+  /** Le joueur parle de sortir, mais il est trop tôt : on le relance vers la porte. */
+  function mentionsExit(input: string): boolean {
+    const paywall = playerStore.scene?.paywall
+    if (!paywall) return false
+    return matchesKeyword(input, paywall.exit_keywords)
   }
 
   async function initSquarePayments(containerSelector: string) {
@@ -106,5 +113,5 @@ export function usePaywall() {
     }
   }
 
-  return { checkPaywallTrigger, initSquarePayments, fetchPaymentIntent, submitPayment }
+  return { checkPaywallTrigger, mentionsExit, initSquarePayments, fetchPaymentIntent, submitPayment }
 }

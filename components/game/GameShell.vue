@@ -3,11 +3,13 @@ import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { usePaywall } from '~/composables/usePaywall'
+import { useImageGen } from '~/composables/useImageGen'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
-const { handlePlayerInput } = useNarrative()
-const { checkPaywallTrigger } = usePaywall()
+const { handlePlayerInput, retryLastTurn } = useNarrative()
+const { checkPaywallTrigger, mentionsExit } = usePaywall()
+const { generateSceneImage } = useImageGen()
 
 /** Les PNJ prennent de la place sur petit écran : repliés par défaut. */
 const showNpcs = ref(false)
@@ -19,7 +21,26 @@ async function onCommand(input: string) {
     setTimeout(() => gameStore.triggerPaywall(), 1400)
     return
   }
+
+  // Le joueur parle de sortir mais il est trop tôt : on ramène le regard
+  // vers la porte sans jamais lui dicter la commande.
+  if (mentionsExit(input)) {
+    await handlePlayerInput(input, 'exit_nudge')
+    return
+  }
+
   await handlePlayerInput(input)
+}
+
+function retryImage() {
+  const scene = playerStore.scene
+  if (!scene) return
+  void generateSceneImage({
+    sceneId: scene.scene_id,
+    placeName: scene.place.name,
+    palette: scene.palette,
+    decor: scene.decor,
+  })
 }
 </script>
 
@@ -29,7 +50,9 @@ async function onCommand(input: string) {
     <div class="shrink-0 max-h-[38dvh] sm:max-h-[45dvh] overflow-hidden">
       <SceneImage
         :src="gameStore.currentSceneImageUrl"
-        :loading="gameStore.playingSubState === 'image_loading'"
+        :loading="gameStore.sceneImageLoading"
+        :error="gameStore.sceneImageError"
+        @retry="retryImage"
       />
     </div>
 
@@ -66,6 +89,31 @@ async function onCommand(input: string) {
 
     <!-- Narration -->
     <NarrativeText :entries="gameStore.narrativeHistory" />
+
+    <!-- Tour en échec : la saisie reste ouverte, et on peut relancer -->
+    <Transition name="slide">
+      <div
+        v-if="gameStore.turnError"
+        class="shrink-0 flex items-center gap-3 mx-4 mb-2 px-3 py-2 border border-red-900/50 bg-red-950/20"
+      >
+        <p class="flex-1 min-w-0 text-red-300/70 text-xs leading-snug">
+          {{ gameStore.turnError }}
+        </p>
+        <button
+          class="shrink-0 text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider border border-amber-800/60 px-3 py-1.5 transition-colors"
+          @click="retryLastTurn"
+        >
+          Réessayer
+        </button>
+        <button
+          class="shrink-0 text-ink-400 hover:text-parchment/60 text-lg leading-none px-1 transition-colors"
+          aria-label="Ignorer"
+          @click="gameStore.clearTurnError()"
+        >
+          ×
+        </button>
+      </div>
+    </Transition>
 
     <!-- Saisie -->
     <div class="shrink-0 pb-[env(safe-area-inset-bottom)]">

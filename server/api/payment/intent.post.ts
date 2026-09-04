@@ -1,7 +1,11 @@
-import pkg from 'square'
-const { Client, Environment } = pkg
+import { SquareClient, SquareEnvironment } from 'square'
 import { ScriptRuntime } from '~/utils/script-runtime'
 
+/**
+ * Square v44 : `SquareClient` / `SquareEnvironment`, et les ressources sont
+ * imbriquées (`checkout.paymentLinks.create`). Les anciens `Client` /
+ * `Environment` / `checkoutApi` de la v3x n'existent plus.
+ */
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   await readBody(event).catch(() => null)
@@ -9,17 +13,15 @@ export default defineEventHandler(async (event) => {
   const runtime = await ScriptRuntime.load()
   const paywall = runtime.paywall
 
-  const client = new Client({
-    accessToken: config.squareAccessToken,
+  const client = new SquareClient({
+    token: config.squareAccessToken,
     environment: config.public.squareEnvironment === 'production'
-      ? Environment.Production
-      : Environment.Sandbox,
+      ? SquareEnvironment.Production
+      : SquareEnvironment.Sandbox,
   })
 
-  const idempotencyKey = crypto.randomUUID()
-
-  const { result } = await client.checkoutApi.createPaymentLink({
-    idempotencyKey,
+  const response = await client.checkout.paymentLinks.create({
+    idempotencyKey: crypto.randomUUID(),
     order: {
       locationId: config.public.squareLocationId,
       lineItems: [
@@ -39,13 +41,13 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  if (!result.paymentLink) {
-    throw createError({ statusCode: 502, statusMessage: 'Failed to create Square payment link' })
+  if (!response.paymentLink) {
+    throw createError({ statusCode: 502, statusMessage: 'Square n\'a pas créé de lien de paiement' })
   }
 
   return {
-    paymentLinkId: result.paymentLink.id,
-    url: result.paymentLink.url,
+    paymentLinkId: response.paymentLink.id,
+    url: response.paymentLink.url,
     applicationId: config.public.squareApplicationId,
     locationId: config.public.squareLocationId,
   }

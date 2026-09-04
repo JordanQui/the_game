@@ -18,7 +18,9 @@ export function useImageGen() {
   }): Promise<string | null> {
     isLoading.value = true
     error.value = null
-    gameStore.setPlayingSubState('image_loading')
+    // État dédié : l'image ne touche pas au playingSubState, sinon elle
+    // bloquerait la saisie pendant les ~30 s de génération.
+    gameStore.startSceneImage()
 
     try {
       const res = await $fetch<SceneImageResponse>('/api/scene/image', {
@@ -31,15 +33,15 @@ export function useImageGen() {
         },
       })
       gameStore.setSceneImage(res.image)
+      gameStore.finishSceneImage()
       return res.image
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erreur de génération d\'image'
+      const message = err instanceof Error ? err.message : 'Erreur de génération d\'image'
+      error.value = message
+      gameStore.failSceneImage(message)
       return null
     } finally {
       isLoading.value = false
-      if (gameStore.playingSubState === 'image_loading') {
-        gameStore.setPlayingSubState('awaiting_input')
-      }
     }
   }
 
