@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import scriptJson from '../game/script.json'
+import userJson from '../game/user.json'
 import type {
   Script,
   SceneScript,
@@ -20,33 +20,15 @@ import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
 
-const fileCache = new Map<string, unknown>()
-
-async function loadJson<T>(fileName: string): Promise<T> {
-  if (fileCache.has(fileName)) return fileCache.get(fileName) as T
-
-  const filePath = resolve(process.cwd(), 'game', fileName)
-  let raw: string
-  try {
-    raw = await readFile(filePath, 'utf-8')
-  } catch {
-    throw new Error(`Fichier introuvable : game/${fileName}`)
-  }
-
-  let parsed: T
-  try {
-    parsed = JSON.parse(raw) as T
-  } catch {
-    throw new Error(`JSON invalide : game/${fileName}`)
-  }
-
-  fileCache.set(fileName, parsed)
-  return parsed
-}
+// Les JSON sont importés, pas lus sur le disque : en serverless (Vercel) le
+// process ne voit que le bundle, jamais l'arborescence du repo. L'import les
+// inline dans le build, donc ils sont toujours là.
+const script = scriptJson as unknown as Script
+const userFixture = userJson as unknown as UserProfile
 
 /** Profil joueur de développement. En prod, remplacé par le classifier Facebook. */
 export function loadUserFixture(): Promise<UserProfile> {
-  return loadJson<UserProfile>('user.json')
+  return Promise.resolve(userFixture)
 }
 
 /** Aplatit le profil en un bloc lisible par le modèle. */
@@ -367,7 +349,6 @@ export class ScriptRuntime {
   constructor(readonly script: Script) {}
 
   static async load(): Promise<ScriptRuntime> {
-    const script = await loadJson<Script>('script.json')
     if (!script.scenes?.length) throw new Error('script.json ne contient aucune scène')
     return new ScriptRuntime(script)
   }

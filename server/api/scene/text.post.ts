@@ -17,6 +17,11 @@ export default defineEventHandler(async (event) => {
     user?: UserProfile
   }>(event) ?? {}
 
+  // Sans clé, le SDK OpenAI jette au constructeur : un 500 nu, illisible en prod.
+  if (!config.openaiApiKey) {
+    throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY absente de l\'environnement' })
+  }
+
   const runtime = await ScriptRuntime.load()
   const scene = runtime.scene(body.sceneId)
   const user = body.user ?? await loadUserFixture()
@@ -24,16 +29,24 @@ export default defineEventHandler(async (event) => {
   const openai = new OpenAI({ apiKey: config.openaiApiKey })
   const gen = scene.generation
 
-  const completion = await openai.chat.completions.create({
-    model: gen.model,
-    temperature: gen.temperature,
-    max_tokens: gen.max_tokens,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: gen.system_prompt },
-      { role: 'user', content: scene.buildGenerationPrompt(user) },
-    ],
-  })
+  let completion
+  try {
+    completion = await openai.chat.completions.create({
+      model: gen.model,
+      temperature: gen.temperature,
+      max_tokens: gen.max_tokens,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: gen.system_prompt },
+        { role: 'user', content: scene.buildGenerationPrompt(user) },
+      ],
+    })
+  } catch (err) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: err instanceof Error ? err.message : `Appel à ${gen.model} échoué`,
+    })
+  }
 
   const raw = completion.choices[0]?.message?.content
   if (!raw) {
