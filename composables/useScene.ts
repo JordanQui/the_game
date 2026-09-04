@@ -72,6 +72,11 @@ export function useScene() {
       return Promise.resolve(res.static_image)
     }
 
+    // Déjà obtenue pour cette scène : ne pas repayer un remontage ou un renvoi.
+    if (gameStore.currentSceneImageUrl) {
+      return Promise.resolve(gameStore.currentSceneImageUrl)
+    }
+
     return generateSceneImage({
       sceneId: res.scene_id,
       placeName: res.place.name,

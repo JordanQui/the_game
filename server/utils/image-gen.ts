@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import OpenAI from 'openai'
 import type { ArtDirection } from '~/types/script'
 
@@ -8,6 +9,35 @@ export interface ImageResult {
   format: string
   bytes: number
   elapsed_ms: number
+}
+
+/**
+ * Cache d'images, indexé par empreinte du prompt.
+ *
+ * Une image coûte ~0,07 USD, contre 0,028 pour tout le texte d'une scène :
+ * c'est le poste dominant, et régénérer deux fois le même prompt est la
+ * dépense la plus facile à éviter.
+ *
+ * Le cache vit dans la mémoire du processus. En développement il tient toute
+ * la session ; sur Vercel il ne survit pas à un démarrage à froid et n'est pas
+ * partagé entre lambdas — il attrape donc les répétitions rapprochées (renvoi,
+ * remontage de composant, deux joueurs sur la même lambda), pas les reprises à
+ * distance. Un cache durable demanderait un stockage partagé.
+ */
+const CACHE_MAX = 50
+const imageCache = new Map<string, ImageResult>()
+
+function cacheKey(model: string, prompt: string, size: string): string {
+  return createHash('sha256').update(`${model}|${size}|${prompt}`).digest('hex')
+}
+
+function remember(key: string, result: ImageResult): void {
+  // Map conserve l'ordre d'insertion : la plus ancienne entrée sort en premier.
+  if (imageCache.size >= CACHE_MAX) {
+    const oldest = imageCache.keys().next().value
+    if (oldest) imageCache.delete(oldest)
+  }
+  imageCache.set(key, result)
 }
 
 /**
@@ -31,13 +61,17 @@ export async function generateImage(
   let lastError: unknown
 
   for (const model of models) {
+    const key = cacheKey(model, prompt, artDirection.image_size)
+    const cached = imageCache.get(key)
+    if (cached) return { ...cached, elapsed_ms: 0 }
+
     const startedAt = Date.now()
     try {
       const response = await openai.images.generate({
         model,
         prompt,
         n: 1,
-        size: artDirection.image_size as '1536x1024',
+        size: artDirection.image_size as '1024x1024',
         quality: artDirection.image_quality as 'low',
         output_format: artDirection.image_format as 'webp',
       })
@@ -48,13 +82,15 @@ export async function generateImage(
         continue
       }
 
-      return {
+      const result: ImageResult = {
         image: `data:image/${artDirection.image_format};base64,${b64}`,
         model,
         format: artDirection.image_format,
         bytes: Math.round(b64.length * 0.75),
         elapsed_ms: Date.now() - startedAt,
       }
+      remember(key, result)
+      return result
     } catch (err) {
       lastError = err
     }

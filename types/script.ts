@@ -241,6 +241,17 @@ export interface PaywallPitch {
   closing: string
 }
 
+/** Hypothèses de prévision. Seuls les prix de PricingConfig sont mesurés. */
+export interface EconomicsConfig {
+  note?: string
+  eur_usd: number
+  price_eur: number
+  conversion_rate_pct: number
+  payment: { note?: string; fee_pct: number; fee_fixed_eur: number }
+  free_visitor: { note?: string; scenes: number; turns: number; images: number }
+  paying_customer: { note?: string; scenes: number; turns: number; images: number }
+}
+
 export interface PaywallConfig {
   gate_text: string
   cta: string
@@ -262,6 +273,7 @@ export interface Script {
   numerology: NumerologyScript
   pricing: PricingConfig
   limits: LimitsConfig
+  economics: EconomicsConfig
 }
 
 /** Une scène dont les defaults ont été résolus : plus aucun champ optionnel. */

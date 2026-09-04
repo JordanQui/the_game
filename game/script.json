@@ -35,7 +35,7 @@
       "negative": "photorealistic, oil painting, 3d render, gradients, soft shading, airbrush, watercolor, pastel, cheerful, bright daylight, anime, manga, chibi, cartoon mascot, cluttered detail, realistic texture, cross-hatching, watermark, signature, lettering, written words, text, letters, numbers, blurry, more than three colors, medieval, fantasy, castle, torches, candles, wooden beams, thatched roof, swords, armour",
       "image_model": "gpt-image-2",
       "image_fallback_model": "gpt-image-1",
-      "image_size": "1536x1024",
+      "image_size": "1024x1024",
       "image_quality": "low",
       "image_format": "webp",
       "accent_reserved_for": "exit and every neon, screen or holographic light source",
@@ -496,10 +496,10 @@
     }
   },
   "pricing": {
-    "note": "Tarifs OpenAI, en dollars. Vérifiés le 2026-09-04 sur developers.openai.com/api/docs/pricing pour gpt-4o. Le prix par image n'y est pas détaillé par taille et qualité : relever la valeur réelle sur le tableau de bord et la corriger ici. Ces chiffres ne servent qu'à arbitrer le budget d'une scène, jamais à facturer. Mesuré le 2026-09-04 : un tour coûte ~0,69 cent, une génération de scène ~2,6 cents. Une partie de 10 tours revient donc à ~9,6 cents. Le plafond de 0,75 $ ne mord qu'en cas de dérive des prompts.",
+    "note": "Tarifs OpenAI en dollars. gpt-4o vérifié le 2026-09-04 sur developers.openai.com/api/docs/pricing. Prix image CALÉ SUR FACTURE RÉELLE : 0,399 USD pour 5-6 images (gpt-image-2 0,195 + gpt-image-1 0,204, partage 50/50 à tarif équivalent), soit ~0,07 USD l'image en 1536x1024 qualité low. Répartition constatée : sortie gpt-4o 49 %, images 26 %, entrée 23 %. ATTENTION : sur une scène GÉNÉRÉE avec son image, l'image pèse 71 % du coût. L'auberge y échappe grâce à son illustration figée.",
     "input_per_1m_usd": 2.5,
     "output_per_1m_usd": 10.0,
-    "image_per_call_usd": 0.02,
+    "image_per_call_usd": 0.07,
     "scene_budget_usd": 0.75
   },
   "limits": {
@@ -523,6 +523,29 @@
         "turns": "La nuit a été longue. Reviens demain.",
         "images": "Plus rien à dessiner pour l'instant."
       }
+    }
+  },
+  "economics": {
+    "note": "Hypothèses de prévision, pour /admin/marge. Ce ne sont PAS des mesures : seuls les prix unitaires de `pricing` viennent de la facture réelle. À réviser dès que du trafic réel existe.",
+    "eur_usd": 1.08,
+    "price_eur": 10.0,
+    "conversion_rate_pct": 3.0,
+    "payment": {
+      "note": "Commission Square. À vérifier sur ton contrat : le taux carte européenne varie.",
+      "fee_pct": 1.75,
+      "fee_fixed_eur": 0.25
+    },
+    "free_visitor": {
+      "note": "Un visiteur gratuit : l'auberge, image figée donc gratuite.",
+      "scenes": 1,
+      "turns": 6,
+      "images": 0
+    },
+    "paying_customer": {
+      "note": "Usage attendu sur les 30 jours d'accès, très en deçà du plafond autorisé.",
+      "scenes": 4,
+      "turns": 40,
+      "images": 4
     }
   }
 }
