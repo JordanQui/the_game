@@ -99,7 +99,9 @@
       "steer_instruction_missing_item": "ORIENTATION VERS L'OBJET — le joueur traîne et n'a toujours pas {{item_name}}.\nÀ partir de maintenant, termine CHAQUE réponse en ramenant l'attention vers {{npc_name}} : ce que ce personnage laisse entendre, un regard, une phrase surprise à une autre table, un détail qui dit qu'il en sait plus que les autres. Sois de plus en plus direct à chaque tour.\nNe pousse PAS vers le sas : sans l'objet, sortir ne mène nulle part, et le joueur doit le sentir. Tu peux nommer le personnage, jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets.",
       "holder_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\nTu détiens {{item_name}}, mais tu ne le nommes PAS encore et tu ne le proposes pas. Ce que tu attends du joueur d'abord : {{item_handover_hint}}.\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Raconte-lui ceci, à ta manière —\n{{item_hook_story}}\nCette histoire est la raison pour laquelle tu gardes quelque chose, et elle doit lui donner envie de te demander quoi.\nTERMINE par une relance qui appelle une réponse — une question, ou une phrase laissée en suspens. Ne dis jamais au joueur quelle commande taper.",
       "autonomous_notice": "Tu as fait le tour de ce que cette salle avait à dire.",
-      "hard_turn_cap": 10
+      "hard_turn_cap": 10,
+      "informant_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\nTu ne détiens rien, mais tu sais ceci, et c'est ce que tu lui apprends : {{item_informant_hint}}\nRéponds en 2 à 3 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Nomme {{item_holder}} explicitement : le joueur doit repartir en sachant à qui aller parler. Ne décris pas l'objet en détail, tu ne l'as jamais eu en main.\nTERMINE par une relance qui appelle une réponse.",
+      "holder_locked_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\nTu gardes quelque chose, mais il ne sait pas quoi et RIEN dans ta réponse ne doit le lui apprendre : tu ne mentionnes ni objet, ni secret, ni ce que tu détiens. Tu parles d'autre chose — du lieu, de la nuit, de ce que tu observes, de {{quest_title}} si tu veux.\nRéponds en 2 à 3 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Français parlé, sec, argot de mégapole.\nTERMINE par une relance qui appelle une réponse."
     },
     "generation": {
       "model": "gpt-4o",
@@ -175,7 +177,9 @@
           "description": "string (à quoi il ressemble, une phrase)",
           "why": "string (ce qu'il permet de rétablir dans la ville, une phrase)",
           "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)",
-          "hook_story": "string (2 phrases : l'histoire de quelqu'un qui a affronté la même tension, racontée par le détenteur)"
+          "hook_story": "string (2 phrases : l'histoire de quelqu'un qui a affronté la même tension, racontée par le détenteur)",
+          "informant_npc_id": "string (l'id d'un AUTRE npc, différent de npc_id)",
+          "informant_hint": "string (2 phrases : ce que l'informateur sait de l'objet sans le nommer précisément)"
         }
       }
     },
@@ -184,7 +188,8 @@
       "loading_message": "Le monde se dessine...",
       "image_loading": "La pluie brouille encore les néons...",
       "image_error": "L'image ne se forme pas. Le texte, lui, tient toujours.",
-      "key_item_received": "Tu tiens maintenant {{item_name}}."
+      "key_item_received": "Tu tiens maintenant {{item_name}}.",
+      "key_item_offer": "Récupérer {{item_name}}"
     }
   },
   "scenes": [
@@ -335,7 +340,7 @@
         }
       ],
       "key_item": {
-        "instruction": "OBJET-CLÉ — sans lui, impossible de franchir le sas. C'est le coeur de la scène.\nChoisis TOI-MÊME lequel des personnages le détient, et ce que c'est. L'objet doit être concret, tenir dans une main, et appartenir à l'univers cyberpunk du lieu.\nIL N'EST PAS DANS LE DÉCOR. Il n'apparaît dans aucun élément de décor, dans aucun interactable, et le texte de scène ne le mentionne jamais. Rien ne brille sur une table, rien ne traîne derrière le comptoir : le joueur ne peut pas le trouver, le prendre ni le voler. Il ne l'obtient QUE parce qu'un personnage décide de le lui céder, au fil d'une conversation.\nIl n'est pas un trophée : il sert à RÉTABLIR quelque chose dans la ville — l'équilibre décrit dans quest.restoration. Ce déséquilibre est la transposition urbaine de la tension intime du joueur : ce qu'il n'arrive pas à faire dans sa vie, la ville en souffre à son échelle.\nLe personnage qui le détient est celui dont le rapport à cette tension rend la remise signifiante. `handover_hint` dit ce qu'il attend du joueur d'abord.\n`hook_story` est l'histoire qu'il raconte pour donner envie : celle de quelqu'un d'autre qui a affronté — ou fui — exactement la même tension que le joueur, et ce que ça lui a coûté. Elle doit rendre l'objet désirable AVANT même que le joueur sache qu'il existe.",
+        "instruction": "OBJET-CLÉ — sans lui, impossible de franchir le sas. C'est le coeur de la scène.\nL'objet doit être concret, tenir dans une main, et appartenir à l'univers cyberpunk du lieu.\nIL N'EST PAS DANS LE DÉCOR. Il n'apparaît dans aucun élément de décor, dans aucun interactable, et le texte de scène ne le mentionne jamais. Rien ne brille sur une table : le joueur ne peut ni le trouver, ni le prendre, ni le voler. Il l'obtient UNIQUEMENT parce qu'un personnage le lui cède.\nIl n'est pas un trophée : il sert à RÉTABLIR quelque chose dans la ville — l'équilibre décrit dans quest.restoration, transposition urbaine de la tension intime du joueur.\n\nDEUX PERSONNAGES, DEUX RÔLES DISTINCTS. Choisis-les toi-même, ils doivent être différents.\n- `npc_id` : LE DÉTENTEUR. Ne le place JAMAIS en premier dans la liste des personnages : le joueur ne doit pas tomber dessus par hasard au premier essai.\n- `informant_npc_id` : L'INFORMATEUR, un autre habitué. Il ne détient rien, mais il sait que le détenteur garde quelque chose. `informant_hint` est ce qu'il en dit : assez pour donner un nom, une piste, une raison d'aller voir l'autre — jamais assez pour se passer de lui.\n`handover_hint` dit ce que le détenteur attend du joueur avant de céder l'objet.\n`hook_story` est l'histoire qu'il raconte : celle de quelqu'un qui a affronté — ou fui — la même tension que le joueur, et ce que ça lui a coûté.",
         "exchanges_before_handover": 2
       }
     }

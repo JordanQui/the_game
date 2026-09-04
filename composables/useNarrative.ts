@@ -27,6 +27,7 @@ export function useNarrative() {
       theme: scene.theme ?? null,
       key_item: scene.key_item ?? null,
       has_key_item: gameStore.hasKeyItem,
+      informed_about_item: gameStore.informedAboutItem,
     }
   }
 
@@ -146,7 +147,9 @@ export function useNarrative() {
    */
   function isHandoverTurn(npc?: SceneNPC): boolean {
     const item = playerStore.scene?.key_item
-    if (!item || !npc || gameStore.hasKeyItem) return false
+    if (!item || !npc || gameStore.hasKeyItem || gameStore.pendingKeyItem) return false
+    // Le détenteur ne cède rien tant qu'un autre habitué n'a pas mis sur la piste.
+    if (!gameStore.informedAboutItem) return false
     if (npc.id !== item.npc_id) return false
     return gameStore.keyItemExchanges + 1 >= item.exchanges_before_handover
   }
@@ -163,7 +166,15 @@ export function useNarrative() {
     const effectiveMode: TurnMode | undefined = handover ? 'handover' : mode
 
     if (npc) gameStore.recordNpcTalk(npc.id)
-    if (npc && item && npc.id === item.npc_id && !gameStore.hasKeyItem) {
+
+    // Parler à l'informateur ouvre la chaîne.
+    if (npc && item && npc.id === item.informant_npc_id && !gameStore.informedAboutItem) {
+      gameStore.markInformedAboutItem()
+    }
+
+    // Les échanges ne comptent qu'une fois la piste connue : avant, le
+    // détenteur ne parle pas de l'objet, ça ne fait pas avancer.
+    if (npc && item && npc.id === item.npc_id && gameStore.informedAboutItem && !gameStore.hasKeyItem) {
       gameStore.recordKeyItemExchange()
     }
 
@@ -173,11 +184,10 @@ export function useNarrative() {
 
     gameStore.incrementTurn(input, text)
 
-    // La remise n'est actée qu'une fois la réplique arrivée : sinon le joueur
-    // verrait l'objet apparaître avant qu'on lui explique pourquoi.
+    // L'objet est TENDU, pas donné : le joueur doit le prendre lui-même. Un
+    // objet qui apparaît tout seul dans l'inventaire ne se remarque pas.
     if (handover && item) {
-      gameStore.receiveKeyItem()
-      gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
+      gameStore.offerKeyItem()
     }
 
     await lockIfOverstayed()

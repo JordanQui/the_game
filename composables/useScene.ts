@@ -15,6 +15,13 @@ const SCENE_TEXT_TIMEOUT_MS = 90_000
  * deux appels ne doivent jamais être fusionnés : ensemble ils dépassent
  * n'importe quel timeout serverless.
  */
+/** Relaie `?fresh=1` de l'URL vers l'API : en dev, force une vraie génération. */
+function freshQuery(): Record<string, string> {
+  if (!import.meta.dev) return {}
+  const fresh = useRoute().query.fresh
+  return fresh ? { fresh: String(fresh) } : {}
+}
+
 export function useScene() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
@@ -34,6 +41,7 @@ export function useScene() {
     try {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
+        query: freshQuery(),
         body: { sceneId, user },
         signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })

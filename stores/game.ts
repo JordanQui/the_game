@@ -18,8 +18,14 @@ export const useGameStore = defineStore('game', {
     spentUsd: 0,
     /** Objet-clé : sans lui, le sas reste fermé. */
     hasKeyItem: false,
-    /** Échanges déjà eus avec le détenteur de l'objet. */
+    /** Échanges déjà eus avec le détenteur de l'objet, une fois informé. */
     keyItemExchanges: 0,
+    /** Un autre habitué a mis le joueur sur la piste de l'objet. */
+    informedAboutItem: false,
+    /** L'objet est proposé : il reste au joueur à le récupérer. */
+    pendingKeyItem: false,
+    /** Objets ramassés dans la scène, par identifiant. */
+    inventory: [] as Array<{ id: string; label: string }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
     /** Verdict de fin quand le joueur n'est jamais sorti. */
@@ -135,8 +141,23 @@ export const useGameStore = defineStore('game', {
       this.keyItemExchanges++
     },
 
-    receiveKeyItem() {
+    markInformedAboutItem() {
+      this.informedAboutItem = true
+    },
+
+    /** Le détenteur tend l'objet. Le joueur doit encore le prendre. */
+    offerKeyItem() {
+      this.pendingKeyItem = true
+    },
+
+    pickUp(id: string, label: string) {
+      if (this.inventory.some(o => o.id === id)) return
+      this.inventory.push({ id, label })
+    },
+
+    collectKeyItem() {
       this.hasKeyItem = true
+      this.pendingKeyItem = false
     },
 
     recordNpcTalk(npcId: string) {
@@ -170,6 +191,8 @@ export const useGameStore = defineStore('game', {
       this.spentUsd = 0
       this.hasKeyItem = false
       this.keyItemExchanges = 0
+      this.informedAboutItem = false
+      this.pendingKeyItem = false
       this.talkedToNpcIds = []
       this.lockVerdict = null
       this.lockRecap = []

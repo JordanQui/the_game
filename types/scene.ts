@@ -46,6 +46,10 @@ export interface SceneKeyItem {
   why: string
   /** Ce que le détenteur attend du joueur avant de le céder. */
   handover_hint: string
+  /** L'autre personnage, celui qui met sur la piste. Jamais le détenteur. */
+  informant_npc_id: string
+  /** Ce que l'informateur en dit : de quoi aller voir le détenteur. */
+  informant_hint: string
   /** L'histoire qu'il raconte pour rendre l'objet désirable. */
   hook_story: string
   /** Nombre d'échanges avec le détenteur avant la remise. */
@@ -215,6 +219,8 @@ export interface TurnContext {
   key_item?: SceneKeyItem | null
   /** Le joueur le détient-il déjà ? Décide vers quoi le narrateur oriente. */
   has_key_item?: boolean
+  /** A-t-il parlé à l'informateur ? Le détenteur reste muet tant que non. */
+  informed_about_item?: boolean
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */

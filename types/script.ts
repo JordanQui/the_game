@@ -89,7 +89,11 @@ export interface TurnRules {
 
   /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
   key_item_context: string
-  /** Réplique du détenteur tant qu'il garde l'objet : il amorce, il relance. */
+  /** Réplique de l'informateur : il révèle qui détient l'objet. */
+  informant_prompt: string
+  /** Réplique du détenteur tant que le joueur n'a pas été informé : il ne lâche rien. */
+  holder_locked_prompt: string
+  /** Réplique du détenteur une fois le joueur informé : il amorce, il relance. */
   holder_prompt: string
   /** Réplique du détenteur au moment où il remet l'objet. */
   handover_prompt: string

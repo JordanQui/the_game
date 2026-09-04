@@ -5,6 +5,7 @@ import { useNarrative } from '~/composables/useNarrative'
 import { usePaywall } from '~/composables/usePaywall'
 import { useImageGen } from '~/composables/useImageGen'
 import { useSceneCommands } from '~/composables/useSceneCommands'
+import { normalize } from '~/utils/text-match'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
@@ -48,6 +49,46 @@ async function onCommand(input: string) {
   }
 
   await handlePlayerInput(input)
+}
+
+/**
+ * Les objets que le joueur peut ramasser maintenant.
+ *
+ * Un objet devient ramassable quand il a été NOMMÉ dans le récit : le script
+ * impose que `interactables` liste exactement ce qui apparaît dans le texte,
+ * mais le joueur ne doit pas voir un bouton pour une chose dont on ne lui a
+ * pas encore parlé. La sortie est exclue — on la franchit, on ne la ramasse pas.
+ */
+const pickable = computed(() => {
+  const scene = playerStore.scene
+  if (!scene?.interactables) return []
+
+  const narrated = normalize(
+    gameStore.narrativeHistory
+      .filter(e => e.type === 'narration' || e.type === 'npc_speech')
+      .map(e => e.text)
+      .join(' ')
+  )
+
+  return scene.interactables.filter((obj) => {
+    if (obj.triggers_paywall) return false
+    if (gameStore.inventory.some(o => o.id === obj.id)) return false
+    const label = normalize(obj.label).replace(/^(l['’]|le |la |les |un |une |des )/, '')
+    return label.length > 2 && narrated.includes(label)
+  })
+})
+
+function pickUp(obj: { id: string; label: string }) {
+  gameStore.pickUp(obj.id, obj.label)
+  gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
+}
+
+/** Le joueur prend l'objet que le détenteur lui tend. */
+function collectItem() {
+  const item = playerStore.scene?.key_item
+  if (!item) return
+  gameStore.collectKeyItem()
+  gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
 }
 
 function retryImage() {
@@ -119,6 +160,47 @@ function retryImage() {
 
     <!-- Narration -->
     <NarrativeText :entries="gameStore.narrativeHistory" />
+
+    <!-- Objets nommés dans le récit : un bouton pour chacun -->
+    <Transition name="slide">
+      <div v-if="pickable.length" class="shrink-0 flex flex-wrap gap-2 px-4 pb-2">
+        <button
+          v-for="obj in pickable"
+          :key="obj.id"
+          class="flex items-center gap-2 font-display text-[10px] uppercase tracking-[0.16em]
+                 text-neon-300 border border-neon-600/50 hover:border-neon-400 hover:text-neon-200
+                 px-2.5 py-1.5 transition-colors"
+          @click="pickUp(obj)"
+        >
+          <span class="text-neon-500">+</span> Ramasser {{ obj.label }}
+        </button>
+      </div>
+    </Transition>
+
+    <!--
+      L'objet est tendu, pas donné. Un objet qui apparaît tout seul dans
+      l'inventaire ne se remarque pas : il faut un geste du joueur.
+    -->
+    <Transition name="slide">
+      <div
+        v-if="gameStore.pendingKeyItem && playerStore.scene?.key_item"
+        class="shrink-0 flex items-center gap-3 mx-4 mb-2 px-3 py-2.5 border border-neon-500/50 bg-neon-700/10"
+      >
+        <svg viewBox="0 0 8 10" class="w-2 h-2.5 shrink-0 fill-neon-500 animate-deco-pulse" aria-hidden="true">
+          <path d="M0 0 L5 5 L0 10 L3 10 L8 5 L3 0 Z" />
+        </svg>
+        <p class="flex-1 min-w-0 text-ink-100 text-xs leading-snug">
+          {{ playerStore.scene.key_item.name }} t'est tendu.
+        </p>
+        <button
+          class="shrink-0 font-display text-[10px] uppercase tracking-[0.2em] text-neon-200 bg-neon-500/70
+                 hover:bg-neon-400 hover:text-ink-900 px-3 py-1.5 transition-colors"
+          @click="collectItem"
+        >
+          Récupérer
+        </button>
+      </div>
+    </Transition>
 
     <!-- Tour en échec : la saisie reste ouverte, et on peut relancer -->
     <Transition name="slide">

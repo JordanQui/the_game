@@ -25,3 +25,6 @@ public/generated/
 *.log
 npm-debug.log*
 .vercel
+
+# Scènes enregistrées en développement
+.mocks/

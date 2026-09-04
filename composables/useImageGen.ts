@@ -25,6 +25,7 @@ export function useImageGen() {
     try {
       const res = await $fetch<SceneImageResponse>('/api/scene/image', {
         method: 'POST',
+        query: import.meta.dev && useRoute().query.fresh ? { fresh: '1' } : {},
         body: {
           scene_id: input.sceneId,
           place_name: input.placeName,

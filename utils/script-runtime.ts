@@ -302,6 +302,12 @@ ${lines}`)
     if (!generated.npcs?.some(n => n.id === item.npc_id)) {
       throw new Error(`Scène invalide : key_item.npc_id "${item.npc_id}" ne désigne aucun PNJ`)
     }
+    if (!item.informant_npc_id || item.informant_npc_id === item.npc_id) {
+      throw new Error('Scène invalide : key_item.informant_npc_id doit désigner un AUTRE PNJ')
+    }
+    if (!generated.npcs.some(n => n.id === item.informant_npc_id)) {
+      throw new Error(`Scène invalide : informant_npc_id "${item.informant_npc_id}" ne désigne aucun PNJ`)
+    }
     if (!Array.isArray(generated.npcs) || generated.npcs.length === 0) {
       throw new Error('Scène invalide : aucun PNJ')
     }
@@ -324,6 +330,16 @@ ${lines}`)
       accent: { ...audit.palette.accent, coverage_pct: ratio.accent_pct },
     }
     const scene = { ...generated, palette }
+
+    // Le détenteur ne doit jamais ouvrir la liste : sans ça le joueur tombe
+    // dessus au premier essai et la chaîne informateur -> détenteur s'effondre.
+    // Le modèle l'oublie régulièrement, on le corrige plutôt que de refuser.
+    const npcs = [...scene.npcs]
+    if (npcs.length > 1 && npcs[0]?.id === scene.key_item.npc_id) {
+      const swapWith = npcs.findIndex(n => n.id !== scene.key_item.npc_id)
+      if (swapWith > 0) [npcs[0], npcs[swapWith]] = [npcs[swapWith], npcs[0]]
+    }
+    scene.npcs = npcs
 
     // Les interactables obligatoires sont réinjectés même si le modèle les a oubliés.
     const interactables = [...(scene.interactables ?? [])]
@@ -505,9 +521,37 @@ ${lines}`)
 
     if (!npc) return interpolate(t.ambient_prompt, { player_input: input })
 
-    // Le détenteur ne se contente jamais de répondre : il raconte, et il relance.
-    // Sans ça le joueur ne sait pas qu'il y a quelque chose à demander.
-    if (ctx.key_item && !ctx.has_key_item && npc.id === ctx.key_item.npc_id) {
+    const item = ctx.key_item
+    const holderName = () => ctx.npcs.find(n => n.id === item?.npc_id)?.name ?? 'un habitué'
+
+    // L'informateur met sur la piste : c'est lui qui ouvre la chaîne.
+    if (item && !ctx.has_key_item && npc.id === item.informant_npc_id) {
+      return interpolate(t.informant_prompt, {
+        npc_name: npc.name,
+        npc_archetype: npc.archetype,
+        npc_personality: npc.personality,
+        npc_knows: npc.knows,
+        player_input: input,
+        item_informant_hint: item.informant_hint || ctx.quest.hook,
+        item_holder: holderName(),
+      })
+    }
+
+    // Le détenteur avant que le joueur ait été informé : il parle, mais jamais
+    // de ce qu'il garde. On peut l'aborder, on ne peut rien en tirer.
+    if (item && !ctx.has_key_item && !ctx.informed_about_item && npc.id === item.npc_id) {
+      return interpolate(t.holder_locked_prompt, {
+        npc_name: npc.name,
+        npc_archetype: npc.archetype,
+        npc_personality: npc.personality,
+        npc_knows: npc.knows,
+        player_input: input,
+        quest_title: ctx.quest.title,
+      })
+    }
+
+    // Le détenteur, une fois informé : il raconte, et il relance.
+    if (item && !ctx.has_key_item && npc.id === item.npc_id) {
       return interpolate(t.holder_prompt, {
         npc_name: npc.name,
         npc_archetype: npc.archetype,

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { SceneQuest } from '~/types/scene'
+import { useGameStore } from '~/stores/game'
 
 // La quête est exposée dès l'arrivée dans la scène : c'est elle qui doit
 // donner envie de franchir la porte.
 defineProps<{ quest: SceneQuest | null }>()
 const open = ref(false)
+
+const gameStore = useGameStore()
 </script>
 
 <template>
@@ -28,6 +31,13 @@ const open = ref(false)
         ]" :key="field.label" class="space-y-1">
           <p class="text-neon-400/70 text-[10px] uppercase tracking-[0.2em] font-display">{{ field.label }}</p>
           <p class="text-ink-200/80 text-xs leading-relaxed">{{ field.value }}</p>
+        </div>
+
+        <div v-if="gameStore.inventory.length" class="space-y-1 pt-1 border-t border-neon-600/20">
+          <p class="text-neon-400/70 text-[10px] uppercase tracking-[0.2em] font-display pt-2">Sur toi</p>
+          <p class="text-ink-200/80 text-xs leading-relaxed">
+            {{ gameStore.inventory.map(o => o.label).join(', ') }}
+          </p>
         </div>
       </div>
     </Transition>

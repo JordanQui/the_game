@@ -1,9 +1,10 @@
 import OpenAI from 'openai'
-import type { GeneratedScene } from '~/types/scene'
+import type { GeneratedScene, SceneTextResponse } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import { consumeQuota } from '~/server/utils/session-quota'
+import { mockKey, readMock, writeMock, wantsFresh } from '~/server/utils/dev-mocks'
 
 /**
  * Phase 1 du pipeline : le texte.
@@ -26,6 +27,14 @@ export default defineEventHandler(async (event) => {
 
   const scene = runtime.scene(body.sceneId)
   const user = body.user ?? await loadUserFixture()
+
+  // En développement, on rejoue la dernière scène enregistrée plutôt que de
+  // repayer la même génération à chaque relance. `?fresh=1` la renouvelle.
+  const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}`)
+  if (import.meta.dev && !wantsFresh(event)) {
+    const cached = await readMock<SceneTextResponse>('scene', key)
+    if (cached) return cached
+  }
 
   const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
   const gen = scene.generation
@@ -70,5 +79,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return scene.assembleText(generated, resolveTheme(user, runtime.script))
+  const assembled = scene.assembleText(generated, resolveTheme(user, runtime.script))
+  await writeMock('scene', key, assembled)
+  return assembled
 })
