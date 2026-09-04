@@ -5,14 +5,24 @@
 @layer base {
   html {
     @apply bg-ink-900 text-parchment;
-    font-family: Georgia, Cambria, 'Times New Roman', Times, serif;
+    /* Sans géométrique par défaut. Le serif reste réservé à la narration. */
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
 
   body {
     @apply min-h-screen overflow-x-hidden;
+    /*
+     * Source unique et dure, comme un projecteur de film noir : une bande
+     * verticale froide en haut, et le noir reprend tout le reste. L'ancienne
+     * vignette brune diffuse appartenait au monde du parchemin.
+     */
+    background-color: theme('colors.ink.900');
+    /* Halo magenta bas, comme la lueur d'une ville sous la pluie. */
     background-image:
-      radial-gradient(ellipse at top, rgba(92, 64, 28, 0.15) 0%, transparent 60%),
-      radial-gradient(ellipse at bottom, rgba(13, 10, 7, 1) 0%, transparent 80%);
+      radial-gradient(120% 55% at 50% 108%, rgba(255, 46, 136, 0.16) 0%, transparent 62%),
+      linear-gradient(180deg, rgba(35, 45, 70, 0.45) 0%, rgba(8, 11, 18, 1) 55%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
 
   * {
@@ -20,7 +30,7 @@
   }
 
   ::selection {
-    @apply bg-amber-700 text-parchment;
+    @apply bg-neon-500 text-ink-900;
   }
 
   ::-webkit-scrollbar {
@@ -32,36 +42,124 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-amber-800 rounded;
+    /* Angle vif : aucune rondeur dans du Deco. */
+    @apply bg-amber-600/60;
   }
 }
 
 @layer components {
+  /**
+   * Emphase Deco : une ombre portée nette, jamais un halo. Le flou de 12px
+   * d'avant faisait de la bougie ; ici la lumière a un bord franc.
+   */
   .text-glow {
-    text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.85);
   }
 
-  .border-ancient {
-    border-image: linear-gradient(
-      to right,
-      transparent,
-      rgba(180, 83, 9, 0.6),
-      rgba(251, 191, 36, 0.8),
-      rgba(180, 83, 9, 0.6),
-      transparent
-    ) 1;
+  /** Filet double — le motif Deco le plus courant : épais dessus, fin dessous. */
+  .deco-rule {
+    @apply relative w-full;
+    height: 5px;
   }
 
+  .deco-rule::before {
+    content: '';
+    @apply absolute inset-x-0 top-0 bg-amber-500/60;
+    height: 2px;
+  }
+
+  .deco-rule::after {
+    content: '';
+    @apply absolute bottom-0 bg-amber-500/25;
+    left: 14%;
+    right: 14%;
+    height: 1px;
+  }
+
+  /**
+   * Éventail de rayons à bords durs. Le repeating-conic-gradient donne des
+   * arêtes franches là où un radial-gradient aurait redonné du flou.
+   */
+  .deco-rays {
+    background: repeating-conic-gradient(
+      from 0deg,
+      rgba(251, 191, 36, 0.06) 0deg 1.6deg,
+      transparent 1.6deg 16deg
+    );
+    /* Le noir reste la matière principale : les rayons s'éteignent très vite. */
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0, 0, 0, 0.45) 18%, transparent 38%);
+    mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0, 0, 0, 0.45) 18%, transparent 38%);
+  }
+
+  /**
+   * Panneau Deco : à-plat noir, filet laiton, et second filet en retrait.
+   * Le nom reste celui d'avant, mais l'emboss de cuir a disparu — le Dark Deco
+   * ne connaît que des aplats et des arêtes.
+   */
   .panel-ancient {
-    @apply bg-ink-900 border border-amber-900/40;
+    @apply relative bg-ink-900 border border-amber-600/45;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75);
+  }
+
+  .panel-ancient::before {
+    content: '';
+    @apply absolute pointer-events-none border border-amber-500/15;
+    inset: 5px;
+  }
+
+  /** Angle à gradins, motif ziggourat, posé aux coins d'un panneau. */
+  .deco-corner {
+    @apply absolute w-4 h-4 pointer-events-none;
+    border-color: theme('colors.amber.500 / 70%');
+  }
+
+  /**
+   * Tube néon. Le coeur du tube est presque blanc rosé, le halo saturé — c'est
+   * ce décalage qui fait lire « verre allumé » plutôt que « texte coloré ».
+   * Seule l'interface a droit à ce halo : les illustrations, elles, restent en
+   * aplats à arêtes dures, c'est la règle du cel-shading.
+   */
+  .neon-text {
+    color: theme('colors.neon.200');
+    text-shadow:
+      0 0 3px rgba(255, 46, 136, 0.95),
+      0 0 10px rgba(255, 46, 136, 0.8),
+      0 0 28px rgba(255, 46, 136, 0.5),
+      0 0 60px rgba(255, 46, 136, 0.28);
+  }
+
+  /** Un tube néon horizontal : filet plein, halo autour. */
+  .neon-rule {
+    @apply bg-neon-500;
+    height: 2px;
     box-shadow:
-      inset 0 1px 0 rgba(251, 191, 36, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-      0 4px 20px rgba(0, 0, 0, 0.6);
+      0 0 6px rgba(255, 46, 136, 0.9),
+      0 0 18px rgba(255, 46, 136, 0.55);
+  }
+
+  /**
+   * Lignes de balayage CRT : la signature des jeux de 1992 affichés sur un
+   * moniteur cathodique. Très légères, sinon elles fatiguent la lecture.
+   */
+  .crt-scanlines {
+    background-image: repeating-linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.28) 0px,
+      rgba(0, 0, 0, 0.28) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  /** Un trait de pluie. La chute est portée par l'animation rain-fall. */
+  .rain-drop {
+    @apply absolute w-px;
+    background: linear-gradient(to bottom, transparent, rgba(181, 188, 203, 0.5));
   }
 
   .narrative-text {
     @apply text-parchment leading-relaxed;
+    font-family: Georgia, Cambria, 'Times New Roman', Times, serif;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   }
 

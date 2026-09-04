@@ -4,7 +4,7 @@
   "meta": {
     "title": "The Game",
     "language": "fr",
-    "genre": "medieval_fantasy",
+    "genre": "cyberpunk_noir",
     "narrative_mode": "text_adventure_80s",
     "note": "Script GLOBAL et STATIQUE. `defaults` s'applique à toutes les scènes ; chaque entrée de `scenes` peut le surcharger. Fusionné à un profil joueur (game/user.json en dev) par utils/script-runtime.ts. Aucun contenu propre à un joueur ici."
   },
@@ -16,7 +16,7 @@
   },
   "defaults": {
     "art_direction": {
-      "render": "1990s Dark Deco animated series cel painting",
+      "render": "1990s Dark Deco animated series cel painting, with the flat polygonal backdrops of the 1992 video game Flashback",
       "tonal_ratio": {
         "dominant_pct": 70,
         "secondary_pct": 20,
@@ -24,26 +24,27 @@
         "description": "Trois couleurs en hiérarchie Dark Deco. L'ombre occupe ~70% de la surface, l'architecture en lumière indirecte ~20%, la lumière elle-même ~10%. Ce n'est pas le 60:30:10 classique : peindre sur fond noir donne mécaniquement plus de place à l'ombre, et chercher à remonter le ton moyen aplatit l'image."
       },
       "constraints": [
-        "painted as if on black paper, in the Dark Deco style of the 1990s Batman animated series",
-        "Art Deco architecture, bold angular geometry, strong verticals, stylised proportions",
+        "painted as if on black paper, in the Dark Deco style of the 1990s Batman animated series, with the flat polygonal backdrops of the 1992 video game Flashback",
+        "retro-futurist Art Deco megastructure, bold angular geometry, strong verticals, stylised proportions",
         "flat cel-shaded color, no gradients, no texture, no rendering — pure filled shapes",
         "heavy black shadows swallowing whole areas, powerful silhouettes, minimal interior detail",
         "single dramatic light source casting long hard-edged shadows, film noir staging",
-        "wide cinematic framing, low horizon, eye-level"
+        "wide cinematic framing, low horizon, eye-level",
+        "neon rendered as abstract glowing tubes and geometric glyphs, never readable letters"
       ],
-      "negative": "photorealistic, oil painting, 3d render, gradients, soft shading, airbrush, watercolor, pastel, cheerful, bright daylight, anime, manga, chibi, cartoon mascot, cluttered detail, realistic texture, cross-hatching, watermark, signature, lettering, written words, text, letters, numbers, blurry, more than three colors",
+      "negative": "photorealistic, oil painting, 3d render, gradients, soft shading, airbrush, watercolor, pastel, cheerful, bright daylight, anime, manga, chibi, cartoon mascot, cluttered detail, realistic texture, cross-hatching, watermark, signature, lettering, written words, text, letters, numbers, blurry, more than three colors, medieval, fantasy, castle, torches, candles, wooden beams, thatched roof, swords, armour",
       "image_model": "gpt-image-2",
       "image_fallback_model": "gpt-image-1",
       "image_size": "1536x1024",
       "image_quality": "low",
       "image_format": "webp",
-      "accent_reserved_for": "exit and every light source",
-      "accent_note": "L'accent (10%) est la lumière de la scène. C'est la seule part du ratio qui doit être tenue au chiffre près : c'est elle qui fait lire l'image. Le partage entre ombre et ton moyen peut dériver, le style l'impose.",
-      "portrait_prompt_template": "Character portrait in the DARK DECO style of the 1990s Batman animated series: flat cel-shaded shapes, hard angular jaw and features, heavy black shadow across half the face, dramatic single light source, bust framing. {{appearance}}. STRICT three-color palette, nothing else: {{dominant_hex}} ({{dominant_name}}) as the flat dark background, about 70 percent; {{secondary_hex}} ({{secondary_name}}) for the shadowed side of the face, hair and clothing, about 20 percent; {{accent_hex}} ({{accent_name}}) as large solid shapes on the lit side of the face and the rim light, about 10 percent. {{constraints}}. No text, no lettering, no numbers anywhere.",
-      "image_prompt_template": "{{setting}} named {{scene_name}}, drawn in the DARK DECO style of the 1990s Batman animated series: painted on black paper, Art Deco architecture, bold angular geometry, flat cel-shaded shapes with hard edges, heavy black shadows, dramatic film-noir lighting from a single source. Wide cinematic view at eye level.\n\nSTRICT THREE-COLOR PALETTE. These three colors and nothing else — no tints, no shades, no blends:\n1. {{dominant_hex}} ({{dominant_name}}) — about 70 percent: the deep shadowed ground of the image, walls, ceiling, floor, everything not lit.\n2. {{secondary_hex}} ({{secondary_name}}) — about 20 percent: architecture, beams, furniture and character silhouettes catching indirect light.\n3. {{accent_hex}} ({{accent_name}}) — a full 10 percent, the ONLY light in the scene.\n\nTHE ACCENT IS THE MOST IMPORTANT INSTRUCTION. {{accent_hex}} is the light itself and must blaze out of the darkness. Fill it as LARGE SOLID SHAPES, never thin outlines — thin lines make it vanish. Paint entirely in {{accent_hex}}: {{focal_element}}, the whole fire in the hearth, the hard-edged shafts and pools of light it throws across the floor, every lantern and candle flame, and the glow through every window. Everything the light touches is {{accent_hex}}; everything else is shadow. Roughly one tenth of the image must be pure {{accent_hex}}. If in doubt, use more, not less.\n\nScene contains: {{decor_line}}.\n{{constraints}}. No text, no lettering, no numbers anywhere."
+      "accent_reserved_for": "exit and every neon, screen or holographic light source",
+      "accent_note": "L'accent (10%) est la lumière de la scène — ici du néon. C'est la seule part du ratio qui doit être tenue au chiffre près : c'est elle qui fait lire l'image. Le partage entre ombre et ton moyen peut dériver, le style l'impose.",
+      "portrait_prompt_template": "Character portrait in the DARK DECO style of the 1990s Batman animated series: flat cel-shaded shapes, hard angular jaw and features, heavy black shadow across half the face, dramatic single light source, bust framing. Cyberpunk city dweller: implants, visors and synthetic fabrics suggested by flat shapes alone. {{appearance}}. STRICT three-color palette, nothing else: {{dominant_hex}} ({{dominant_name}}) as the flat dark background, about 70 percent; {{secondary_hex}} ({{secondary_name}}) for the shadowed side of the face, hair and clothing, about 20 percent; {{accent_hex}} ({{accent_name}}) as large solid shapes on the lit side of the face and the rim light, about 10 percent. {{constraints}}. No text, no lettering, no numbers anywhere.",
+      "image_prompt_template": "{{setting}} named {{scene_name}}, drawn in the DARK DECO style of the 1990s Batman animated series crossed with the flat polygonal backdrops of the 1992 video game Flashback: painted on black paper, retro-futurist Art Deco megastructure, bold angular geometry, flat cel-shaded shapes with hard edges, heavy black shadows, dramatic film-noir lighting from a single source. Wide cinematic view at eye level.\n\nSTRICT THREE-COLOR PALETTE. These three colors and nothing else — no tints, no shades, no blends:\n1. {{dominant_hex}} ({{dominant_name}}) — about 70 percent: the deep shadowed ground of the image, walls, ceiling, floor, everything not lit.\n2. {{secondary_hex}} ({{secondary_name}}) — about 20 percent: architecture, beams, furniture and character silhouettes catching indirect light.\n3. {{accent_hex}} ({{accent_name}}) — a full 10 percent, the ONLY light in the scene.\n\nTHE ACCENT IS THE MOST IMPORTANT INSTRUCTION. {{accent_hex}} is the light itself and must blaze out of the darkness. Fill it as LARGE SOLID SHAPES, never thin outlines — thin lines make it vanish. Paint entirely in {{accent_hex}}: {{focal_element}}, the neon tubes running along the bar, the hard-edged shafts and pools of light they throw across the wet floor, every screen and holographic sign, and the glow through the rain-streaked window. Everything the light touches is {{accent_hex}}; everything else is shadow. Roughly one tenth of the image must be pure {{accent_hex}}. If in doubt, use more, not less.\n\nScene contains: {{decor_line}}.\n{{constraints}}. No text, no lettering, no numbers anywhere."
     },
     "palette_derivation": {
-      "instruction": "Choisis exactement trois couleurs à partir du joueur, dans une logique Dark Deco (série animée Batman des années 90) : une nuit profonde percée par une seule lumière.\n- Dominante (70%) : l'ombre du lieu, dérivée de l'ambiance de sa ville d'origine ou de vie. TRÈS SOMBRE et sourde, proche du noir teinté.\n- Secondaire (20%) : l'architecture éclairée indirectement, dérivée de son métier ou de sa formation. Ton MOYEN, ni noir ni clair.\n- Accent (10%) : la lumière elle-même, dérivée de sa passion la plus intense. Couleur franchement CHROMATIQUE et VIVE — saturation élevée, teinte identifiable au premier coup d'oeil. Interdits absolus : blanc, blanc cassé, crème, beige, ivoire, gris, noir, pastel, désaturé. Teinte franchement éloignée de celles de la dominante et de la secondaire sur la roue chromatique.",
+      "instruction": "Choisis exactement trois couleurs à partir du joueur, dans une logique Dark Deco (série animée Batman des années 90) : une nuit profonde percée par une seule lumière.\n- Dominante (70%) : l'ombre du lieu, dérivée de l'ambiance de sa ville d'origine ou de vie. TRÈS SOMBRE et sourde, proche du noir teinté.\n- Secondaire (20%) : l'architecture éclairée indirectement, dérivée de son métier ou de sa formation. Ton MOYEN, ni noir ni clair.\n- Accent (10%) : la lumière elle-même — un néon —, dérivée de sa passion la plus intense. Couleur franchement CHROMATIQUE et VIVE — saturation élevée, teinte identifiable au premier coup d'oeil. Interdits absolus : blanc, blanc cassé, crème, beige, ivoire, gris, noir, pastel, désaturé. Teinte franchement éloignée de celles de la dominante et de la secondaire sur la roue chromatique.",
       "sources": {
         "dominant": [
           "origin.hometown",
@@ -78,16 +79,16 @@
     "turn": {
       "max_tokens": 220,
       "max_words": 90,
-      "system_prompt_template": "Tu es le narrateur de {{scene_title}} — {{place_name}}, dans un jeu d'aventure textuel médiéval-fantastique en français.\n\nJoueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nPersonnages présents : {{npc_list}}\n\n{{narrative_instruction}}\n\nRègles absolues :\n- Réponds toujours en français.\n- Ne dépasse jamais {{max_words}} mots.\n- N'invente aucune sortie : la seule issue de ce lieu est {{exit_label}}.\n- Ne fais jamais franchir cette sortie au joueur, quoi qu'il tape.\n- Ne brise jamais le quatrième mur, ne mentionne jamais que tu es une IA.",
+      "system_prompt_template": "Tu es le narrateur de {{scene_title}} — {{place_name}}, dans un jeu d'aventure textuel cyberpunk en français.\n\nJoueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nPersonnages présents : {{npc_list}}\n\n{{narrative_instruction}}\n\nRègles absolues :\n- Réponds toujours en français.\n- Ne dépasse jamais {{max_words}} mots.\n- N'invente aucune sortie : la seule issue de ce lieu est {{exit_label}}.\n- Ne fais jamais franchir cette sortie au joueur, quoi qu'il tape.\n- Ne brise jamais le quatrième mur, ne mentionne jamais que tu es une IA.",
       "ambient_prompt": "Le joueur tape : « {{player_input}} ». Réponds par 1 à 2 phrases de narration à la deuxième personne du singulier, dans le style du jeu textuel des années 80. Décris ce qui se passe ou ce qu'il découvre. Nomme explicitement tout nouvel objet manipulable. Pas de dialogue direct, pas de question au joueur.",
-      "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français légèrement médiéval, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.",
-      "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers la porte de façon détournée : un courant d'air froid sous le battant, une rumeur venue du dehors, un habitué qui jette un regard vers elle, la lumière qui filtre par l'interstice.\nRappelle que cette porte est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre."
+      "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français parlé, sec, teinté d'argot de mégapole, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.",
+      "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers le sas de façon détournée : la pluie qui bat contre le battant, une sirène qui passe dans la rue, un habitué qui jette un regard vers lui, la lueur d'un néon qui filtre par l'interstice.\nRappelle que ce sas est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre."
     },
     "generation": {
       "model": "gpt-4o",
       "temperature": 0.9,
       "max_tokens": 2200,
-      "system_prompt": "Tu es l'architecte narratif d'un jeu d'aventure textuel médiéval-fantastique en français. Tu reçois le profil réel d'un joueur et tu le transposes en fiction. Règle absolue : rien du profil réel n'apparaît littéralement — ni nom de ville, ni nom d'entreprise, ni nom d'école, ni titre d'oeuvre. Tout est transposé en équivalent médiéval-fantastique. Tu réponds exclusivement en JSON valide, sans markdown, sans commentaire.",
+      "system_prompt": "Tu es l'architecte narratif d'un jeu d'aventure textuel cyberpunk en français. Tu reçois le profil réel d'un joueur et tu le transposes en fiction. Règle absolue : rien du profil réel n'apparaît littéralement — ni nom de ville, ni nom d'entreprise, ni nom d'école, ni titre d'oeuvre. Tout est transposé en équivalent cyberpunk. Tu réponds exclusivement en JSON valide, sans markdown, sans commentaire.",
       "output_schema": {
         "place": {
           "name": "string",
@@ -153,24 +154,24 @@
       }
     },
     "error_fallbacks": {
-      "narrative_error": "L'aubergiste te regarde sans comprendre. « Répète un peu ça, voyageur. »",
+      "narrative_error": "Le barman lève les yeux de son comptoir. « Répète un peu ça. »",
       "loading_message": "Le monde se dessine...",
-      "image_loading": "La fumée du foyer voile la salle...",
+      "image_loading": "La pluie brouille encore les néons...",
       "image_error": "L'image ne se forme pas. Le texte, lui, tient toujours."
     }
   },
   "scenes": [
     {
       "id": "auberge",
-      "title": "L'Auberge",
+      "title": "Le Comptoir",
       "order": 1,
       "is_free": true,
       "is_paywall_gate": true,
-      "image_setting": "Interior of a medieval fantasy tavern",
-      "focal_element": "the heavy closed exit door on the right side",
+      "image_setting": "Interior of a cramped cyberpunk dive bar in a rain-soaked megacity",
+      "focal_element": "the heavy sealed exit hatch on the right side",
       "static_image": "/scenes/auberge.png",
       "naming": {
-        "instruction": "Invente le nom de l'auberge en français, 2 à 5 mots, forme « L'Auberge de ... » ou « À l'Enseigne du ... » ou « Le/La ... ». Il doit dériver métaphoriquement du lieu d'origine du joueur ou d'un tournant de sa vie, jamais littéralement. Aucun nom de marque, d'entreprise ou de ville réelle.",
+        "instruction": "Invente le nom du bar en français, 2 à 5 mots, forme « Le Néon de ... », « Le Comptoir du ... », « Chez ... » ou « Le/La ... ». Il doit dériver métaphoriquement du lieu d'origine du joueur ou d'un tournant de sa vie, jamais littéralement. Aucun nom de marque, d'entreprise ou de ville réelle.",
         "sources": [
           "origin.hometown",
           "trajectory.turning_points"
@@ -179,43 +180,43 @@
       "decor_slots": [
         {
           "id": "enseigne",
-          "role": "L'enseigne qui grince au-dessus de la porte, vue de l'intérieur par la fenêtre",
+          "role": "L'enseigne au néon au-dessus de l'entrée, vue de l'intérieur à travers la baie ruisselante de pluie",
           "source": "origin.hometown",
           "visual_weight": "secondary"
         },
         {
           "id": "foyer",
-          "role": "La cheminée ou le foyer central, coeur chaud de la salle et principale source de lumière",
+          "role": "Le comptoir rétroéclairé et son mur de tubes néon, coeur de la salle et principale source de lumière",
           "source": "trajectory.turning_points",
           "visual_weight": "accent"
         },
         {
           "id": "outils_suspendus",
-          "role": "Des objets de métier accrochés aux poutres, transposés en équivalents médiévaux",
+          "role": "Du matériel de métier accroché aux structures et aux faisceaux de câbles, transposé en équivalents cyberpunk",
           "source": "trajectory.work",
           "visual_weight": "secondary"
         },
         {
           "id": "mur_de_souvenirs",
-          "role": "Un mur couvert de cartes, blasons, trophées ou parchemins évoquant un savoir accumulé",
+          "role": "Un mur d'écrans cathodiques, de plaques d'accréditation et de badges évoquant un savoir accumulé",
           "source": "trajectory.education",
           "visual_weight": "dominant"
         },
         {
           "id": "table_des_habitues",
-          "role": "La grande table où se retrouvent les habitués, jonchée d'objets révélant leurs obsessions",
+          "role": "Le box où se retrouvent les habitués, jonché d'objets révélant leurs obsessions",
           "source": "passions",
           "visual_weight": "dominant"
         },
         {
           "id": "ambiance_sonore",
-          "role": "Ce qu'on entend : un instrument, une rengaine, un silence pesant",
+          "role": "Ce qu'on entend : une nappe synthétique, une friture de radio, un silence sous la pluie",
           "source": "passions",
           "visual_weight": "none"
         },
         {
           "id": "porte_de_sortie",
-          "role": "La porte massive vers l'extérieur. Toujours présente, toujours en couleur d'accent, toujours décrite en dernier",
+          "role": "Le sas blindé vers la rue. Toujours présent, toujours en couleur d'accent, toujours décrit en dernier",
           "source": "static",
           "visual_weight": "accent",
           "required": true
@@ -223,20 +224,20 @@
       ],
       "npcs": {
         "count": 3,
-        "instruction": "Crée des personnages d'auberge qui incarnent métaphoriquement les passions du joueur, jamais littéralement. Chacun connaît un fragment de la quête. Prénom et nom médiévaux, français.",
+        "instruction": "Crée des habitués du bar qui incarnent métaphoriquement les passions du joueur, jamais littéralement. Chacun connaît un fragment de la quête. Prénom court et alias de mégapole, en français.",
         "source": "passions"
       },
       "quest": {
-        "instruction": "Construis la quête comme une métaphore du parcours réel du joueur, jamais une transposition littérale. Elle doit être entièrement exposée dans l'auberge et rendre la sortie désirable : le joueur doit avoir une raison précise de franchir la porte.",
+        "instruction": "Construis la quête comme une métaphore du parcours réel du joueur, jamais une transposition littérale. Elle doit être entièrement exposée dans le bar et rendre la sortie désirable : le joueur doit avoir une raison précise de franchir le sas.",
         "source": "trajectory.turning_points",
         "structure": {
-          "title": "Titre épique, 2 à 5 mots",
+          "title": "Titre court et tranchant, 2 à 5 mots",
           "hook": "Deux phrases qui plantent l'urgence",
           "objective": "Ce qu'il faut accomplir, une phrase",
           "stakes": "Ce qui est perdu en cas d'échec, une phrase",
           "artifact": "L'objet à retrouver ou détruire",
           "antagonist_hint": "Allusion à la menace, sans la nommer",
-          "why_leave": "La raison concrète pour laquelle rester à l'auberge n'est plus tenable"
+          "why_leave": "La raison concrète pour laquelle rester au comptoir n'est plus tenable"
         }
       },
       "interactables": {
@@ -244,7 +245,7 @@
         "always_include": [
           {
             "id": "porte",
-            "label": "la porte",
+            "label": "le sas",
             "verb": "sortir",
             "triggers_paywall": true
           }
@@ -253,7 +254,7 @@
       "exits": [
         {
           "id": "exit_door",
-          "label": "La porte, vers la nuit",
+          "label": "Le sas, vers la pluie",
           "keywords": [
             "sortir",
             "sors",
@@ -290,7 +291,15 @@
             "outside",
             "door",
             "north",
-            "nord"
+            "nord",
+            "sas",
+            "la rue",
+            "rue",
+            "la pluie",
+            "ouvrir le sas",
+            "ouvre le sas",
+            "street",
+            "hatch"
           ],
           "min_turns_before_trigger": 2,
           "leads_to": "PAYWALL"
@@ -299,8 +308,8 @@
     }
   ],
   "paywall": {
-    "gate_text": "Ta main se referme sur la poignée de fer. Le bois est froid. Derrière, {{quest_artifact}} t'attend quelque part dans la nuit.\n\nLa porte ne s'ouvre pas encore.",
-    "cta": "Franchir la porte — 10 €",
+    "gate_text": "Ta main se referme sur la poignée d'acier du sas. Le métal est froid. Derrière, {{quest_artifact}} t'attend quelque part sous la pluie.\n\nLe sas ne s'ouvre pas encore.",
+    "cta": "Franchir le sas — 10 €",
     "sub_cta": "Débloque la suite de {{quest_title}}",
     "amount_cents": 1000,
     "currency": "EUR"

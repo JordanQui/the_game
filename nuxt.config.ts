@@ -15,10 +15,11 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      title: 'La Nuit du Bout du Monde',
       htmlAttrs: { lang: 'fr' },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-        { name: 'theme-color', content: '#0d0a07' },
+        { name: 'theme-color', content: '#080b12' },
       ],
     },
   },

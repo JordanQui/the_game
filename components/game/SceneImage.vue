@@ -36,8 +36,8 @@ const message = computed(() => {
     <div v-if="!src" class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6">
       <div v-if="loading" class="absolute inset-0 shimmer-bg" />
       <p
-        class="relative z-10 text-center font-serif text-xs sm:text-sm italic"
-        :class="error ? 'text-red-400/50' : 'text-amber-600/60 animate-flicker'"
+        class="relative z-10 text-center font-display text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
+        :class="error ? 'text-red-400/50' : 'text-amber-500/60 animate-deco-pulse'"
       >
         {{ message }}
       </p>
