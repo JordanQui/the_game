@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import type { TurnRequest } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { buildConversationHistory } from '~/utils/prompt-builder'
+import { requireSecret } from '~/server/utils/runtime-secrets'
 
 /**
  * Un tour de jeu, en streaming SSE.
@@ -24,7 +25,7 @@ export default defineEventHandler(async (event) => {
     ? body.context.npcs?.find(n => n.id === body.npcId)
     : undefined
 
-  const openai = new OpenAI({ apiKey: config.openaiApiKey })
+  const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
 
   const stream = await openai.chat.completions.create({
     model: scene.generation.model,

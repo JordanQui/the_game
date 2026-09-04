@@ -1,5 +1,6 @@
 import { SquareClient, SquareEnvironment } from 'square'
 import { ScriptRuntime } from '~/utils/script-runtime'
+import { requireSecret } from '~/server/utils/runtime-secrets'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -13,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const paywall = runtime.paywall
 
   const client = new SquareClient({
-    token: config.squareAccessToken,
+    token: requireSecret(config.squareAccessToken, 'SQUARE_ACCESS_TOKEN'),
     environment: config.public.squareEnvironment === 'production'
       ? SquareEnvironment.Production
       : SquareEnvironment.Sandbox,

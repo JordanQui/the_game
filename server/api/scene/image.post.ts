@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import type { SceneImageRequest, SceneImageResponse } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { generateImage } from '~/server/utils/image-gen'
+import { requireSecret } from '~/server/utils/runtime-secrets'
 
 /**
  * Phase 2 du pipeline : l'illustration.
@@ -30,7 +31,7 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
     decor: body.decor,
   })
 
-  const openai = new OpenAI({ apiKey: config.openaiApiKey })
+  const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
 
   try {
     return await generateImage(openai, scene.artDirection, prompt)

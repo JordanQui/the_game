@@ -1,4 +1,5 @@
 import type { FacebookRawProfile } from '~/types/facebook'
+import { requireSecret } from '~/server/utils/runtime-secrets'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -9,7 +10,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify token validity via Facebook debug_token endpoint
-  const debugUrl = `https://graph.facebook.com/debug_token?input_token=${body.accessToken}&access_token=${config.public.facebookAppId}|${config.facebookAppSecret}`
+  const debugUrl = `https://graph.facebook.com/debug_token?input_token=${body.accessToken}&access_token=${config.public.facebookAppId}|${requireSecret(config.facebookAppSecret, 'FACEBOOK_APP_SECRET')}`
   const debugRes = await $fetch<{ data: { is_valid: boolean; error?: { message: string } } }>(debugUrl)
 
   if (!debugRes.data.is_valid) {

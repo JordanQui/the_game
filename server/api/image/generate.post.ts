@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import type { ScenePalette, SceneImageResponse } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { generateImage } from '~/server/utils/image-gen'
+import { requireSecret } from '~/server/utils/runtime-secrets'
 
 /**
  * Portrait de PNJ, généré dans la palette de la scène en cours.
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
     palette: body.palette,
   })
 
-  const openai = new OpenAI({ apiKey: config.openaiApiKey })
+  const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
 
   try {
     return await generateImage(openai, scene.artDirection, prompt)

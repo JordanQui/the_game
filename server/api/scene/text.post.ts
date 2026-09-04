@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import type { GeneratedScene } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
 import { ScriptRuntime, loadUserFixture } from '~/utils/script-runtime'
+import { requireSecret } from '~/server/utils/runtime-secrets'
 
 /**
  * Phase 1 du pipeline : le texte.
@@ -17,16 +18,11 @@ export default defineEventHandler(async (event) => {
     user?: UserProfile
   }>(event) ?? {}
 
-  // Sans clé, le SDK OpenAI jette au constructeur : un 500 nu, illisible en prod.
-  if (!config.openaiApiKey) {
-    throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY absente de l\'environnement' })
-  }
-
   const runtime = await ScriptRuntime.load()
   const scene = runtime.scene(body.sceneId)
   const user = body.user ?? await loadUserFixture()
 
-  const openai = new OpenAI({ apiKey: config.openaiApiKey })
+  const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
   const gen = scene.generation
 
   let completion
