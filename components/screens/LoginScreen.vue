@@ -1,9 +1,29 @@
 <script setup lang="ts">
 import { useFacebook } from '~/composables/useFacebook'
+import { useGameStore } from '~/stores/game'
+import { usePlayerStore } from '~/stores/player'
+import type { UserProfile } from '~/types/user'
 
 const { login, isLoading, error } = useFacebook()
+const gameStore = useGameStore()
+const playerStore = usePlayerStore()
 
 const showDisclaimer = ref(false)
+const isLoadingDemo = ref(false)
+
+/** Lance la scène sur le profil de démonstration, sans passer par Meta. */
+async function startWithoutMeta() {
+  isLoadingDemo.value = true
+  try {
+    const profile = await $fetch<UserProfile>('/api/user/demo')
+    playerStore.setProfile(profile)
+  } catch {
+    // Le serveur retombera de toute façon sur game/user.json.
+  } finally {
+    isLoadingDemo.value = false
+    gameStore.setScreen('scene_build_loading')
+  }
+}
 
 function openDisclaimer() {
   showDisclaimer.value = true
@@ -48,6 +68,15 @@ async function acceptAndLogin() {
         </GlowButton>
         <p class="text-ink-500 text-xs">Connexion sécurisée via Facebook / Instagram</p>
       </div>
+
+      <!-- Essai sans Meta -->
+      <button
+        class="text-ink-400 text-xs underline underline-offset-4 decoration-ink-600 hover:text-amber-400/80 hover:decoration-amber-700 transition-colors disabled:opacity-40 py-2 px-3 -my-2"
+        :disabled="isLoadingDemo"
+        @click="startWithoutMeta"
+      >
+        {{ isLoadingDemo ? 'Ouverture de la porte...' : 'Lancer sans les données Meta' }}
+      </button>
 
       <!-- Error -->
       <p v-if="error" class="text-red-400/80 text-sm">{{ error }}</p>

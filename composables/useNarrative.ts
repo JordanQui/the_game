@@ -1,137 +1,104 @@
+import type { SceneNPC, TurnContext } from '~/types/scene'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
-import { buildSystemPrompt, buildConversationHistory } from '~/utils/prompt-builder'
 
+/**
+ * Un tour de jeu. Le prompt système est bâti côté serveur depuis script.json ;
+ * on n'envoie ici que les faits de la scène courante.
+ */
 export function useNarrative() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
 
-  async function streamNarrative(promptPath: string, variables: Record<string, string>, npcName?: string) {
-    const systemPrompt = buildSystemPrompt({
-      worldSystemPrompt: 'Tu es le maître narrateur d\'un RPG médiéval-fantastique en français. Reste toujours dans le personnage.',
-      playerName: playerStore.playerName,
-      worldName: playerStore.world?.name ?? 'Royaume des Ombres',
-      worldDescription: playerStore.world?.description ?? '',
-      questTitle: playerStore.quest?.title ?? '',
-      questObjective: playerStore.quest?.objective ?? '',
-      npcNamesAndArchetypes: playerStore.npcNames,
-    })
-
-    gameStore.setPlayingSubState('narrative_streaming')
-    const entryType = npcName ? 'npc_speech' : 'narration'
-    gameStore.addNarrativeEntry(entryType, '', npcName)
-
-    const response = await fetch('/api/narrative/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        colonneId: 'auberge_v1',
-        promptPath,
-        variables,
-        systemPrompt,
-        conversationHistory: buildConversationHistory(gameStore.conversationHistory),
-        stream: true,
-        maxTokens: 300,
-      }),
-    })
-
-    if (!response.ok || !response.body) {
-      gameStore.updateLastNarrativeEntry('Une étrange brume obscurcit les sens...')
-      gameStore.setPlayingSubState('awaiting_input')
-      return
+  function buildContext(): TurnContext | null {
+    const scene = playerStore.scene
+    if (!scene) return null
+    return {
+      player_name: playerStore.playerName,
+      place: scene.place,
+      quest: scene.quest,
+      npcs: scene.npcs,
     }
+  }
 
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
+  /** Trouve le PNJ interpellé par son prénom. */
+  function findAddressedNpc(input: string): SceneNPC | undefined {
+    const lower = input.toLowerCase()
+    return playerStore.npcs.find(npc =>
+      npc.name.split(' ').some(part => part.length > 2 && lower.includes(part.toLowerCase()))
+    )
+  }
+
+  async function streamTurn(input: string, npc?: SceneNPC): Promise<string> {
+    const context = buildContext()
+    if (!context) return ''
+
+    gameStore.setPlayingSubState(npc ? 'npc_dialogue' : 'narrative_streaming')
+    gameStore.addNarrativeEntry(npc ? 'npc_speech' : 'narration', '', npc?.name)
+
     let fullText = ''
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
+    try {
+      const response = await fetch('/api/narrative/turn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sceneId: playerStore.scene?.scene_id,
+          context,
+          input,
+          npcId: npc?.id,
+          history: gameStore.conversationHistory,
+        }),
+      })
+
+      if (!response.ok || !response.body) throw new Error('stream indisponible')
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        // Un chunk réseau peut couper une ligne SSE en deux.
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
           const data = line.slice(6).trim()
-          if (data === '[DONE]') break
+          if (data === '[DONE]') continue
           try {
-            const parsed = JSON.parse(data)
+            const parsed = JSON.parse(data) as { text?: string }
             if (parsed.text) {
               gameStore.updateLastNarrativeEntry(parsed.text)
               fullText += parsed.text
             }
-          } catch { /* ignore parse errors */ }
+          } catch { /* fragment incomplet, ignoré */ }
         }
       }
+    } catch {
+      const fallback = 'L\'aubergiste te regarde sans comprendre. « Répète un peu ça, voyageur. »'
+      gameStore.updateLastNarrativeEntry(fallback)
+      fullText = fallback
+    } finally {
+      gameStore.setPlayingSubState('awaiting_input')
     }
 
-    gameStore.setPlayingSubState('awaiting_input')
     return fullText
   }
 
-  async function generateNonStreaming(promptPath: string, variables: Record<string, string>): Promise<string> {
-    const data = await $fetch<{ text: string }>('/api/narrative/generate', {
-      method: 'POST',
-      body: {
-        colonneId: 'auberge_v1',
-        promptPath,
-        variables,
-        stream: false,
-        maxTokens: 400,
-      },
-    })
-    return data.text
-  }
-
   async function handlePlayerInput(input: string) {
-    const colonne = await $fetch<{ paywall_trigger: { keywords: string[]; min_turns_before_trigger: number } }>(
-      '/api/colonne/triggers',
-      { method: 'POST', body: { colonneId: 'auberge_v1' } }
-    ).catch(() => null)
-
-    // Add player command to history
     gameStore.addNarrativeEntry('player_command', input)
 
-    // Check for NPC address (simple name matching)
-    const addressedNpc = playerStore.npcs.find(npc =>
-      input.toLowerCase().includes(npc.name.split(' ')[0].toLowerCase())
-    )
+    const npc = findAddressedNpc(input)
+    gameStore.setActiveNpc(npc?.id ?? null)
 
-    const variables: Record<string, string> = {
-      player_name: playerStore.playerName,
-      player_input: input,
-      world_name: playerStore.world?.name ?? '',
-      quest_title: playerStore.quest?.title ?? '',
-    }
-
-    if (addressedNpc) {
-      gameStore.setActiveNpc(addressedNpc.id)
-      gameStore.setPlayingSubState('npc_dialogue')
-      await streamNarrative('levels.0.npc_dialogue.system_prompt', {
-        ...variables,
-        npc_name: addressedNpc.name,
-        npc_archetype: addressedNpc.archetype,
-        npc_backstory: addressedNpc.backstory,
-        npc_personality: addressedNpc.personality,
-      }, addressedNpc.name)
-    } else {
-      await streamNarrative('levels.0.ambient_reactions.prompt', variables)
-    }
-
-    // Check if quest should be revealed this turn
-    if (!gameStore.questRevealed && gameStore.turnCount + 1 >= (colonne ? 2 : 2)) {
-      gameStore.revealQuest()
-      const questText = await generateNonStreaming('levels.0.quest_reveal.prompt', {
-        ...variables,
-        quest_title: playerStore.quest?.title ?? '',
-        quest_hook: playerStore.quest?.hook ?? '',
-      })
-      gameStore.addNarrativeEntry('quest_reveal', questText)
-    }
-
-    const lastEntry = gameStore.narrativeHistory[gameStore.narrativeHistory.length - 1]
-    gameStore.incrementTurn(input, lastEntry?.text ?? '')
+    const text = await streamTurn(input, npc)
+    gameStore.incrementTurn(input, text)
   }
 
-  return { streamNarrative, generateNonStreaming, handlePlayerInput }
+  return { handlePlayerInput, streamTurn, findAddressedNpc }
 }

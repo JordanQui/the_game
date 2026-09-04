@@ -1,24 +1,37 @@
+import type { ScenePalette, DecorElement, SceneImageResponse } from '~/types/scene'
 import { useGameStore } from '~/stores/game'
-import { interpolate } from '~/utils/prompt-builder'
 
+/**
+ * gpt-image-* ne renvoie que du base64 : `image` est une data URI, directement
+ * utilisable en `src`. Rien n'expire, contrairement aux anciennes URLs dall-e-3.
+ */
 export function useImageGen() {
   const gameStore = useGameStore()
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  async function generateSceneImage(prompt: string, style: string, variables?: Record<string, string>) {
+  async function generateSceneImage(input: {
+    sceneId: string
+    placeName: string
+    palette: ScenePalette
+    decor: DecorElement[]
+  }): Promise<string | null> {
     isLoading.value = true
     error.value = null
     gameStore.setPlayingSubState('image_loading')
 
     try {
-      const finalPrompt = variables ? interpolate(prompt, variables) : prompt
-      const { url } = await $fetch<{ url: string }>('/api/image/generate', {
+      const res = await $fetch<SceneImageResponse>('/api/scene/image', {
         method: 'POST',
-        body: { prompt: finalPrompt, style },
+        body: {
+          scene_id: input.sceneId,
+          place_name: input.placeName,
+          palette: input.palette,
+          decor: input.decor,
+        },
       })
-      gameStore.setSceneImage(url)
-      return url
+      gameStore.setSceneImage(res.image)
+      return res.image
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur de génération d\'image'
       return null
@@ -30,18 +43,17 @@ export function useImageGen() {
     }
   }
 
-  async function generateNpcPortrait(npcAppearance: string): Promise<string | null> {
+  async function generateNpcPortrait(
+    appearance: string,
+    palette: ScenePalette,
+    sceneId?: string
+  ): Promise<string | null> {
     try {
-      const { url } = await $fetch<{ url: string }>('/api/image/generate', {
+      const res = await $fetch<SceneImageResponse>('/api/image/generate', {
         method: 'POST',
-        body: {
-          prompt: interpolate('Medieval fantasy character portrait, {{npc_appearance}}, oil painting style, warm candlelight illumination, detailed face with character, fantasy tavern background, painterly brushwork', {
-            npc_appearance: npcAppearance,
-          }),
-          style: 'character portrait, detailed face, warm lighting',
-        },
+        body: { sceneId, appearance, palette },
       })
-      return url
+      return res.image
     } catch {
       return null
     }

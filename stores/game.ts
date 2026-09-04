@@ -9,7 +9,6 @@ export const useGameStore = defineStore('game', {
     turnCount: 0,
     currentSceneImageUrl: null as string | null,
     activeNpcId: null as string | null,
-    questRevealed: false,
     paywallTriggered: false,
     conversationHistory: [] as Array<{ role: 'user' | 'assistant'; content: string }>,
   }),
@@ -65,10 +64,6 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    revealQuest() {
-      this.questRevealed = true
-    },
-
     triggerPaywall() {
       this.paywallTriggered = true
       this.currentScreen = 'paywall'
@@ -81,7 +76,6 @@ export const useGameStore = defineStore('game', {
       this.turnCount = 0
       this.currentSceneImageUrl = null
       this.activeNpcId = null
-      this.questRevealed = false
       this.paywallTriggered = false
       this.conversationHistory = []
     },

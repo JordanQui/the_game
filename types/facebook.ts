@@ -47,23 +47,3 @@ export interface FacebookRawProfile {
   games?: { data: Array<{ id: string; name: string; category: string }> }
   likes?: { data: Array<{ id: string; name: string; category: string }> }
 }
-
-export interface InterestCluster {
-  theme: string
-  description: string
-  intensity: 'high' | 'medium' | 'low'
-}
-
-export interface ImportantLifeEvents {
-  summary: string
-  turning_points: string[]
-  raw_events: string[]
-}
-
-export interface ClassifiedFacebookData {
-  playerName: string
-  playerPictureUrl: string
-  importantLifeEvents: ImportantLifeEvents
-  interestClusters: InterestCluster[]
-  miscFacts: string[]
-}

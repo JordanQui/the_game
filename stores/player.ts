@@ -1,51 +1,44 @@
 import { defineStore } from 'pinia'
-import type { ClassifiedFacebookData } from '~/types/facebook'
-import type { GeneratedNPC, GeneratedQuest, GeneratedWorld, WorldBuildProgress } from '~/types/game'
+import type { UserProfile } from '~/types/user'
+import type { SceneTextResponse, SceneNPC, SceneQuest, ScenePlace, ScenePalette } from '~/types/scene'
+import type { SceneBuildProgress } from '~/types/game'
 
 export const usePlayerStore = defineStore('player', {
   state: () => ({
-    facebookData: null as ClassifiedFacebookData | null,
-    world: null as GeneratedWorld | null,
-    npcs: [] as GeneratedNPC[],
-    quest: null as GeneratedQuest | null,
-    buildProgress: {
-      worldName: false,
-      worldDescription: false,
-      npcs: false,
-      quest: false,
-    } as WorldBuildProgress,
+    profile: null as UserProfile | null,
+    scene: null as SceneTextResponse | null,
+    buildProgress: { text: false, image: false } as SceneBuildProgress,
   }),
 
   getters: {
-    playerName: (state) => state.facebookData?.playerName ?? 'Aventurier',
-    isWorldReady: (state) =>
-      state.buildProgress.worldName &&
-      state.buildProgress.worldDescription &&
-      state.buildProgress.npcs &&
-      state.buildProgress.quest,
-    npcNames: (state) => state.npcs.map(n => `${n.name} (${n.archetype})`).join(', '),
+    playerName: (state): string => state.profile?.identity.name ?? 'Aventurier',
+    place: (state): ScenePlace | null => state.scene?.place ?? null,
+    palette: (state): ScenePalette | null => state.scene?.palette ?? null,
+    npcs: (state): SceneNPC[] => state.scene?.npcs ?? [],
+    quest: (state): SceneQuest | null => state.scene?.quest ?? null,
+    npcNames: (state): string =>
+      (state.scene?.npcs ?? []).map(n => `${n.name} (${n.archetype})`).join(', '),
+    isSceneReady: (state): boolean => state.scene !== null,
   },
 
   actions: {
-    setFacebookData(data: ClassifiedFacebookData) {
-      this.facebookData = data
+    setProfile(profile: UserProfile) {
+      this.profile = profile
     },
-    setWorld(world: GeneratedWorld) {
-      this.world = world
-      this.buildProgress.worldName = true
-      this.buildProgress.worldDescription = true
+    setScene(scene: SceneTextResponse) {
+      this.scene = scene
+      this.buildProgress.text = true
     },
-    setNpcs(npcs: GeneratedNPC[]) {
-      this.npcs = npcs
-      this.buildProgress.npcs = true
-    },
-    setQuest(quest: GeneratedQuest) {
-      this.quest = quest
-      this.buildProgress.quest = true
+    markImageReady() {
+      this.buildProgress.image = true
     },
     updateNpcPortrait(npcId: string, portraitUrl: string) {
-      const npc = this.npcs.find(n => n.id === npcId)
+      const npc = this.scene?.npcs.find(n => n.id === npcId)
       if (npc) npc.portraitUrl = portraitUrl
+    },
+    reset() {
+      this.scene = null
+      this.buildProgress = { text: false, image: false }
     },
   },
 })

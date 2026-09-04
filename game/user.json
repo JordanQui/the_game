@@ -1,0 +1,128 @@
+{
+  "_fixture": true,
+  "_note": "Échantillon de développement. Sera remplacé à l'exécution par la sortie de utils/facebook-classifier.ts. La forme ci-dessous est le contrat : ne pas la changer sans mettre à jour script.json.",
+
+  "source": {
+    "provider": "meta",
+    "graph_api_version": "v21.0",
+    "fetched_at": "2026-09-04T10:00:00.000Z",
+    "scopes": [
+      "public_profile",
+      "user_education_history",
+      "user_work_history",
+      "user_birthday",
+      "user_location",
+      "user_hometown",
+      "user_likes"
+    ]
+  },
+
+  "identity": {
+    "id": "10158899234567890",
+    "name": "Camille Ferrand",
+    "first_name": "Camille",
+    "picture_url": "https://graph.facebook.com/10158899234567890/picture?type=large",
+    "birthday": "1991-03-17",
+    "age": 35,
+    "languages": ["Français", "Anglais", "Espagnol"]
+  },
+
+  "origin": {
+    "hometown": {
+      "name": "Saint-Malo",
+      "traits": ["port fortifié", "marées violentes", "granit gris", "brume et vent d'ouest"]
+    },
+    "current_location": {
+      "name": "Lyon",
+      "traits": ["confluence de deux fleuves", "traboules", "ville d'ateliers et de cuisine"]
+    }
+  },
+
+  "trajectory": {
+    "education": [
+      {
+        "school": "Université de Rennes",
+        "degree": "Licence d'histoire médiévale",
+        "year": "2012",
+        "type": "College"
+      },
+      {
+        "school": "École des Beaux-Arts de Nantes",
+        "degree": "DNSEP design graphique",
+        "year": "2015",
+        "type": "Graduate School"
+      }
+    ],
+    "work": [
+      {
+        "employer": "Atelier Vertigo",
+        "position": "Directrice artistique",
+        "location": "Lyon",
+        "start_date": "2019-04",
+        "end_date": null
+      },
+      {
+        "employer": "Studio Kombu",
+        "position": "Graphiste",
+        "location": "Nantes",
+        "start_date": "2015-09",
+        "end_date": "2019-03"
+      }
+    ],
+    "turning_points": [
+      "A quitté une ville portuaire de l'ouest pour une ville de fleuves à l'intérieur des terres",
+      "A abandonné l'étude du passé pour la fabrication d'images",
+      "Dirige aujourd'hui un atelier après avoir été exécutante pendant quatre ans"
+    ]
+  },
+
+  "passions": [
+    {
+      "theme": "cartographie et vieux livres",
+      "intensity": "high",
+      "evidence": ["Cartes anciennes", "Bibliothèque nationale de France", "Atlas Maior"]
+    },
+    {
+      "theme": "musique folk et instruments à cordes",
+      "intensity": "high",
+      "evidence": ["Fleet Foxes", "Alela Diane", "luthiers"]
+    },
+    {
+      "theme": "voile et navigation",
+      "intensity": "medium",
+      "evidence": ["Route du Rhum", "Éric Tabarly", "Vieux gréements"]
+    },
+    {
+      "theme": "cuisine fermentée",
+      "intensity": "medium",
+      "evidence": ["Pain au levain", "Miso", "Noma"]
+    },
+    {
+      "theme": "jeux de rôle sur table",
+      "intensity": "low",
+      "evidence": ["Donjons & Dragons"]
+    }
+  ],
+
+  "misc_facts": [
+    "Née un 17 mars",
+    "Parle trois langues",
+    "A vécu dans quatre villes différentes"
+  ],
+
+  "_field_map": {
+    "identity.name": "GET /me?fields=name",
+    "identity.first_name": "GET /me?fields=first_name",
+    "identity.picture_url": "GET /me?fields=picture.type(large)",
+    "identity.birthday": "GET /me?fields=birthday (scope user_birthday)",
+    "identity.languages": "GET /me?fields=languages",
+    "origin.hometown.name": "GET /me?fields=hometown (scope user_hometown)",
+    "origin.current_location.name": "GET /me?fields=location (scope user_location)",
+    "origin.*.traits": "DÉRIVÉ — enrichissement local, pas fourni par Meta",
+    "trajectory.education[]": "GET /me?fields=education (scope user_education_history)",
+    "trajectory.work[]": "GET /me?fields=work (scope user_work_history)",
+    "trajectory.turning_points[]": "DÉRIVÉ — utils/facebook-classifier.ts, scoring des événements",
+    "passions[]": "GET /me?fields=likes,music,movies,books,television,games,sports (scope user_likes), regroupés par thème",
+    "misc_facts[]": "DÉRIVÉ"
+  }
+}

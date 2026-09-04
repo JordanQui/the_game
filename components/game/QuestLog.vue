@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import type { GeneratedQuest } from '~/types/game'
+import type { SceneQuest } from '~/types/scene'
 
-defineProps<{ quest: GeneratedQuest | null; revealed: boolean }>()
+// La quête est exposée dès l'arrivée dans la scène : c'est elle qui doit
+// donner envie de franchir la porte.
+defineProps<{ quest: SceneQuest | null }>()
 const open = ref(false)
 </script>
 
 <template>
-  <div v-if="revealed && quest" class="panel-ancient">
+  <div v-if="quest" class="panel-ancient">
     <button
       class="w-full flex items-center justify-between px-3 py-2 text-amber-400/80 text-xs uppercase tracking-widest hover:text-amber-300 transition-colors"
       @click="open = !open"

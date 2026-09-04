@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { GeneratedNPC } from '~/types/game'
+import type { SceneNPC } from '~/types/scene'
 
-defineProps<{ npc: GeneratedNPC }>()
+defineProps<{ npc: SceneNPC }>()
 </script>
 
 <template>

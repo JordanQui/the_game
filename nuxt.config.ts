@@ -13,6 +13,16 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  app: {
+    head: {
+      htmlAttrs: { lang: 'fr' },
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+        { name: 'theme-color', content: '#0d0a07' },
+      ],
+    },
+  },
+
   runtimeConfig: {
     facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
     openaiApiKey: process.env.OPENAI_API_KEY,

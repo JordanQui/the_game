@@ -17,7 +17,8 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  inputRef.value?.focus()
+  // Pas d'autofocus sur mobile : le clavier masquerait la scène d'entrée.
+  if (!window.matchMedia('(max-width: 640px)').matches) inputRef.value?.focus()
 })
 </script>
 
@@ -29,8 +30,9 @@ onMounted(() => {
       v-model="input"
       type="text"
       :disabled="disabled"
-      class="command-prompt flex-1 text-sm placeholder-ink-500 disabled:opacity-40"
-      placeholder="Que faites-vous ?"
+      class="command-prompt flex-1 text-base sm:text-sm placeholder-ink-500 disabled:opacity-40"
+      placeholder="Que fais-tu ?"
+      enterkeyhint="send"
       autocomplete="off"
       autocorrect="off"
       spellcheck="false"
@@ -38,7 +40,7 @@ onMounted(() => {
     />
     <button
       :disabled="disabled || !input.trim()"
-      class="shrink-0 text-amber-700/60 hover:text-amber-400 disabled:opacity-30 transition-colors"
+      class="shrink-0 p-2 -m-2 text-amber-700/60 hover:text-amber-400 disabled:opacity-30 transition-colors"
       @click="submit"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

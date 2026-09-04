@@ -1,4 +1,5 @@
 import { useGameStore } from '~/stores/game'
+import { usePlayerStore } from '~/stores/player'
 import { usePaymentStore } from '~/stores/payment'
 
 declare global {
@@ -14,25 +15,28 @@ declare global {
   }
 }
 
-const PAYWALL_KEYWORDS = ['sortir', 'quitter', 'partir', 'dehors', 'porte', 'exit', 'leave', 'quitte', 'sort']
-
 export function usePaywall() {
   const gameStore = useGameStore()
+  const playerStore = usePlayerStore()
   const paymentStore = usePaymentStore()
   const config = useRuntimeConfig()
 
   let squareCard: Awaited<ReturnType<Awaited<ReturnType<typeof window.Square.payments>>['card']>> | null = null
 
-  function checkPaywallTrigger(input: string, minTurns = 3): boolean {
-    if (gameStore.turnCount < minTurns) return false
+  /**
+   * Les mots-clés et le nombre de tours minimum viennent du script, portés par
+   * la scène — plus aucune liste codée en dur côté client.
+   */
+  function checkPaywallTrigger(input: string): boolean {
+    const paywall = playerStore.scene?.paywall
+    if (!paywall) return false
+    if (gameStore.turnCount < paywall.min_turns_before_trigger) return false
     const lower = input.toLowerCase()
-    return PAYWALL_KEYWORDS.some(kw => lower.includes(kw))
+    return paywall.exit_keywords.some(kw => lower.includes(kw))
   }
 
   async function initSquarePayments(containerSelector: string) {
-    if (!window.Square) {
-      await loadSquareSdk()
-    }
+    if (!window.Square) await loadSquareSdk()
 
     const payments = await window.Square.payments(
       config.public.squareApplicationId,
@@ -56,10 +60,13 @@ export function usePaywall() {
   }
 
   async function fetchPaymentIntent() {
-    const data = await $fetch<{ paymentLinkId: string; url: string; applicationId: string; locationId: string }>(
-      '/api/payment/intent',
-      { method: 'POST', body: { colonneId: 'auberge_v1' } }
-    )
+    const data = await $fetch<{
+      paymentLinkId: string
+      url: string
+      applicationId: string
+      locationId: string
+    }>('/api/payment/intent', { method: 'POST', body: {} })
+
     paymentStore.setIntent({
       paymentId: data.paymentLinkId,
       applicationId: data.applicationId,
@@ -79,8 +86,7 @@ export function usePaywall() {
 
     const result = await squareCard.tokenize()
     if (result.status !== 'OK' || !result.token) {
-      const errMsg = result.errors?.[0]?.message ?? 'Erreur de tokenisation'
-      paymentStore.setError(errMsg)
+      paymentStore.setError(result.errors?.[0]?.message ?? 'Erreur de tokenisation')
       gameStore.setScreen('paywall')
       return false
     }
@@ -88,14 +94,13 @@ export function usePaywall() {
     try {
       await $fetch('/api/payment/confirm', {
         method: 'POST',
-        body: { sourceId: result.token, colonneId: 'auberge_v1' },
+        body: { sourceId: result.token },
       })
       paymentStore.setSuccess()
       gameStore.setScreen('payment_success')
       return true
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Paiement refusé'
-      paymentStore.setError(msg)
+      paymentStore.setError(err instanceof Error ? err.message : 'Paiement refusé')
       gameStore.setScreen('paywall')
       return false
     }

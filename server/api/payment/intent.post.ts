@@ -1,13 +1,13 @@
 import pkg from 'square'
 const { Client, Environment } = pkg
-import { loadColonne } from '~/utils/colonne-loader'
+import { ScriptRuntime } from '~/utils/script-runtime'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody<{ colonneId: string }>(event)
+  await readBody(event).catch(() => null)
 
-  const colonneId = body?.colonneId ?? 'auberge_v1'
-  const colonne = await loadColonne(colonneId)
+  const runtime = await ScriptRuntime.load()
+  const paywall = runtime.paywall
 
   const client = new Client({
     accessToken: config.squareAccessToken,
@@ -24,11 +24,11 @@ export default defineEventHandler(async (event) => {
       locationId: config.public.squareLocationId,
       lineItems: [
         {
-          name: colonne.paywall.cta,
+          name: paywall.cta,
           quantity: '1',
           basePriceMoney: {
-            amount: BigInt(colonne.paywall.amount_cents),
-            currency: colonne.paywall.currency as 'EUR' | 'USD',
+            amount: BigInt(paywall.amount_cents),
+            currency: paywall.currency as 'EUR' | 'USD',
           },
         },
       ],

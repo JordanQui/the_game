@@ -58,8 +58,7 @@ export function useFacebook() {
         body: { accessToken },
       })
 
-      const classified = classifyFacebookData(profile)
-      playerStore.setFacebookData(classified)
+      playerStore.setProfile(classifyFacebookData(profile))
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur de connexion Facebook'
       gameStore.setScreen('login')

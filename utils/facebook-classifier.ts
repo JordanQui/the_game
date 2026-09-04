@@ -1,164 +1,150 @@
-import type { FacebookRawProfile, ClassifiedFacebookData, InterestCluster, ImportantLifeEvents } from '~/types/facebook'
+import type { FacebookRawProfile } from '~/types/facebook'
+import type { UserProfile, UserPassion, PassionIntensity } from '~/types/user'
+
+/**
+ * Convertit un profil Graph API brut en UserProfile — exactement la forme de
+ * game/user.json, que /api/scene/text sait consommer.
+ */
 
 function scoreLifeEvent(description: string): number {
   let score = 0
   if (description.length > 100) score += 2
   if (description.length > 200) score += 1
-  const majorKeywords = ['université', 'diplôme', 'marriage', 'mariage', 'naissance', 'enfant', 'fondé', 'créé', 'déménagé', 'moved', 'graduated', 'founded', 'married', 'born', 'died', 'started', 'left', 'joined']
+  const majorKeywords = [
+    'université', 'diplôme', 'mariage', 'naissance', 'enfant', 'fondé', 'créé', 'déménagé',
+    'moved', 'graduated', 'founded', 'married', 'born', 'died', 'started', 'left', 'joined',
+  ]
   for (const kw of majorKeywords) {
     if (description.toLowerCase().includes(kw)) score += 2
   }
   return score
 }
 
-function extractInterestClusters(profile: FacebookRawProfile): InterestCluster[] {
-  const clusters: InterestCluster[] = []
-  const themeMap: Record<string, string[]> = {}
-
-  const addToTheme = (theme: string, name: string) => {
-    if (!themeMap[theme]) themeMap[theme] = []
-    themeMap[theme].push(name)
-  }
-
-  if (profile.music?.data) {
-    for (const item of profile.music.data) addToTheme('musique', item.name)
-  }
-  if (profile.movies?.data) {
-    for (const item of profile.movies.data) addToTheme('cinéma', item.name)
-  }
-  if (profile.books?.data) {
-    for (const item of profile.books.data) addToTheme('littérature', item.name)
-  }
-  if (profile.television?.data) {
-    for (const item of profile.television.data) addToTheme('séries & télévision', item.name)
-  }
-  if (profile.games?.data) {
-    for (const item of profile.games.data) addToTheme('jeux', item.name)
-  }
-  if (profile.sports) {
-    for (const item of profile.sports) addToTheme('sport', item.name)
-  }
-  if (profile.favorite_teams) {
-    for (const item of profile.favorite_teams) addToTheme('sport', item.name)
-  }
-  if (profile.likes?.data) {
-    for (const item of profile.likes.data) {
-      const cat = item.category?.toLowerCase() || 'divers'
-      addToTheme(cat, item.name)
-    }
-  }
-
-  for (const [theme, names] of Object.entries(themeMap)) {
-    if (names.length === 0) continue
-    const intensity: InterestCluster['intensity'] =
-      names.length >= 5 ? 'high' : names.length >= 2 ? 'medium' : 'low'
-    clusters.push({
-      theme,
-      description: `Passionné(e) de ${theme} : ${names.slice(0, 5).join(', ')}${names.length > 5 ? '...' : ''}`,
-      intensity,
-    })
-  }
-
-  return clusters.sort((a, b) => {
-    const order = { high: 0, medium: 1, low: 2 }
-    return order[a.intensity] - order[b.intensity]
-  })
+function computeAge(birthday?: string): number | undefined {
+  if (!birthday) return undefined
+  // Facebook renvoie MM/DD/YYYY, ou MM/DD si l'année est masquée.
+  const parts = birthday.split('/')
+  const year = parts.length === 3 ? Number(parts[2]) : Number(birthday.slice(0, 4))
+  if (!Number.isFinite(year) || year < 1900) return undefined
+  return new Date().getFullYear() - year
 }
 
-function extractImportantLifeEvents(profile: FacebookRawProfile): ImportantLifeEvents {
-  const rawEvents: string[] = []
+function extractPassions(profile: FacebookRawProfile): UserPassion[] {
+  const themes = new Map<string, string[]>()
 
-  if (profile.education) {
-    for (const edu of profile.education) {
-      const year = edu.year?.name ? ` (${edu.year.name})` : ''
-      const degree = edu.degree?.name ? `, ${edu.degree.name}` : ''
-      rawEvents.push(`Études à ${edu.school.name}${degree}${year}`)
-    }
+  const add = (theme: string, name: string) => {
+    const list = themes.get(theme)
+    if (list) list.push(name)
+    else themes.set(theme, [name])
   }
 
-  if (profile.work) {
-    for (const job of profile.work) {
-      const pos = job.position?.name ? ` — ${job.position.name}` : ''
-      const loc = job.location?.name ? ` à ${job.location.name}` : ''
-      const dates = job.start_date ? ` (${job.start_date}${job.end_date ? ` → ${job.end_date}` : ' → aujourd\'hui'})` : ''
-      rawEvents.push(`Travail chez ${job.employer.name}${pos}${loc}${dates}`)
-    }
+  for (const item of profile.music?.data ?? []) add('musique', item.name)
+  for (const item of profile.movies?.data ?? []) add('cinéma', item.name)
+  for (const item of profile.books?.data ?? []) add('littérature', item.name)
+  for (const item of profile.television?.data ?? []) add('séries & télévision', item.name)
+  for (const item of profile.games?.data ?? []) add('jeux', item.name)
+  for (const item of profile.sports ?? []) add('sport', item.name)
+  for (const item of profile.favorite_teams ?? []) add('sport', item.name)
+  for (const item of profile.likes?.data ?? []) add(item.category?.toLowerCase() || 'divers', item.name)
+
+  const passions: UserPassion[] = []
+  for (const [theme, names] of themes) {
+    if (!names.length) continue
+    const intensity: PassionIntensity = names.length >= 5 ? 'high' : names.length >= 2 ? 'medium' : 'low'
+    passions.push({ theme, intensity, evidence: names.slice(0, 5) })
   }
 
-  if (profile.location?.name) {
-    rawEvents.push(`Vit actuellement à ${profile.location.name}`)
+  const rank: Record<PassionIntensity, number> = { high: 0, medium: 1, low: 2 }
+  return passions.sort((a, b) => rank[a.intensity] - rank[b.intensity])
+}
+
+function extractTurningPoints(profile: FacebookRawProfile): string[] {
+  const events: string[] = []
+
+  for (const edu of profile.education ?? []) {
+    const year = edu.year?.name ? ` (${edu.year.name})` : ''
+    const degree = edu.degree?.name ? `, ${edu.degree.name}` : ''
+    events.push(`Études à ${edu.school.name}${degree}${year}`)
   }
+
+  for (const job of profile.work ?? []) {
+    const pos = job.position?.name ? ` — ${job.position.name}` : ''
+    const loc = job.location?.name ? ` à ${job.location.name}` : ''
+    const dates = job.start_date
+      ? ` (${job.start_date}${job.end_date ? ` → ${job.end_date}` : ' → aujourd\'hui'})`
+      : ''
+    events.push(`Travail chez ${job.employer.name}${pos}${loc}${dates}`)
+  }
+
   if (profile.hometown?.name && profile.hometown.name !== profile.location?.name) {
-    rawEvents.push(`Originaire de ${profile.hometown.name}`)
+    events.push(`A quitté ${profile.hometown.name} pour ${profile.location?.name ?? 'ailleurs'}`)
   }
 
   if (profile.relationship_status) {
-    const status = profile.relationship_status
-    if (['Married', 'Engaged', 'In a relationship', 'Marié(e)', 'Fiancé(e)'].includes(status)) {
+    const notable = ['Married', 'Engaged', 'In a relationship', 'Marié(e)', 'Fiancé(e)']
+    if (notable.includes(profile.relationship_status)) {
       const partner = profile.significant_other?.name ? ` avec ${profile.significant_other.name}` : ''
-      rawEvents.push(`Statut relationnel : ${status}${partner}`)
+      events.push(`Statut relationnel : ${profile.relationship_status}${partner}`)
     }
   }
 
-  if (profile.about && profile.about.length > 50) {
-    rawEvents.push(`À propos : ${profile.about}`)
-  }
+  if (profile.about && profile.about.length > 50) events.push(`À propos : ${profile.about}`)
   if (profile.bio && profile.bio.length > 50 && profile.bio !== profile.about) {
-    rawEvents.push(`Bio : ${profile.bio}`)
+    events.push(`Bio : ${profile.bio}`)
   }
 
-  const scored = rawEvents.map(event => ({ event, score: scoreLifeEvent(event) }))
-  scored.sort((a, b) => b.score - a.score)
-
-  const turning_points = scored.slice(0, 3).map(s => s.event)
-  const summary = rawEvents.length > 0
-    ? rawEvents.slice(0, 5).join('. ')
-    : 'Un aventurier au passé mystérieux'
-
-  return { summary, turning_points, raw_events: rawEvents }
+  return events
+    .map(event => ({ event, score: scoreLifeEvent(event) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(s => s.event)
 }
 
 function extractMiscFacts(profile: FacebookRawProfile): string[] {
   const facts: string[] = []
-
-  if (profile.languages) {
-    const langs = profile.languages.map(l => l.name).join(', ')
-    facts.push(`Parle : ${langs}`)
+  if (profile.inspirational_people?.length) {
+    facts.push(`Inspiré(e) par : ${profile.inspirational_people.slice(0, 3).map(p => p.name).join(', ')}`)
   }
-  if (profile.inspirational_people) {
-    const people = profile.inspirational_people.slice(0, 3).map(p => p.name).join(', ')
-    facts.push(`Inspiré(e) par : ${people}`)
-  }
-  if (profile.birthday) {
-    facts.push(`Né(e) le : ${profile.birthday}`)
-  }
-
+  if (profile.birthday) facts.push(`Né(e) le : ${profile.birthday}`)
   return facts
 }
 
-export function classifyFacebookData(profile: FacebookRawProfile): ClassifiedFacebookData {
+export function classifyFacebookData(profile: FacebookRawProfile): UserProfile {
+  const turningPoints = extractTurningPoints(profile)
+
   return {
-    playerName: profile.name,
-    playerPictureUrl: profile.picture?.data?.url || '',
-    importantLifeEvents: extractImportantLifeEvents(profile),
-    interestClusters: extractInterestClusters(profile),
-    miscFacts: extractMiscFacts(profile),
+    identity: {
+      id: profile.id,
+      name: profile.name,
+      first_name: profile.name?.split(' ')[0],
+      picture_url: profile.picture?.data?.url,
+      birthday: profile.birthday,
+      age: computeAge(profile.birthday),
+      languages: profile.languages?.map(l => l.name),
+    },
+    origin: {
+      hometown: profile.hometown?.name ? { name: profile.hometown.name } : undefined,
+      current_location: profile.location?.name ? { name: profile.location.name } : undefined,
+    },
+    trajectory: {
+      education: (profile.education ?? []).map(e => ({
+        school: e.school.name,
+        degree: e.degree?.name,
+        year: e.year?.name,
+        type: e.type,
+      })),
+      work: (profile.work ?? []).map(w => ({
+        employer: w.employer.name,
+        position: w.position?.name,
+        location: w.location?.name,
+        start_date: w.start_date,
+        end_date: w.end_date ?? null,
+      })),
+      turning_points: turningPoints.length
+        ? turningPoints
+        : ['Un passé dont les détails restent à découvrir'],
+    },
+    passions: extractPassions(profile),
+    misc_facts: extractMiscFacts(profile),
   }
-}
-
-export function buildInterestsString(data: ClassifiedFacebookData): string {
-  if (data.interestClusters.length === 0) {
-    return 'aventure, mystère, voyages'
-  }
-  return data.interestClusters
-    .slice(0, 4)
-    .map(c => c.description)
-    .join('. ')
-}
-
-export function buildLifeEventsString(data: ClassifiedFacebookData): string {
-  if (data.importantLifeEvents.raw_events.length === 0) {
-    return 'Un passé mystérieux dont les détails restent à découvrir'
-  }
-  return data.importantLifeEvents.summary
 }

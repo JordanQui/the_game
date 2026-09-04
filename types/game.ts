@@ -2,7 +2,7 @@ export type GameScreen =
   | 'init'
   | 'login'
   | 'facebook_loading'
-  | 'world_build_loading'
+  | 'scene_build_loading'
   | 'playing'
   | 'paywall'
   | 'payment_processing'
@@ -19,7 +19,6 @@ export type NarrativeEntryType =
   | 'npc_speech'
   | 'system'
   | 'player_command'
-  | 'quest_reveal'
 
 export interface NarrativeEntry {
   id: string
@@ -29,35 +28,8 @@ export interface NarrativeEntry {
   timestamp: number
 }
 
-export interface GeneratedNPC {
-  id: string
-  name: string
-  archetype: string
-  appearance: string
-  personality: string
-  backstory: string
-  opening_line: string
-  knows_about_quest: boolean
-  portraitUrl?: string
-}
-
-export interface GeneratedQuest {
-  title: string
-  hook: string
-  objective: string
-  stakes: string
-  artifact: string
-  antagonist_hint: string
-}
-
-export interface GeneratedWorld {
-  name: string
-  description: string
-}
-
-export interface WorldBuildProgress {
-  worldName: boolean
-  worldDescription: boolean
-  npcs: boolean
-  quest: boolean
+/** Avancement du pipeline découplé, affiché pendant le chargement. */
+export interface SceneBuildProgress {
+  text: boolean
+  image: boolean
 }

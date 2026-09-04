@@ -1,17 +1,17 @@
 import pkg from 'square'
 const { Client, Environment } = pkg
-import { loadColonne } from '~/utils/colonne-loader'
+import { ScriptRuntime } from '~/utils/script-runtime'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody<{ sourceId: string; colonneId?: string }>(event)
+  const body = await readBody<{ sourceId: string }>(event)
 
   if (!body?.sourceId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing sourceId' })
   }
 
-  const colonneId = body.colonneId ?? 'auberge_v1'
-  const colonne = await loadColonne(colonneId)
+  const runtime = await ScriptRuntime.load()
+  const paywall = runtime.paywall
 
   const client = new Client({
     accessToken: config.squareAccessToken,
@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
     sourceId: body.sourceId,
     idempotencyKey,
     amountMoney: {
-      amount: BigInt(colonne.paywall.amount_cents),
-      currency: colonne.paywall.currency as 'EUR' | 'USD',
+      amount: BigInt(paywall.amount_cents),
+      currency: paywall.currency as 'EUR' | 'USD',
     },
     locationId: config.public.squareLocationId,
   })
