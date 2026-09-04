@@ -2,6 +2,7 @@
 import { usePaywall } from '~/composables/usePaywall'
 import { usePaymentStore } from '~/stores/payment'
 import { usePlayerStore } from '~/stores/player'
+import type { ScenePaywall } from '~/types/scene'
 
 const { initSquarePayments, fetchPaymentIntent, submitPayment } = usePaywall()
 const paymentStore = usePaymentStore()
@@ -9,8 +10,15 @@ const playerStore = usePlayerStore()
 
 const isInitializing = ref(true)
 
+/**
+ * Textes de repli, quand aucune scène n'est chargée — cas du visiteur qui a
+ * épuisé son quota gratuit sans partie en cours. Ils viennent du script, servis
+ * par une route qui ne génère rien.
+ */
+const fallback = ref<ScenePaywall | null>(null)
+
 // Tout le texte du paywall vient du script, interpolé avec la quête du joueur.
-const paywall = computed(() => playerStore.scene?.paywall ?? null)
+const paywall = computed(() => playerStore.scene?.paywall ?? fallback.value)
 const price = computed(() => {
   const p = paywall.value
   if (!p) return ''
@@ -19,6 +27,12 @@ const price = computed(() => {
 })
 
 onMounted(async () => {
+  if (!playerStore.scene) {
+    try {
+      fallback.value = await $fetch<ScenePaywall>('/api/paywall')
+    } catch { /* le prix et le bouton resteront vides, sans casser l'écran */ }
+  }
+
   try {
     await fetchPaymentIntent()
     await nextTick()
@@ -32,37 +46,68 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-[100dvh] flex flex-col items-center justify-center px-5 py-10">
-    <div class="w-full max-w-md space-y-7">
+  <div class="relative min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center px-5 py-10">
+    <div
+      class="absolute inset-x-0 bottom-0 h-[50vh] pointer-events-none"
+      style="background: radial-gradient(85% 100% at 50% 100%, rgba(255,46,136,0.16) 0%, transparent 68%)"
+    />
+
+    <div class="relative z-10 w-full max-w-md space-y-8">
 
       <!-- Narration de la porte -->
       <div class="text-center space-y-4">
-        <div class="w-16 h-px bg-gradient-to-r from-transparent via-amber-700/60 to-transparent mx-auto" />
-        <p class="text-parchment/80 font-serif text-[15px] sm:text-sm italic leading-relaxed whitespace-pre-line">
+        <div class="neon-rule w-24 mx-auto" />
+        <p class="text-ink-100 text-[15px] sm:text-sm leading-relaxed whitespace-pre-line">
           {{ paywall?.gate_text }}
         </p>
-        <p v-if="paywall" class="text-amber-400/60 text-xs font-serif italic">
+        <p v-if="paywall" class="text-neon-400/75 text-xs font-display uppercase tracking-[0.2em]">
           {{ paywall.sub_cta }}
         </p>
-        <div class="w-16 h-px bg-gradient-to-r from-transparent via-amber-700/60 to-transparent mx-auto" />
+      </div>
+
+      <!--
+        L'argumentaire : ce que le jeu fait de leurs données, et pourquoi la
+        suite vaut la peine. Sans ça, la sortie ressemble à un péage.
+      -->
+      <div v-if="paywall?.pitch" class="space-y-5 border-y border-neon-600/25 py-6">
+        <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display text-center">
+          {{ paywall.pitch.eyebrow }}
+        </p>
+
+        <ul class="space-y-4">
+          <li v-for="point in paywall.pitch.points" :key="point.label" class="flex items-start gap-3.5">
+            <svg viewBox="0 0 8 10" class="w-2 h-2.5 mt-1 shrink-0 fill-neon-500" aria-hidden="true">
+              <path d="M0 0 L5 5 L0 10 L3 10 L8 5 L3 0 Z" />
+            </svg>
+            <div class="space-y-1">
+              <p class="text-ink-100 text-xs font-display uppercase tracking-[0.14em]">{{ point.label }}</p>
+              <p class="text-ink-200/75 text-[13px] leading-relaxed">{{ point.text }}</p>
+            </div>
+          </li>
+        </ul>
+
+        <p class="text-neon-300/80 text-[13px] leading-relaxed text-center italic">
+          {{ paywall.pitch.closing }}
+        </p>
       </div>
 
       <!-- Prix -->
       <div class="text-center">
-        <p class="text-amber-300 font-serif text-3xl text-glow">{{ price }}</p>
+        <p class="neon-text font-display text-3xl tracking-[0.04em]">{{ price }}</p>
       </div>
 
       <!-- Formulaire Square -->
-      <div class="panel-ancient p-4 space-y-4">
-        <p class="text-amber-600/70 text-xs uppercase tracking-widest text-center">
+      <div class="relative bg-ink-900 border border-neon-600/40 p-4 space-y-4">
+        <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
+        <p class="relative text-neon-400/70 text-[10px] uppercase tracking-[0.28em] font-display text-center">
           Paiement sécurisé
         </p>
         <div v-if="isInitializing" class="h-12 flex items-center justify-center">
-          <p class="text-parchment/40 text-sm italic">Chargement du formulaire...</p>
+          <p class="text-steel-400 text-xs">Chargement du formulaire...</p>
         </div>
-        <div id="card-container" />
+        <div id="card-container" class="relative" />
 
-        <p v-if="paymentStore.errorMessage" class="text-red-400/80 text-xs text-center">
+        <p v-if="paymentStore.errorMessage" class="relative text-red-400/80 text-xs text-center">
           {{ paymentStore.errorMessage }}
         </p>
       </div>
@@ -78,9 +123,11 @@ onMounted(async () => {
         </GlowButton>
       </div>
 
-      <p class="text-ink-500 text-xs text-center">
-        Aventure de {{ playerStore.playerName }} — {{ playerStore.place?.name }}
+      <p v-if="playerStore.place" class="text-steel-400 text-[10px] uppercase tracking-[0.18em] font-display text-center">
+        {{ playerStore.playerName }} — {{ playerStore.place.name }}
       </p>
     </div>
+
+    <div class="crt-scanlines absolute inset-0 z-20 pointer-events-none opacity-40" />
   </div>
 </template>

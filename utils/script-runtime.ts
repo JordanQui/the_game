@@ -374,6 +374,16 @@ ${lines}`)
         currency: this.script.paywall.currency,
         exit_keywords: exit.keywords,
         min_turns_before_trigger: exit.min_turns_before_trigger,
+        // Les variables de quête sont interpolées ici : le client n'a jamais
+        // à connaître la syntaxe des gabarits.
+        pitch: {
+          eyebrow: this.script.paywall.pitch.eyebrow,
+          points: this.script.paywall.pitch.points.map(pt => ({
+            label: pt.label,
+            text: interpolate(pt.text, vars),
+          })),
+          closing: interpolate(this.script.paywall.pitch.closing, vars),
+        },
       },
     }
   }

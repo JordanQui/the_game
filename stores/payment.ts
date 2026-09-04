@@ -9,6 +9,9 @@ export const usePaymentStore = defineStore('payment', {
     applicationId: null as string | null,
     locationId: null as string | null,
     errorMessage: null as string | null,
+    /** Droit d'accès en cours, ouvert par un paiement passé. */
+    hasAccess: false,
+    accessExpiresAt: null as number | null,
   }),
 
   actions: {
@@ -19,13 +22,19 @@ export const usePaymentStore = defineStore('payment', {
       this.status = 'pending'
       this.errorMessage = null
     },
+    setAccess(active: boolean, expiresAt: number | null = null) {
+      this.hasAccess = active
+      this.accessExpiresAt = expiresAt
+    },
     setProcessing() {
       this.status = 'processing'
       this.errorMessage = null
     },
-    setSuccess() {
+    setSuccess(expiresAt: number | null = null) {
       this.status = 'success'
       this.errorMessage = null
+      this.hasAccess = true
+      this.accessExpiresAt = expiresAt
     },
     setError(message: string) {
       this.status = 'error'

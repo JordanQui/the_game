@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
+import { usePaymentStore } from '~/stores/payment'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
+const paymentStore = usePaymentStore()
 
-onMounted(() => {
+// Un joueur qui a déjà payé reprend sans repasser par le paywall. L'appel ne
+// déclenche aucune génération : il ne fait que lire un cookie signé.
+onMounted(async () => {
   if (gameStore.currentScreen === 'init') gameStore.setScreen('login')
+  try {
+    const access = await $fetch<{ active: boolean; expiresAt?: number }>('/api/access')
+    paymentStore.setAccess(access.active, access.expiresAt ?? null)
+  } catch {
+    // Sans réponse, on reste sur le parcours payant : jamais l'inverse.
+  }
 })
 
 // Les données Meta récupérées, on enchaîne sur la construction de la scène.

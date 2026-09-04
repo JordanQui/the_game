@@ -1,4 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto'
+import type { LimitsConfig } from '~/types/script'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 
 /**
@@ -16,6 +17,7 @@ import { requireSecret } from '~/server/utils/runtime-secrets'
  */
 
 const COOKIE = 'tg_quota'
+const ACCESS_COOKIE = 'tg_access'
 
 export interface SessionQuota {
   /** Identifiant de session, pour le diagnostic. */
@@ -28,6 +30,14 @@ export interface SessionQuota {
   images: number
   /** Date d'ouverture de la session, en millisecondes. */
   since: number
+}
+
+/** Droit d'accès ouvert par le paiement. Signé, donc infalsifiable. */
+export interface AccessPass {
+  /** Identifiant du paiement Square, pour le rapprochement comptable. */
+  payment_id: string
+  paid_at: number
+  expires_at: number
 }
 
 function freshQuota(): SessionQuota {
@@ -43,6 +53,60 @@ function signatureMatches(expected: string, received: string): boolean {
   const a = Buffer.from(expected)
   const b = Buffer.from(received)
   return a.length === b.length && timingSafeEqual(a, b)
+}
+
+/** Encode et signe une charge utile quelconque. */
+function seal(value: unknown, secret: string): string {
+  const payload = Buffer.from(JSON.stringify(value), 'utf-8').toString('base64url')
+  return `${payload}.${sign(payload, secret)}`
+}
+
+/** Vérifie la signature et décode. Null si absent, falsifié ou illisible. */
+function unseal<T>(raw: string | undefined, secret: string): T | null {
+  if (!raw) return null
+  const separator = raw.lastIndexOf('.')
+  if (separator < 1) return null
+
+  const payload = raw.slice(0, separator)
+  if (!signatureMatches(sign(payload, secret), raw.slice(separator + 1))) return null
+
+  try {
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8')) as T
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Ouvre l'accès à la suite pour la durée prévue au script.
+ *
+ * Le cookie précédent était en clair, avec une valeur fixe : n'importe qui
+ * pouvait l'envoyer et débloquer la suite sans payer. Celui-ci est signé.
+ */
+export function grantAccess(event: H3Event, paymentId: string, windowDays: number): AccessPass {
+  const secret = requireSecret(useRuntimeConfig().nuxtSecret, 'NUXT_SECRET')
+  const pass: AccessPass = {
+    payment_id: paymentId,
+    paid_at: Date.now(),
+    expires_at: Date.now() + windowDays * 86_400_000,
+  }
+
+  setCookie(event, ACCESS_COOKIE, seal(pass, secret), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: !import.meta.dev,
+    path: '/',
+    maxAge: windowDays * 86_400,
+  })
+  return pass
+}
+
+/** Le droit d'accès en cours, ou null s'il est absent, falsifié ou expiré. */
+export function readAccess(event: H3Event): AccessPass | null {
+  const secret = requireSecret(useRuntimeConfig().nuxtSecret, 'NUXT_SECRET')
+  const pass = unseal<AccessPass>(getCookie(event, ACCESS_COOKIE), secret)
+  if (!pass?.expires_at || pass.expires_at < Date.now()) return null
+  return pass
 }
 
 export function readQuota(event: H3Event, windowHours: number): SessionQuota {
@@ -85,16 +149,27 @@ export function writeQuota(event: H3Event, quota: SessionQuota): void {
 /**
  * Consomme une unité du quota, ou refuse la requête.
  *
- * Le 429 porte un message lisible : c'est lui que verra le joueur, pas une
- * erreur technique.
+ * Le barème dépend du droit d'accès : un visiteur qui a payé dispose d'une
+ * fenêtre bien plus large. Le plafond reste nécessaire même après paiement —
+ * 10 € couvrent une centaine de parties en coût de génération, pas l'infini.
  */
 export function consumeQuota(
   event: H3Event,
   kind: 'scenes' | 'turns' | 'images',
-  limit: number,
-  windowHours: number,
-  message: string
+  limits: LimitsConfig
 ): SessionQuota {
+  // En développement, aucun quota : on doit pouvoir relancer l'expérience
+  // autant de fois qu'il le faut pour la mettre au point.
+  if (import.meta.dev) return readQuota(event, limits.window_hours)
+
+  const access = readAccess(event)
+
+  const limit = access
+    ? limits.paid[`${kind}_per_window` as const]
+    : limits[`${kind}_per_session` as const]
+  const windowHours = access ? limits.paid.window_days * 24 : limits.window_hours
+  const message = access ? limits.paid.messages[kind] : limits.messages[kind]
+
   const quota = readQuota(event, windowHours)
 
   if (quota[kind] >= limit) {

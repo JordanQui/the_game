@@ -9,7 +9,7 @@ import { useSceneCommands } from '~/composables/useSceneCommands'
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
 const { handlePlayerInput, retryLastTurn } = useNarrative()
-const { checkPaywallTrigger, blockedByKeyItem, mentionsExit } = usePaywall()
+const { checkPaywallTrigger, blockedByKeyItem, openExit, mentionsExit } = usePaywall()
 const { generateSceneImage } = useImageGen()
 const { isCommand, run: runSceneCommand } = useSceneCommands()
 
@@ -36,7 +36,7 @@ async function onCommand(input: string) {
   if (checkPaywallTrigger(input)) {
     const gate = playerStore.scene?.paywall.gate_text
     if (gate) gameStore.addNarrativeEntry('narration', gate)
-    setTimeout(() => gameStore.triggerPaywall(), 1400)
+    setTimeout(openExit, 1400)
     return
   }
 

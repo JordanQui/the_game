@@ -37,6 +37,18 @@ export function usePaywall() {
     return matchesKeyword(input, paywall.exit_keywords)
   }
 
+  /**
+   * Ouvre la sortie. Un joueur qui a déjà payé passe directement à la suite :
+   * le droit d'accès dure un mois, on ne lui repropose pas le paiement.
+   */
+  function openExit() {
+    if (paymentStore.hasAccess) {
+      gameStore.setScreen('payment_success')
+      return
+    }
+    gameStore.triggerPaywall()
+  }
+
   /** Le joueur veut sortir mais il lui manque l'objet. */
   function blockedByKeyItem(input: string): boolean {
     if (!playerStore.scene?.key_item || gameStore.hasKeyItem) return false
@@ -107,11 +119,11 @@ export function usePaywall() {
     }
 
     try {
-      await $fetch('/api/payment/confirm', {
+      const confirmed = await $fetch<{ expiresAt?: number }>('/api/payment/confirm', {
         method: 'POST',
         body: { sourceId: result.token },
       })
-      paymentStore.setSuccess()
+      paymentStore.setSuccess(confirmed?.expiresAt ?? null)
       gameStore.setScreen('payment_success')
       return true
     } catch (err) {
@@ -121,5 +133,5 @@ export function usePaywall() {
     }
   }
 
-  return { checkPaywallTrigger, blockedByKeyItem, mentionsExit, initSquarePayments, fetchPaymentIntent, submitPayment }
+  return { checkPaywallTrigger, blockedByKeyItem, openExit, mentionsExit, initSquarePayments, fetchPaymentIntent, submitPayment }
 }

@@ -1,5 +1,6 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
+import { usePaywall } from '~/composables/usePaywall'
 
 /**
  * Canal direct vers le scénario.
@@ -25,6 +26,7 @@ export interface SceneCommand {
 export function useSceneCommands() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
+  const { openExit } = usePaywall()
 
   function say(text: string) {
     gameStore.addNarrativeEntry('system', text)
@@ -43,7 +45,7 @@ export function useSceneCommands() {
         // Même mise en scène que la sortie jouée, mais sans le garde-fou du
         // nombre de tours : c'est tout l'intérêt du raccourci.
         gameStore.addNarrativeEntry('narration', gate)
-        setTimeout(() => gameStore.triggerPaywall(), 1400)
+        setTimeout(openExit, 1400)
       },
     },
     {

@@ -24,15 +24,11 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
   }
 
   const runtime = await ScriptRuntime.load()
-  // Quota de session : arrête l'abus par rechargement avant tout appel payant.
-  const limits = runtime.script.limits
-  consumeQuota(event, 'images', limits.images_per_session, limits.window_hours, limits.messages.images)
-
   const scene = runtime.scene(body.scene_id)
 
-  // Illustration figée : on sort avant même de construire le client OpenAI.
-  // C'est ce qui rend le « toujours fixe » vrai quel que soit l'appelant, et
-  // ce qui garantit qu'aucun crédit image ne part pour cette scène.
+  // Illustration figée : on sort AVANT le quota comme avant le client OpenAI.
+  // Elle ne coûte rien, elle ne doit donc rien consommer — sinon un quota
+  // d'images à zéro empêcherait d'afficher l'auberge, qui est pourtant gratuite.
   if (scene.staticImage) {
     return {
       image: scene.staticImage,
@@ -42,6 +38,9 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
       elapsed_ms: 0,
     }
   }
+
+  // Quota de session : seule une génération réelle est décomptée.
+  consumeQuota(event, 'images', runtime.script.limits)
 
   const prompt = scene.buildImagePrompt({
     place_name: body.place_name,

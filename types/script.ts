@@ -224,6 +224,21 @@ export interface LimitsConfig {
   turns_per_session: number
   images_per_session: number
   messages: { scenes: string; turns: string; images: string }
+  /** Quota ouvert par le paiement, sur une fenêtre bien plus large. */
+  paid: {
+    window_days: number
+    scenes_per_window: number
+    turns_per_window: number
+    images_per_window: number
+    messages: { scenes: string; turns: string; images: string }
+  }
+}
+
+/** Argumentaire affiché à la sortie : ce que le jeu fait, et pourquoi continuer. */
+export interface PaywallPitch {
+  eyebrow: string
+  points: Array<{ label: string; text: string }>
+  closing: string
 }
 
 export interface PaywallConfig {
@@ -232,6 +247,7 @@ export interface PaywallConfig {
   sub_cta: string
   amount_cents: number
   currency: string
+  pitch: PaywallPitch
 }
 
 export interface Script {

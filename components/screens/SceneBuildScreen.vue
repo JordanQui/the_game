@@ -5,7 +5,7 @@ import { useScene } from '~/composables/useScene'
 
 const playerStore = usePlayerStore()
 const gameStore = useGameStore()
-const { loadSceneText, loadSceneImage, error } = useScene()
+const { loadSceneText, loadSceneImage, error, quotaExhausted } = useScene()
 
 const messages = [
   'Les étoiles alignent les présages...',
@@ -31,6 +31,13 @@ async function build() {
   const scene = await loadSceneText(undefined, playerStore.profile ?? undefined)
 
   if (interval) clearInterval(interval)
+
+  // Quota épuisé : on l'envoie vers la sortie payante, pas vers un message rouge.
+  if (quotaExhausted.value) {
+    gameStore.setScreen('paywall')
+    return
+  }
+
   if (!scene) return
 
   gameStore.setScreen('playing')

@@ -91,6 +91,12 @@ export interface GeneratedScene {
   key_item: Omit<SceneKeyItem, 'exchanges_before_handover'>
 }
 
+export interface ScenePaywallPitch {
+  eyebrow: string
+  points: Array<{ label: string; text: string }>
+  closing: string
+}
+
 export interface ScenePaywall {
   gate_text: string
   cta: string
@@ -99,6 +105,7 @@ export interface ScenePaywall {
   currency: string
   exit_keywords: string[]
   min_turns_before_trigger: number
+  pitch: ScenePaywallPitch
 }
 
 /** Réponse de la phase 1. Suffisante pour jouer, l'image est facultative. */

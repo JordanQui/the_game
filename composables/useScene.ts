@@ -23,11 +23,14 @@ export function useScene() {
   const scene = ref<SceneTextResponse | null>(null)
   const isLoadingText = ref(false)
   const error = ref<string | null>(null)
+  /** Quota gratuit épuisé : ce n'est pas une panne, c'est une invitation à payer. */
+  const quotaExhausted = ref(false)
 
   /** Phase 1. Bloquant : sans texte, pas de scène. */
   async function loadSceneText(sceneId?: string, user?: UserProfile) {
     isLoadingText.value = true
     error.value = null
+    quotaExhausted.value = false
     try {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
@@ -40,6 +43,13 @@ export function useScene() {
       gameStore.setPlayingSubState('awaiting_input')
       return res
     } catch (err) {
+      // 429 : le quota gratuit est atteint. On ne montre pas d'erreur, on
+      // propose la suite.
+      if ((err as { statusCode?: number })?.statusCode === 429) {
+        quotaExhausted.value = true
+        return null
+      }
+
       const aborted = err instanceof DOMException && err.name === 'TimeoutError'
       error.value = aborted
         ? 'Le monde a mis trop de temps à se dessiner.'
@@ -86,5 +96,5 @@ export function useScene() {
     return s.paywall.exit_keywords.some(kw => lower.includes(kw))
   }
 
-  return { scene, isLoadingText, error, loadSceneText, loadSceneImage, enterScene, hitsPaywall }
+  return { scene, isLoadingText, error, quotaExhausted, loadSceneText, loadSceneImage, enterScene, hitsPaywall }
 }

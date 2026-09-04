@@ -1,6 +1,7 @@
 import { SquareClient, SquareEnvironment } from 'square'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
+import { grantAccess } from '~/server/utils/session-quota'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -37,14 +38,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Cookie de session ouvrant l'accès à la suite de l'aventure.
-  setCookie(event, 'game_access', 'scene_2_unlocked', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30,
-    path: '/',
-  })
+  // Le paiement ouvre l'accès à la suite, pour la durée prévue au script.
+  // Cookie SIGNÉ : le précédent portait une valeur fixe en clair, que
+  // n'importe qui pouvait renvoyer pour débloquer la suite sans payer.
+  const pass = grantAccess(event, response.payment?.id ?? 'inconnu', runtime.script.limits.paid.window_days)
 
-  return { success: true, paymentId: response.payment?.id }
+  return { success: true, paymentId: response.payment?.id, expiresAt: pass.expires_at }
 })

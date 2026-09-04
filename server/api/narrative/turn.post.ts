@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   const runtime = await ScriptRuntime.load()
   // Quota de session : arrête l'abus par rechargement avant tout appel payant.
   const limits = runtime.script.limits
-  consumeQuota(event, 'turns', limits.turns_per_session, limits.window_hours, limits.messages.turns)
+  consumeQuota(event, 'turns', limits)
 
   const scene = runtime.scene(body.sceneId)
 

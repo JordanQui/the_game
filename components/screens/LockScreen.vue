@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
+import { usePaywall } from '~/composables/usePaywall'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
+const { openExit } = usePaywall()
 
 const quest = computed(() => playerStore.quest)
 const exitLabel = computed(() => playerStore.scene?.paywall.cta ?? 'Franchir le sas')
@@ -13,7 +15,7 @@ const exitLabel = computed(() => playerStore.scene?.paywall.cta ?? 'Franchir le 
  * seulement traîné. On lui remet la quête en main et il décide.
  */
 function takeTheExit() {
-  gameStore.triggerPaywall()
+  openExit()
 }
 </script>
 
