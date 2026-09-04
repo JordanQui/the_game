@@ -12,6 +12,10 @@ export const useGameStore = defineStore('game', {
     sceneImageError: null as string | null,
     activeNpcId: null as string | null,
     paywallTriggered: false,
+    /** Tours réellement facturés au modèle. Les réponses locales n'y entrent pas. */
+    modelTurnsUsed: 0,
+    /** Dépense cumulée de la scène, en dollars, d'après l'usage réel rapporté. */
+    spentUsd: 0,
     /** Objet-clé : sans lui, le sas reste fermé. */
     hasKeyItem: false,
     /** Échanges déjà eus avec le détenteur de l'objet. */
@@ -117,6 +121,15 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    recordModelTurn() {
+      this.modelTurnsUsed++
+    },
+
+    /** Ajoute le coût d'un appel, calculé sur les tokens réellement consommés. */
+    recordSpend(promptTokens: number, completionTokens: number, inPer1m: number, outPer1m: number) {
+      this.spentUsd += (promptTokens * inPer1m + completionTokens * outPer1m) / 1_000_000
+    },
+
     /** Un échange de plus avec le détenteur de l'objet. */
     recordKeyItemExchange() {
       this.keyItemExchanges++
@@ -153,6 +166,8 @@ export const useGameStore = defineStore('game', {
       this.sceneImageError = null
       this.activeNpcId = null
       this.paywallTriggered = false
+      this.modelTurnsUsed = 0
+      this.spentUsd = 0
       this.hasKeyItem = false
       this.keyItemExchanges = 0
       this.talkedToNpcIds = []

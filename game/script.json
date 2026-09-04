@@ -66,12 +66,12 @@
         "1 à 2 phrases d'ouverture : pourquoi tu es sorti ce soir",
         "1 phrase de localisation",
         "3 à 5 phrases de description reprenant les slots de décor",
-        "1 à 2 phrases sur ce qui se murmure ici ce soir : l'amorce de la quête",
+        "2 à 3 phrases sur l'affaire qui se joue ici : ce qui ne tourne plus rond dans la ville, ce que ça coûte si personne ne bouge, et ce qu'il faudrait récupérer",
         "1 ligne 'Ici ce soir :' nommant les trois personnes présentes et ce que chacune semble savoir",
         "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
         "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action, dont parler à quelqu'un"
       ],
-      "max_words": 230,
+      "max_words": 260,
       "forbidden": [
         "mention d'IA",
         "question directe au joueur",
@@ -79,14 +79,14 @@
         "bris du quatrième mur"
       ],
       "vocabulary": "LEXIQUE IMPOSÉ — le monde est cyberpunk, pas médiéval.\nLa sortie est un SAS. N'écris jamais « porte », « battant », « seuil » ni « huis » : c'est un sas, et le mot doit apparaître tel quel dans la ligne « Sorties : » comme dans le verbe d'action.\nDe même : un bar ou un comptoir, jamais une auberge ni une taverne ; des néons, des écrans et des tubes, jamais des torches, des lanternes ni des bougies ; un barman, jamais un aubergiste ; des câbles et des structures, jamais des poutres.",
-      "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti ce soir : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif doit s'accorder à la tension intime décrite dans la section SIGNE, sans jamais la nommer — c'est ce qu'il fuit ce soir qui sera exactement ce qu'il devra affronter dehors.\nEnsuite, en une ou deux phrases, ce qui se dit ici ce soir : l'affaire de la quête, ce qui ne tourne plus rond dans la ville. Assez pour donner envie, pas assez pour tout comprendre."
+      "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti ce soir : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif doit s'accorder à la tension intime décrite dans la section SIGNE, sans jamais la nommer — c'est ce qu'il fuit ce soir qui sera exactement ce qu'il devra affronter dehors.\nENJEUX — le joueur doit comprendre ce qui se joue SANS avoir à ouvrir le journal de quête. Le texte de scène expose donc, en clair : ce qui ne tourne plus rond dans la ville (quest.restoration), ce que ça coûte si personne ne bouge (quest.stakes), et ce qu'il faudrait récupérer (quest.artifact). Dis-le comme une rumeur de comptoir, pas comme une fiche de mission — mais dis-le vraiment : à la fin de l'intro, le joueur doit savoir ce qu'il y a à perdre."
     },
     "turn": {
       "max_tokens": 220,
       "max_words": 90,
       "system_prompt_template": "Tu es le narrateur de {{scene_title}} — {{place_name}}, dans un jeu d'aventure textuel cyberpunk en français.\n\nJoueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nPersonnages présents : {{npc_list}}\n\n{{narrative_instruction}}\n\nRègles absolues :\n- Réponds toujours en français.\n- Ne dépasse jamais {{max_words}} mots.\n- N'invente aucune sortie : la seule issue de ce lieu est {{exit_label}}.\n- Ne fais jamais franchir cette sortie au joueur, quoi qu'il tape.\n- Ne brise jamais le quatrième mur, ne mentionne jamais que tu es une IA.",
       "ambient_prompt": "Le joueur tape : « {{player_input}} ». Réponds par 1 à 2 phrases de narration à la deuxième personne du singulier, dans le style du jeu textuel des années 80. Décris ce qui se passe ou ce qu'il découvre. Nomme explicitement tout nouvel objet manipulable. Pas de dialogue direct, pas de question au joueur.",
-      "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français parlé, sec, teinté d'argot de mégapole, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.",
+      "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français parlé, sec, teinté d'argot de mégapole, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.\nTERMINE TOUJOURS par une relance : une question au joueur, une remarque qui appelle une réponse, ou une confidence laissée en suspens. Un personnage qui se contente de répondre tue la conversation. L'interdiction de poser des questions vaut pour la narration, jamais pour un personnage qui parle.",
       "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers le sas de façon détournée : la pluie qui bat contre le battant, une sirène qui passe dans la rue, un habitué qui jette un regard vers lui, la lueur d'un néon qui filtre par l'interstice.\nRappelle que ce sas est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre.",
       "steer_after_turns": 5,
       "lock_after_turns": 8,
@@ -96,7 +96,10 @@
       "key_item_context": "OBJET-CLÉ DE LA SCÈNE : {{item_name}} — {{item_description}}\nDétenu par {{item_holder}}. Il permet de rétablir : {{item_why}}\nCe personnage attend d'abord ceci du joueur : {{item_handover_hint}}\nTant que le joueur ne l'a pas, franchir {{exit_label}} ne sert à rien, et tous les personnages le savent. Ne remets jamais l'objet de ta propre initiative : on te dira quand.",
       "handover_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}.\nLe joueur t'a dit : « {{player_input}} ».\nIl t'a assez parlé : tu lui remets MAINTENANT {{item_name}} ({{item_description}}).\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Dis pourquoi tu t'en sépares, et ce qu'il doit en faire : {{item_why}}. Termine en le poussant vers {{exit_label}}. Tu parles, tu ne décris pas ton geste à la troisième personne.",
       "blocked_exit_prompt": "Le joueur veut franchir {{exit_label}} : « {{player_input}} ». Il n'a pas encore {{item_name}}, et sans cet objet, sortir ne servirait à rien.\nÉcris 1 à 2 phrases de narration à la deuxième personne : il approche du sas, et quelque chose le retient — il lui manque ce que {{npc_name}} garde encore.\nInterdits absolus : ne dis jamais quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions.",
-      "steer_instruction_missing_item": "ORIENTATION VERS L'OBJET — le joueur traîne et n'a toujours pas {{item_name}}.\nÀ partir de maintenant, termine CHAQUE réponse en ramenant l'attention vers {{npc_name}} : ce que ce personnage laisse entendre, un regard, une phrase surprise à une autre table, un détail qui dit qu'il en sait plus que les autres. Sois de plus en plus direct à chaque tour.\nNe pousse PAS vers le sas : sans l'objet, sortir ne mène nulle part, et le joueur doit le sentir. Tu peux nommer le personnage, jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets."
+      "steer_instruction_missing_item": "ORIENTATION VERS L'OBJET — le joueur traîne et n'a toujours pas {{item_name}}.\nÀ partir de maintenant, termine CHAQUE réponse en ramenant l'attention vers {{npc_name}} : ce que ce personnage laisse entendre, un regard, une phrase surprise à une autre table, un détail qui dit qu'il en sait plus que les autres. Sois de plus en plus direct à chaque tour.\nNe pousse PAS vers le sas : sans l'objet, sortir ne mène nulle part, et le joueur doit le sentir. Tu peux nommer le personnage, jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets.",
+      "holder_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\nTu détiens {{item_name}}, mais tu ne le nommes PAS encore et tu ne le proposes pas. Ce que tu attends du joueur d'abord : {{item_handover_hint}}.\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Raconte-lui ceci, à ta manière —\n{{item_hook_story}}\nCette histoire est la raison pour laquelle tu gardes quelque chose, et elle doit lui donner envie de te demander quoi.\nTERMINE par une relance qui appelle une réponse — une question, ou une phrase laissée en suspens. Ne dis jamais au joueur quelle commande taper.",
+      "autonomous_notice": "Tu as fait le tour de ce que cette salle avait à dire.",
+      "hard_turn_cap": 10
     },
     "generation": {
       "model": "gpt-4o",
@@ -171,7 +174,8 @@
           "name": "string (nom de l'objet, court)",
           "description": "string (à quoi il ressemble, une phrase)",
           "why": "string (ce qu'il permet de rétablir dans la ville, une phrase)",
-          "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)"
+          "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)",
+          "hook_story": "string (2 phrases : l'histoire de quelqu'un qui a affronté la même tension, racontée par le détenteur)"
         }
       }
     },
@@ -265,7 +269,7 @@
         }
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé : il n'est pas dans la salle, il est sur un personnage.",
         "always_include": [
           {
             "id": "sas",
@@ -331,7 +335,7 @@
         }
       ],
       "key_item": {
-        "instruction": "OBJET-CLÉ — sans lui, impossible de franchir le sas. C'est le coeur de la scène.\nChoisis TOI-MÊME lequel des personnages le détient, et ce que c'est. L'objet doit être concret, tenir dans une main, et appartenir à l'univers cyberpunk du lieu.\nIl n'est pas un trophée : il sert à RÉTABLIR quelque chose dans la ville — l'équilibre décrit dans quest.restoration. Ce déséquilibre est la transposition urbaine de la tension intime du joueur : ce qu'il n'arrive pas à faire dans sa vie, la ville en souffre à son échelle.\nLe personnage qui le détient est celui dont le rapport à cette tension rend la remise signifiante. Il ne le donne pas d'emblée : `handover_hint` dit ce qu'il attend du joueur d'abord — qu'on l'écoute, qu'on admette quelque chose, qu'on lui pose la bonne question.",
+        "instruction": "OBJET-CLÉ — sans lui, impossible de franchir le sas. C'est le coeur de la scène.\nChoisis TOI-MÊME lequel des personnages le détient, et ce que c'est. L'objet doit être concret, tenir dans une main, et appartenir à l'univers cyberpunk du lieu.\nIL N'EST PAS DANS LE DÉCOR. Il n'apparaît dans aucun élément de décor, dans aucun interactable, et le texte de scène ne le mentionne jamais. Rien ne brille sur une table, rien ne traîne derrière le comptoir : le joueur ne peut pas le trouver, le prendre ni le voler. Il ne l'obtient QUE parce qu'un personnage décide de le lui céder, au fil d'une conversation.\nIl n'est pas un trophée : il sert à RÉTABLIR quelque chose dans la ville — l'équilibre décrit dans quest.restoration. Ce déséquilibre est la transposition urbaine de la tension intime du joueur : ce qu'il n'arrive pas à faire dans sa vie, la ville en souffre à son échelle.\nLe personnage qui le détient est celui dont le rapport à cette tension rend la remise signifiante. `handover_hint` dit ce qu'il attend du joueur d'abord.\n`hook_story` est l'histoire qu'il raconte pour donner envie : celle de quelqu'un d'autre qui a affronté — ou fui — exactement la même tension que le joueur, et ce que ça lui a coûté. Elle doit rendre l'objet désirable AVANT même que le joueur sache qu'il existe.",
         "exchanges_before_handover": 2
       }
     }
@@ -471,6 +475,25 @@
         "destiny": "Tenir une position que tout le monde a abandonnée.",
         "reception": "On t'appelle quand ça tourne mal, jamais avant."
       }
+    }
+  },
+  "pricing": {
+    "note": "Tarifs OpenAI, en dollars. Vérifiés le 2026-09-04 sur developers.openai.com/api/docs/pricing pour gpt-4o. Le prix par image n'y est pas détaillé par taille et qualité : relever la valeur réelle sur le tableau de bord et la corriger ici. Ces chiffres ne servent qu'à arbitrer le budget d'une scène, jamais à facturer. Mesuré le 2026-09-04 : un tour coûte ~0,69 cent, une génération de scène ~2,6 cents. Une partie de 10 tours revient donc à ~9,6 cents. Le plafond de 0,75 $ ne mord qu'en cas de dérive des prompts.",
+    "input_per_1m_usd": 2.5,
+    "output_per_1m_usd": 10.0,
+    "image_per_call_usd": 0.02,
+    "scene_budget_usd": 0.75
+  },
+  "limits": {
+    "note": "Quota par session, tenu dans un cookie signé (server/utils/session-quota.ts). Vise l'abus par rechargement : sans lui, recharger la page relance une génération de scène à chaque fois. Effacer ses cookies réinitialise le compteur — limite assumée, il faudrait un store partagé (Vercel KV) pour aller plus loin.",
+    "window_hours": 24,
+    "scenes_per_session": 3,
+    "turns_per_session": 40,
+    "images_per_session": 3,
+    "messages": {
+      "scenes": "Tu as déjà ouvert plusieurs mondes ce soir. Reviens demain, ou franchis le sas de celui-ci.",
+      "turns": "La nuit a été longue. Le comptoir ferme pour toi.",
+      "images": "Plus rien à dessiner ce soir."
     }
   }
 }

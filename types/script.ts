@@ -79,12 +79,18 @@ export interface TurnRules {
   steer_instruction_missing_item: string
   /** Tour à partir duquel la partie se bloque faute d'être sortie. */
   lock_after_turns: number
+  /** Plafond dur de tours facturés, si le comptage de tokens venait à manquer. */
+  hard_turn_cap: number
+  /** Ce que dit la scène quand elle passe en autonomie. */
+  autonomous_notice: string
   /** Prompts du verdict de blocage. Le modèle répond en JSON. */
   lock_system_prompt: string
   lock_prompt_template: string
 
   /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
   key_item_context: string
+  /** Réplique du détenteur tant qu'il garde l'objet : il amorce, il relance. */
+  holder_prompt: string
   /** Réplique du détenteur au moment où il remet l'objet. */
   handover_prompt: string
   /** Narration quand le joueur veut sortir sans l'objet. */
@@ -201,6 +207,25 @@ export interface NumerologyScript {
   numbers: Record<string, NumerologyNumberScript>
 }
 
+/** Tarifs et plafond de dépense. Le budget est arbitré, jamais facturé. */
+export interface PricingConfig {
+  note?: string
+  input_per_1m_usd: number
+  output_per_1m_usd: number
+  image_per_call_usd: number
+  scene_budget_usd: number
+}
+
+/** Quota par session, contre l'abus par rechargement. */
+export interface LimitsConfig {
+  note?: string
+  window_hours: number
+  scenes_per_session: number
+  turns_per_session: number
+  images_per_session: number
+  messages: { scenes: string; turns: string; images: string }
+}
+
 export interface PaywallConfig {
   gate_text: string
   cta: string
@@ -219,6 +244,8 @@ export interface Script {
   paywall: PaywallConfig
   zodiac: ZodiacScript
   numerology: NumerologyScript
+  pricing: PricingConfig
+  limits: LimitsConfig
 }
 
 /** Une scène dont les defaults ont été résolus : plus aucun champ optionnel. */

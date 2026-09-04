@@ -138,6 +138,11 @@ export class SceneRuntime {
     return {
       steer_after_turns: this.scene.turn.steer_after_turns,
       lock_after_turns: this.scene.turn.lock_after_turns,
+      hard_turn_cap: this.scene.turn.hard_turn_cap,
+      autonomous_notice: this.scene.turn.autonomous_notice,
+      budget_usd: this.script.pricing.scene_budget_usd,
+      price_input_per_1m_usd: this.script.pricing.input_per_1m_usd,
+      price_output_per_1m_usd: this.script.pricing.output_per_1m_usd,
     }
   }
 
@@ -406,7 +411,7 @@ ${lines}`)
           item_name: ctx.key_item.name,
           item_description: ctx.key_item.description,
           item_why: ctx.key_item.why,
-          item_handover_hint: ctx.key_item.handover_hint,
+          item_handover_hint: ctx.key_item.handover_hint || "qu'on l'écoute vraiment",
           item_holder: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
           exit_label: this.scene.exits[0]?.label ?? 'la sortie',
         })}`
@@ -489,6 +494,21 @@ ${lines}`)
     }
 
     if (!npc) return interpolate(t.ambient_prompt, { player_input: input })
+
+    // Le détenteur ne se contente jamais de répondre : il raconte, et il relance.
+    // Sans ça le joueur ne sait pas qu'il y a quelque chose à demander.
+    if (ctx.key_item && !ctx.has_key_item && npc.id === ctx.key_item.npc_id) {
+      return interpolate(t.holder_prompt, {
+        npc_name: npc.name,
+        npc_archetype: npc.archetype,
+        npc_personality: npc.personality,
+        npc_knows: npc.knows,
+        player_input: input,
+        item_name: ctx.key_item.name,
+        item_handover_hint: ctx.key_item.handover_hint || "qu'on l'écoute vraiment",
+        item_hook_story: ctx.key_item.hook_story || ctx.quest.hook,
+      })
+    }
 
     return interpolate(t.npc_dialogue_prompt, {
       npc_name: npc.name,

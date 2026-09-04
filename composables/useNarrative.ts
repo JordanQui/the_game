@@ -1,6 +1,7 @@
-import type { SceneNPC, TurnContext, TurnMode, LockResponse } from '~/types/scene'
+import type { SceneNPC, TurnContext, TurnMode, LockResponse, TurnUsage } from '~/types/scene'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
+import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
 
 /** Durée totale au-delà de laquelle on considère le tour perdu. */
 const TURN_TIMEOUT_MS = 60_000
@@ -98,10 +99,19 @@ export function useNarrative() {
           const data = line.slice(6).trim()
           if (data === '[DONE]') continue
           try {
-            const parsed = JSON.parse(data) as { text?: string }
+            const parsed = JSON.parse(data) as { text?: string; usage?: TurnUsage }
             if (parsed.text) {
               gameStore.updateLastNarrativeEntry(parsed.text)
               fullText += parsed.text
+            }
+            if (parsed.usage) {
+              const pacing = playerStore.scene?.pacing
+              gameStore.recordSpend(
+                parsed.usage.prompt_tokens,
+                parsed.usage.completion_tokens,
+                pacing?.price_input_per_1m_usd ?? 0,
+                pacing?.price_output_per_1m_usd ?? 0
+              )
             }
           } catch { /* fragment incomplet, ignoré */ }
         }
@@ -157,6 +167,7 @@ export function useNarrative() {
       gameStore.recordKeyItemExchange()
     }
 
+    gameStore.recordModelTurn()
     const text = await streamTurn(input, npc, effectiveMode)
     if (!text) return
 
@@ -205,10 +216,56 @@ export function useNarrative() {
     }
   }
 
+  /**
+   * Répond sans appeler le modèle, puis rend la réponse comme un tour normal.
+   *
+   * La scène générée contient déjà les descriptions du décor, ce que sait
+   * chaque personnage et l'état de la quête : les ressortir ne justifie pas
+   * une facturation.
+   */
+  function answerLocally(input: string, text: string, npcName?: string) {
+    gameStore.addNarrativeEntry(npcName ? 'npc_speech' : 'narration', text, npcName)
+    gameStore.incrementTurn(input, text)
+    gameStore.setPlayingSubState('awaiting_input')
+  }
+
   async function handlePlayerInput(input: string, mode?: TurnMode) {
     gameStore.addNarrativeEntry('player_command', input)
     gameStore.setLastCommand(input)
     gameStore.setLastMode(mode ?? null)
+
+    const scene = playerStore.scene
+    const state = { hasKeyItem: gameStore.hasKeyItem, talkedToNpcIds: gameStore.talkedToNpcIds }
+
+    if (scene && !mode) {
+      const npc = findAddressedNpc(input)
+      // La remise de l'objet est le dénouement : elle passe toujours par le
+      // modèle, quel qu'en soit le coût, sinon la scène n'a plus de sortie.
+      const isHandover = isHandoverTurn(npc)
+
+      if (!isHandover) {
+        const local = resolveLocally(input, scene, state)
+        if (local) {
+          answerLocally(input, local.text, local.npcName)
+          await lockIfOverstayed()
+          return
+        }
+
+        // Autonomie : au premier des deux plafonds atteint. Le compte de tours
+        // mord en pratique ; le budget en dollars n'est qu'un filet si les
+        // prompts venaient à grossir.
+        const pacing = scene.pacing
+        const capReached = pacing?.hard_turn_cap > 0 && gameStore.modelTurnsUsed >= pacing.hard_turn_cap
+        const budgetReached = pacing?.budget_usd > 0 && gameStore.spentUsd >= pacing.budget_usd
+        if (capReached || budgetReached) {
+          const notice = pacing.autonomous_notice
+          answerLocally(input, `${notice}\n\n${buildGuidance(scene, state)}`)
+          await lockIfOverstayed()
+          return
+        }
+      }
+    }
+
     await runTurn(input, mode)
   }
 

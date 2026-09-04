@@ -3,6 +3,7 @@ import type { GeneratedScene } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
+import { consumeQuota } from '~/server/utils/session-quota'
 
 /**
  * Phase 1 du pipeline : le texte.
@@ -19,6 +20,10 @@ export default defineEventHandler(async (event) => {
   }>(event) ?? {}
 
   const runtime = await ScriptRuntime.load()
+  // Quota de session : arrête l'abus par rechargement avant tout appel payant.
+  const limits = runtime.script.limits
+  consumeQuota(event, 'scenes', limits.scenes_per_session, limits.window_hours, limits.messages.scenes)
+
   const scene = runtime.scene(body.sceneId)
   const user = body.user ?? await loadUserFixture()
 

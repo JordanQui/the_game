@@ -3,6 +3,7 @@ import type { LockRequest, LockResponse } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { buildConversationHistory } from '~/utils/prompt-builder'
 import { requireSecret } from '~/server/utils/runtime-secrets'
+import { consumeQuota } from '~/server/utils/session-quota'
 
 /**
  * Verdict de fin de partie : le joueur n'est jamais sorti.
@@ -19,6 +20,10 @@ export default defineEventHandler(async (event): Promise<LockResponse> => {
   }
 
   const runtime = await ScriptRuntime.load()
+  // Quota de session : arrête l'abus par rechargement avant tout appel payant.
+  const limits = runtime.script.limits
+  consumeQuota(event, 'turns', limits.turns_per_session, limits.window_hours, limits.messages.turns)
+
   const scene = runtime.scene(body.sceneId)
   const turn = scene.turn
 

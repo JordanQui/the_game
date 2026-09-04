@@ -3,6 +3,7 @@ import type { SceneImageRequest, SceneImageResponse } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { generateImage } from '~/server/utils/image-gen'
 import { requireSecret } from '~/server/utils/runtime-secrets'
+import { consumeQuota } from '~/server/utils/session-quota'
 
 /**
  * Phase 2 du pipeline : l'illustration.
@@ -23,6 +24,10 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
   }
 
   const runtime = await ScriptRuntime.load()
+  // Quota de session : arrête l'abus par rechargement avant tout appel payant.
+  const limits = runtime.script.limits
+  consumeQuota(event, 'images', limits.images_per_session, limits.window_hours, limits.messages.images)
+
   const scene = runtime.scene(body.scene_id)
 
   // Illustration figée : on sort avant même de construire le client OpenAI.

@@ -10,23 +10,24 @@ const open = ref(false)
 <template>
   <div v-if="quest" class="panel-ancient">
     <button
-      class="w-full flex items-center justify-between px-3 py-2 text-amber-400/80 text-xs uppercase tracking-widest hover:text-amber-300 transition-colors"
+      class="w-full flex items-center justify-between px-3 py-2 text-neon-400/85 text-[10px] uppercase tracking-[0.25em] font-display hover:text-neon-300 transition-colors"
       @click="open = !open"
     >
       <span>Journal de Quête</span>
       <span class="text-base">{{ open ? '▴' : '▾' }}</span>
     </button>
     <Transition name="slide">
-      <div v-if="open" class="px-3 pb-3 space-y-2 border-t border-amber-900/30 pt-2">
-        <p class="text-amber-300 font-serif text-sm">{{ quest.title }}</p>
-        <p class="text-parchment/70 text-xs italic leading-relaxed">{{ quest.hook }}</p>
-        <div class="space-y-1">
-          <p class="text-amber-600/70 text-xs uppercase tracking-wider">Objectif</p>
-          <p class="text-parchment/80 text-xs">{{ quest.objective }}</p>
-        </div>
-        <div class="space-y-1">
-          <p class="text-amber-600/70 text-xs uppercase tracking-wider">Artefact</p>
-          <p class="text-parchment/80 text-xs italic">{{ quest.artifact }}</p>
+      <div v-if="open" class="px-3 pb-3 space-y-3 border-t border-neon-600/25 pt-2">
+        <p class="text-neon-300 font-display uppercase tracking-wider text-xs">{{ quest.title }}</p>
+        <p class="text-ink-200/75 text-xs leading-relaxed">{{ quest.hook }}</p>
+        <div v-for="field in [
+          { label: 'Objectif', value: quest.objective },
+          { label: 'Enjeu', value: quest.stakes },
+          { label: 'À rétablir', value: quest.restoration },
+          { label: 'Artefact', value: quest.artifact },
+        ]" :key="field.label" class="space-y-1">
+          <p class="text-neon-400/70 text-[10px] uppercase tracking-[0.2em] font-display">{{ field.label }}</p>
+          <p class="text-ink-200/80 text-xs leading-relaxed">{{ field.value }}</p>
         </div>
       </div>
     </Transition>

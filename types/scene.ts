@@ -46,6 +46,8 @@ export interface SceneKeyItem {
   why: string
   /** Ce que le détenteur attend du joueur avant de le céder. */
   handover_hint: string
+  /** L'histoire qu'il raconte pour rendre l'objet désirable. */
+  hook_story: string
   /** Nombre d'échanges avec le détenteur avant la remise. */
   exchanges_before_handover: number
 }
@@ -146,6 +148,20 @@ export interface ScenePacing {
   steer_after_turns: number
   /** Tour à partir duquel la partie se bloque. */
   lock_after_turns: number
+  /** Plafond dur de tours facturés, filet de sécurité du budget. */
+  hard_turn_cap: number
+  autonomous_notice: string
+  /** Plafond de dépense de la scène, en dollars. */
+  budget_usd: number
+  /** Tarifs, pour convertir des tokens en dollars côté client. */
+  price_input_per_1m_usd: number
+  price_output_per_1m_usd: number
+}
+
+/** Consommation réelle d'un appel, telle que la rapporte OpenAI. */
+export interface TurnUsage {
+  prompt_tokens: number
+  completion_tokens: number
 }
 
 /** Verdict de fin de partie quand le joueur n'est jamais sorti. */
