@@ -46,5 +46,5 @@ onUnmounted(stop)
 </script>
 
 <template>
-  <span>{{ displayed }}<span v-if="displayed.length < text.length" class="animate-pulse text-amber-400">▍</span></span>
+  <span>{{ displayed }}<span v-if="displayed.length < text.length" class="animate-pulse text-neon-400">▍</span></span>
 </template>

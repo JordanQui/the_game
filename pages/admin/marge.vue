@@ -15,16 +15,17 @@ type Data = {
   economics: {
     eur_usd: number; price_eur: number; conversion_rate_pct: number
     payment: { fee_pct: number; fee_fixed_eur: number }
+    experience: { scenes_total: number; free_scenes: number; turns_per_scene: number }
     free_visitor: { scenes: number; turns: number; images: number }
     paying_customer: { scenes: number; turns: number; images: number }
   }
   art: { image_size: string }
 }
 
-const route = useRoute()
-const { data, error } = await useFetch<Data>('/api/admin/economics', {
-  query: { key: route.query.key },
-})
+// Voir middleware/admin.ts : la page n'existe qu'en développement.
+definePageMeta({ middleware: 'admin' })
+
+const { data, error } = await useFetch<Data>('/api/admin/economics')
 
 // Curseurs. Initialisés depuis le script, ajustables à la main.
 const visits = ref(10_000)
@@ -53,6 +54,21 @@ const unit = computed(() => {
 
 const costOf = (u: { scenes: number; turns: number; images: number }) =>
   u.scenes * unit.value.sceneText + u.turns * unit.value.turn + u.images * unit.value.image
+
+/** L'expérience de bout en bout : l'auberge gratuite puis les scènes payantes. */
+const experience = computed(() => {
+  const e = data.value?.economics
+  if (!e) return { free: 0, paid: 0, total: 0, images: 0, turns: 0, texts: 0 }
+  const x = e.experience
+  const paidScenes = x.scenes_total - x.free_scenes
+
+  const texts = x.scenes_total * unit.value.sceneText
+  const images = paidScenes * unit.value.image
+  const turns = x.scenes_total * x.turns_per_scene * unit.value.turn
+  const free = unit.value.sceneText + x.turns_per_scene * unit.value.turn
+
+  return { free, paid: texts + images + turns - free, total: texts + images + turns, images, turns, texts }
+})
 
 const freeCost = computed(() => costOf(data.value?.economics.free_visitor ?? { scenes: 0, turns: 0, images: 0 }))
 const paidCost = computed(() => costOf(data.value?.economics.paying_customer ?? { scenes: 0, turns: 0, images: 0 }))
@@ -104,11 +120,9 @@ const breakEven = computed(() => {
     <div class="mx-auto w-full max-w-4xl space-y-10">
 
       <div v-if="error" class="border border-neon-600/40 p-6 space-y-2">
-        <p class="font-display uppercase tracking-[0.2em] text-neon-400 text-xs">Accès refusé</p>
+        <p class="font-display uppercase tracking-[0.2em] text-neon-400 text-xs">Données indisponibles</p>
         <p class="text-ink-200/80 text-sm">
-          En production, cette page exige <code class="text-neon-300">?key=</code> correspondant à la
-          variable d'environnement <code class="text-neon-300">ADMIN_KEY</code>. Sans cette variable,
-          la route reste fermée.
+          Impossible de lire <code class="text-neon-300">game/script.json</code>.
         </p>
       </div>
 
@@ -118,6 +132,33 @@ const breakEven = computed(() => {
           <h1 class="neon-text font-display uppercase text-2xl sm:text-3xl tracking-[0.05em]">Coûts &amp; marges</h1>
           <div class="neon-rule w-32" />
         </header>
+
+        <!-- Le chiffre qui compte -->
+        <section class="border border-neon-600/40 p-6 space-y-5">
+          <p class="font-display text-[10px] uppercase tracking-[0.28em] text-neon-400/80">
+            Une expérience complète — {{ data.economics.experience.scenes_total }} scènes,
+            {{ data.economics.experience.turns_per_scene }} tours chacune
+          </p>
+          <p class="neon-text font-display text-4xl">{{ money(experience.total) }}</p>
+          <p class="text-ink-200/80 text-sm leading-relaxed">
+            Coût IA total, de l'auberge à la dernière scène. Dont
+            {{ money(experience.free) }} avant paiement — l'auberge, que vous offrez —
+            et {{ money(experience.paid) }} après.
+          </p>
+          <div class="grid gap-3 sm:grid-cols-3 pt-1">
+            <div v-for="c in [
+              { label: 'Images', value: experience.images, detail: `${data.economics.experience.scenes_total - data.economics.experience.free_scenes} générées` },
+              { label: 'Tours de jeu', value: experience.turns, detail: `${data.economics.experience.scenes_total * data.economics.experience.turns_per_scene} au total` },
+              { label: 'Textes de scène', value: experience.texts, detail: `${data.economics.experience.scenes_total} générations` },
+            ]" :key="c.label" class="space-y-1">
+              <p class="text-steel-400 text-[10px] uppercase tracking-[0.18em] font-display">{{ c.label }}</p>
+              <p class="text-ink-100 font-display text-lg">{{ money(c.value) }}</p>
+              <p class="text-ink-300 text-[11px]">
+                {{ c.detail }} — {{ fmt(c.value / experience.total * 100, 0) }} % du total
+              </p>
+            </div>
+          </div>
+        </section>
 
         <!-- Prix unitaires -->
         <section class="space-y-4">
@@ -161,8 +202,11 @@ const breakEven = computed(() => {
               <ul class="text-ink-300 text-xs space-y-1">
                 <li>Prix de vente : {{ money(data.economics.price_eur) }}</li>
                 <li>— commission Square : {{ money(feePerSale) }}</li>
-                <li>— coût de génération : {{ money(paidCost) }}</li>
+                <li>— IA des {{ data.economics.paying_customer.scenes }} scènes : {{ money(paidCost) }}</li>
               </ul>
+              <p class="text-neon-400/70 text-[11px]">
+                Vous conservez {{ fmt(netPerSale / data.economics.price_eur * 100, 0) }} % du prix.
+              </p>
               <p class="text-steel-400 text-[11px]">
                 Plafond si le quota est épuisé : {{ money(paidCeiling) }}
               </p>

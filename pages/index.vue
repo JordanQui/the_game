@@ -39,8 +39,11 @@ watch(() => playerStore.profile, (profile) => {
       <LoadingScreen v-else-if="gameStore.currentScreen === 'payment_processing'" key="pay" message="Traitement du paiement..." />
       <div v-else-if="gameStore.currentScreen === 'payment_success'" key="success" class="min-h-[100dvh] flex items-center justify-center text-center px-6">
         <div class="space-y-6 max-w-sm">
-          <p class="text-amber-300 font-serif text-3xl text-glow">La porte s'ouvre...</p>
-          <p class="text-parchment/70 font-serif text-sm italic">
+          <p class="neon-text font-display uppercase text-2xl sm:text-3xl tracking-[0.05em]">
+            Le sas s'ouvre
+          </p>
+          <div class="neon-rule w-24 mx-auto" />
+          <p class="text-ink-200/80 text-sm leading-relaxed">
             {{ playerStore.quest?.title }} ne fait que commencer.
           </p>
           <GlowButton @click="gameStore.setScreen('playing')">Continuer l'aventure</GlowButton>

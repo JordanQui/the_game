@@ -515,14 +515,15 @@
     },
     "paid": {
       "window_days": 30,
-      "scenes_per_window": 30,
-      "turns_per_window": 400,
-      "images_per_window": 30,
+      "scenes_per_window": 20,
+      "turns_per_window": 200,
+      "images_per_window": 20,
       "messages": {
         "scenes": "Tu as beaucoup voyagé ce mois-ci. Le monde a besoin de souffler.",
         "turns": "La nuit a été longue. Reviens demain.",
         "images": "Plus rien à dessiner pour l'instant."
-      }
+      },
+      "note": "Deux expériences complètes (9 scènes chacune), soit une partie et une reprise. Effacer ses cookies fait perdre l'accès payant en même temps que le compteur : un payant n'a donc aucun intérêt à contourner."
     }
   },
   "economics": {
@@ -536,16 +537,22 @@
       "fee_fixed_eur": 0.25
     },
     "free_visitor": {
-      "note": "Un visiteur gratuit : l'auberge, image figée donc gratuite.",
+      "note": "L'auberge seule. Son image est figée, elle ne coûte donc rien.",
       "scenes": 1,
       "turns": 6,
       "images": 0
     },
     "paying_customer": {
-      "note": "Usage attendu sur les 30 jours d'accès, très en deçà du plafond autorisé.",
-      "scenes": 4,
-      "turns": 40,
-      "images": 4
+      "note": "Ce qui est consommé APRÈS paiement : les 9 scènes restantes, image comprise.",
+      "scenes": 9,
+      "turns": 90,
+      "images": 9
+    },
+    "experience": {
+      "note": "La forme réelle du produit : l'auberge gratuite, puis 9 scènes générées avec image.",
+      "scenes_total": 10,
+      "free_scenes": 1,
+      "turns_per_scene": 10
     }
   }
 }

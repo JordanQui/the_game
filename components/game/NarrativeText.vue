@@ -29,15 +29,15 @@ watch(
         :key="entry.id"
         :class="{
           'narrative-text text-parchment/90 text-[15px] sm:text-sm leading-relaxed whitespace-pre-line': entry.type === 'narration',
-          'pl-4 border-l-2 border-amber-700/60 text-amber-200 text-sm italic': entry.type === 'npc_speech',
-          'text-amber-500/70 text-xs uppercase tracking-widest whitespace-pre-line': entry.type === 'system',
+          'pl-4 border-l-2 border-neon-700/60 text-neon-200 text-sm italic': entry.type === 'npc_speech',
+          'text-neon-500/70 text-xs uppercase tracking-widest whitespace-pre-line': entry.type === 'system',
           'text-ink-400 text-xs font-mono': entry.type === 'player_command',
         }"
       >
-        <span v-if="entry.type === 'npc_speech' && entry.npcName" class="block text-amber-400/80 text-xs mb-1 not-italic font-sans uppercase tracking-wider">
+        <span v-if="entry.type === 'npc_speech' && entry.npcName" class="block text-neon-400/80 text-xs mb-1 not-italic font-sans uppercase tracking-wider">
           {{ entry.npcName }}
         </span>
-        <span v-if="entry.type === 'player_command'" class="text-amber-600/50 mr-1">&gt;</span>
+        <span v-if="entry.type === 'player_command'" class="text-neon-600/50 mr-1">&gt;</span>
         <TypewriterText
           v-if="entry === entries[entries.length - 1] && ['narration', 'npc_speech'].includes(entry.type)"
           :text="entry.text"

@@ -23,8 +23,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex items-center gap-3 px-4 py-3 border-t border-amber-900/40 bg-ink-900/80">
-    <span class="text-amber-500/70 font-mono text-sm shrink-0 select-none">&#62;</span>
+  <div class="flex items-center gap-3 px-4 py-3 border-t border-neon-700/40 bg-ink-900/80">
+    <span class="text-neon-500/70 font-mono text-sm shrink-0 select-none">&#62;</span>
     <input
       ref="inputRef"
       v-model="input"
@@ -40,7 +40,7 @@ onMounted(() => {
     />
     <button
       :disabled="disabled || !input.trim()"
-      class="shrink-0 p-2 -m-2 text-amber-700/60 hover:text-amber-400 disabled:opacity-30 transition-colors"
+      class="shrink-0 p-2 -m-2 text-neon-700/60 hover:text-neon-400 disabled:opacity-30 transition-colors"
       @click="submit"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

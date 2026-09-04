@@ -43,7 +43,7 @@
 
   ::-webkit-scrollbar-thumb {
     /* Angle vif : aucune rondeur dans du Deco. */
-    @apply bg-amber-600/60;
+    @apply bg-neon-600/60;
   }
 }
 
@@ -64,13 +64,13 @@
 
   .deco-rule::before {
     content: '';
-    @apply absolute inset-x-0 top-0 bg-amber-500/60;
+    @apply absolute inset-x-0 top-0 bg-neon-500/60;
     height: 2px;
   }
 
   .deco-rule::after {
     content: '';
-    @apply absolute bottom-0 bg-amber-500/25;
+    @apply absolute bottom-0 bg-neon-500/25;
     left: 14%;
     right: 14%;
     height: 1px;
@@ -97,20 +97,20 @@
    * ne connaît que des aplats et des arêtes.
    */
   .panel-ancient {
-    @apply relative bg-ink-900 border border-amber-600/45;
+    @apply relative bg-ink-900 border border-neon-600/45;
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75);
   }
 
   .panel-ancient::before {
     content: '';
-    @apply absolute pointer-events-none border border-amber-500/15;
+    @apply absolute pointer-events-none border border-neon-500/15;
     inset: 5px;
   }
 
   /** Angle à gradins, motif ziggourat, posé aux coins d'un panneau. */
   .deco-corner {
     @apply absolute w-4 h-4 pointer-events-none;
-    border-color: theme('colors.amber.500 / 70%');
+    border-color: theme('colors.neon.500 / 70%');
   }
 
   /**
@@ -164,8 +164,8 @@
   }
 
   .command-prompt {
-    @apply font-mono text-amber-300 bg-transparent border-none outline-none w-full;
-    caret-color: theme('colors.amber.400');
+    @apply font-mono text-neon-300 bg-transparent border-none outline-none w-full;
+    caret-color: theme('colors.neon.400');
   }
 
   .shimmer-bg {

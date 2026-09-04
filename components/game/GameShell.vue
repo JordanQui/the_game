@@ -86,13 +86,13 @@ function retryImage() {
     </div>
 
     <!-- Bandeau : lieu + accès aux PNJ -->
-    <div class="shrink-0 flex items-center gap-3 px-4 py-2 border-b border-amber-900/30">
-      <p class="flex-1 min-w-0 truncate text-amber-400/90 font-serif text-sm">
+    <div class="shrink-0 flex items-center gap-3 px-4 py-2 border-b border-neon-700/30">
+      <p class="flex-1 min-w-0 truncate text-neon-400/90 font-display uppercase tracking-[0.14em] text-[11px]">
         {{ playerStore.place?.name ?? playerStore.scene?.scene_title }}
       </p>
       <button
         v-if="playerStore.npcs.length"
-        class="shrink-0 text-xs text-amber-600/80 hover:text-amber-400 transition-colors py-1 px-2 -my-1"
+        class="shrink-0 text-xs text-neon-600/80 hover:text-neon-400 transition-colors py-1 px-2 -my-1"
         @click="showNpcs = !showNpcs"
       >
         {{ playerStore.npcs.length }} à qui parler {{ showNpcs ? '▴' : '▾' }}
@@ -101,7 +101,7 @@ function retryImage() {
 
     <!-- Liste des PNJ -->
     <Transition name="slide">
-      <div v-if="showNpcs" class="shrink-0 flex gap-2 px-4 py-2 border-b border-amber-900/30 overflow-x-auto">
+      <div v-if="showNpcs" class="shrink-0 flex gap-2 px-4 py-2 border-b border-neon-700/30 overflow-x-auto">
         <NPCDialogue
           v-for="npc in playerStore.npcs"
           :key="npc.id"
@@ -130,7 +130,7 @@ function retryImage() {
           {{ gameStore.turnError }}
         </p>
         <button
-          class="shrink-0 text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider border border-amber-800/60 px-3 py-1.5 transition-colors"
+          class="shrink-0 text-neon-400 hover:text-neon-300 text-xs uppercase tracking-wider border border-neon-700/60 px-3 py-1.5 transition-colors"
           @click="retryLastTurn"
         >
           Réessayer

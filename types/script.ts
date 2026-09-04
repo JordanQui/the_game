@@ -248,6 +248,8 @@ export interface EconomicsConfig {
   price_eur: number
   conversion_rate_pct: number
   payment: { note?: string; fee_pct: number; fee_fixed_eur: number }
+  /** Forme du produit : combien de scènes, dont combien gratuites. */
+  experience: { note?: string; scenes_total: number; free_scenes: number; turns_per_scene: number }
   free_visitor: { note?: string; scenes: number; turns: number; images: number }
   paying_customer: { note?: string; scenes: number; turns: number; images: number }
 }

@@ -37,7 +37,7 @@ const message = computed(() => {
       <div v-if="loading" class="absolute inset-0 shimmer-bg" />
       <p
         class="relative z-10 text-center font-display text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
-        :class="error ? 'text-red-400/50' : 'text-amber-500/60 animate-deco-pulse'"
+        :class="error ? 'text-red-400/50' : 'text-neon-500/60 animate-deco-pulse'"
       >
         {{ message }}
       </p>
@@ -46,7 +46,7 @@ const message = computed(() => {
       </p>
       <button
         v-if="error"
-        class="relative z-10 text-amber-500/80 hover:text-amber-300 text-[11px] uppercase tracking-wider border border-amber-800/50 px-3 py-1 transition-colors"
+        class="relative z-10 text-neon-500/80 hover:text-neon-300 text-[11px] uppercase tracking-wider border border-neon-700/50 px-3 py-1 transition-colors"
         @click="$emit('retry')"
       >
         Réessayer

@@ -3,21 +3,11 @@ import { ScriptRuntime } from '~/utils/script-runtime'
 /**
  * Les données de la page de marge.
  *
- * Rien de secret ici — ce sont des prix unitaires et des hypothèses — mais
- * l'économie d'un produit n'a pas à être publique. En production la route
- * exige donc ADMIN_KEY ; sans cette variable elle reste fermée, ce qui évite
- * une exposition par oubli de configuration.
+ * L'accès est fermé par server/middleware/admin-guard.ts, qui rend tout /admin
+ * inexistant hors développement. Pas de garde en double ici : deux règles
+ * concurrentes finissent toujours par diverger.
  */
-export default defineEventHandler(async (event) => {
-  if (!import.meta.dev) {
-    const expected = process.env.ADMIN_KEY
-    const provided = getQuery(event).key
-
-    if (!expected || provided !== expected) {
-      throw createError({ statusCode: 404, statusMessage: 'Not Found' })
-    }
-  }
-
+export default defineEventHandler(async () => {
   const runtime = await ScriptRuntime.load()
   const s = runtime.script
 
