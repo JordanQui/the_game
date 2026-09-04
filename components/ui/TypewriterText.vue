@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { highlightNames, escapeHtml } from '~/utils/highlight'
-
 const props = defineProps<{
   text: string
   speed?: number
-  /** Noms à mettre en gras, une fois la frappe terminée. */
-  names?: string[]
 }>()
 
 const emit = defineEmits<{ done: [] }>()
@@ -49,15 +45,8 @@ watch(() => props.text, (target) => {
 onUnmounted(stop)
 
 const typing = computed(() => displayed.value.length < props.text.length)
-
-/**
- * Pendant la frappe on rend du texte brut : poser des balises sur une chaîne
- * tronquée les couperait en plein milieu. Le gras arrive à la fin.
- */
-const rendered = computed(() =>
-  typing.value ? escapeHtml(displayed.value) : highlightNames(displayed.value, props.names ?? []))
 </script>
 
 <template>
-  <span><span v-html="rendered" /><span v-if="typing" class="animate-pulse text-neon-400">▍</span></span>
+  <span>{{ displayed }}<span v-if="typing" class="animate-pulse text-neon-400">▍</span></span>
 </template>

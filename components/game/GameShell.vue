@@ -51,31 +51,42 @@ async function onCommand(input: string) {
   await handlePlayerInput(input)
 }
 
+/** Verbes qui désignent une prise. Le reste — examiner, parler — n'en est pas une. */
+const TAKE_VERBS = ['prendre', 'ramasser', 'recuperer', 'récupérer', 'empocher', 'saisir', 'voler', 'emporter']
+
 /**
- * Les objets que le joueur peut ramasser maintenant.
+ * L'objet qui vient d'arriver dans la conversation, et qu'on peut prendre.
  *
- * Un objet devient ramassable quand il a été NOMMÉ dans le récit : le script
- * impose que `interactables` liste exactement ce qui apparaît dans le texte,
- * mais le joueur ne doit pas voir un bouton pour une chose dont on ne lui a
- * pas encore parlé. La sortie est exclue — on la franchit, on ne la ramasse pas.
+ * On ne regarde QUE la dernière réplique : le bouton est un geste offert à
+ * l'instant où l'objet apparaît, pas un inventaire du décor. Une barre
+ * permanente listant tout ce qui a été nommé afficherait le comptoir, les
+ * murs, et les personnages.
  */
-const pickable = computed(() => {
+const justAppeared = computed(() => {
   const scene = playerStore.scene
-  if (!scene?.interactables) return []
+  const last = gameStore.narrativeHistory[gameStore.narrativeHistory.length - 1]
+  if (!scene?.interactables || !last) return null
+  if (last.type !== 'narration' && last.type !== 'npc_speech') return null
 
-  const narrated = normalize(
-    gameStore.narrativeHistory
-      .filter(e => e.type === 'narration' || e.type === 'npc_speech')
-      .map(e => e.text)
-      .join(' ')
-  )
+  const text = normalize(last.text)
+  // Ni les personnages ni le décor : on ne ramasse ni les gens, ni les murs,
+  // ni le comptoir. La génération met « prendre » un peu partout.
+  const excluded = [
+    ...scene.npcs.map(n => normalize(n.name)),
+    ...(scene.decor ?? []).map(d => normalize(d.name ?? '')),
+  ].filter(n => n.length > 2)
 
-  return scene.interactables.filter((obj) => {
+  return scene.interactables.find((obj) => {
     if (obj.triggers_paywall) return false
+    if (!TAKE_VERBS.includes(normalize(obj.verb ?? ''))) return false
     if (gameStore.inventory.some(o => o.id === obj.id)) return false
+
     const label = normalize(obj.label).replace(/^(l['’]|le |la |les |un |une |des )/, '')
-    return label.length > 2 && narrated.includes(label)
-  })
+    if (label.length < 3) return false
+    if (excluded.some(n => label.includes(n) || n.includes(label))) return false
+
+    return text.includes(label)
+  }) ?? null
 })
 
 function pickUp(obj: { id: string; label: string }) {
@@ -153,26 +164,27 @@ function retryImage() {
       </div>
     </Transition>
 
-    <!-- Journal de quête -->
-    <div class="shrink-0 px-4 pt-2">
-      <QuestLog :quest="playerStore.quest" />
-    </div>
 
     <!-- Narration -->
     <NarrativeText :entries="gameStore.narrativeHistory" />
 
-    <!-- Objets nommés dans le récit : un bouton pour chacun -->
+    <!-- Un objet vient d'apparaître : on le prend d'un clic, pas en le tapant -->
     <Transition name="slide">
-      <div v-if="pickable.length" class="shrink-0 flex flex-wrap gap-2 px-4 pb-2">
+      <div
+        v-if="justAppeared"
+        class="shrink-0 flex items-center gap-3 mx-4 mb-2 px-3 py-2.5 border border-neon-600/40"
+      >
+        <span class="shrink-0 text-neon-500 font-display text-sm">+</span>
+        <p class="flex-1 min-w-0 text-ink-100 text-xs leading-snug">
+          {{ justAppeared.label }}
+        </p>
         <button
-          v-for="obj in pickable"
-          :key="obj.id"
-          class="flex items-center gap-2 font-display text-[10px] uppercase tracking-[0.16em]
-                 text-neon-300 border border-neon-600/50 hover:border-neon-400 hover:text-neon-200
-                 px-2.5 py-1.5 transition-colors"
-          @click="pickUp(obj)"
+          class="shrink-0 font-display text-[10px] uppercase tracking-[0.2em] text-neon-300
+                 border border-neon-600/60 hover:border-neon-400 hover:text-neon-200
+                 px-3 py-1.5 transition-colors"
+          @click="pickUp(justAppeared)"
         >
-          <span class="text-neon-500">+</span> Ramasser {{ obj.label }}
+          Ramasser
         </button>
       </div>
     </Transition>

@@ -12,14 +12,40 @@ import { createHash } from 'node:crypto'
  * inertes et n'écrivent jamais rien — Vercel a de toute façon un système de
  * fichiers en lecture seule.
  *
- * Pour régénérer pour de vrai, charger la page avec `?fresh=1`.
+ * DÉSACTIVÉ PAR DÉFAUT. Un mock enregistré avant une modification des prompts
+ * rejoue l'ancienne version de la scène : on croit tester ses changements alors
+ * qu'on relit du passé, et le jeu paraît cassé sans raison. Pour les activer :
+ * `DEV_MOCKS=1` dans le .env.
+ *
+ * Même activés, ils sont invalidés dès que `game/script.json` change — leur
+ * empreinte inclut celle du script. Toute modification de prompt reconstruit
+ * donc les mocks à la session suivante, automatiquement.
+ *
+ * Pour forcer une régénération sans rien désactiver : `?fresh=1`.
  */
 
 const DIR = '.mocks'
 
+/** Les mocks n'existent qu'en développement, et seulement si on les demande. */
+function enabled(): boolean {
+  return import.meta.dev && process.env.DEV_MOCKS === '1'
+}
+
+/**
+ * Empreinte du script courant. Mémoïsée : le contenu ne bouge pas en cours de
+ * processus, et le hacher à chaque requête serait du gaspillage.
+ */
+let scriptPrint: string | null = null
+export function scriptFingerprint(script: unknown): string {
+  if (!scriptPrint) {
+    scriptPrint = createHash('sha256').update(JSON.stringify(script)).digest('hex').slice(0, 12)
+  }
+  return scriptPrint
+}
+
 /** Une empreinte par scène et par joueur : deux profils, deux mocks. */
-export function mockKey(sceneId: string, seed: string): string {
-  return createHash('sha256').update(`${sceneId}|${seed}`).digest('hex').slice(0, 16)
+export function mockKey(sceneId: string, seed: string, fingerprint: string): string {
+  return createHash('sha256').update(`${fingerprint}|${sceneId}|${seed}`).digest('hex').slice(0, 16)
 }
 
 async function fsModule() {
@@ -33,7 +59,7 @@ function filePath(pathMod: typeof import('node:path'), kind: string, key: string
 }
 
 export async function readMock<T>(kind: string, key: string): Promise<T | null> {
-  if (!import.meta.dev) return null
+  if (!enabled()) return null
 
   try {
     const { fs, path } = await fsModule()
@@ -46,7 +72,7 @@ export async function readMock<T>(kind: string, key: string): Promise<T | null> 
 }
 
 export async function writeMock(kind: string, key: string, value: unknown): Promise<void> {
-  if (!import.meta.dev) return
+  if (!enabled()) return
 
   try {
     const { fs, path } = await fsModule()

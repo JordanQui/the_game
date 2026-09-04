@@ -157,8 +157,8 @@ export interface PlayerTheme {
 export interface ScenePacing {
   /** Tour à partir duquel le narrateur oriente vers la sortie. */
   steer_after_turns: number
-  /** Tour à partir duquel la partie se bloque. */
-  lock_after_turns: number
+  /** Tour où les personnages viennent dénouer la scène. */
+  resolution_after_turns: number
   /** Plafond dur de tours facturés, filet de sécurité du budget. */
   hard_turn_cap: number
   autonomous_notice: string
@@ -173,20 +173,6 @@ export interface ScenePacing {
 export interface TurnUsage {
   prompt_tokens: number
   completion_tokens: number
-}
-
-/** Verdict de fin de partie quand le joueur n'est jamais sorti. */
-export interface LockRequest {
-  sceneId?: string
-  context: TurnContext
-  history?: Array<{ role: 'user' | 'assistant'; content: string }>
-}
-
-export interface LockResponse {
-  /** Le constat, à la deuxième personne : tu es resté boire. */
-  verdict: string
-  /** Ce qu'il fallait comprendre pour sortir, une idée par ligne. */
-  recap: string[]
 }
 
 export interface SceneImageRequest {
@@ -224,7 +210,7 @@ export interface TurnContext {
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */
-export type TurnMode = 'ambient' | 'npc' | 'exit_nudge' | 'handover' | 'blocked_exit'
+export type TurnMode = 'ambient' | 'npc' | 'exit_nudge' | 'handover' | 'blocked_exit' | 'resolution'
 
 export interface TurnRequest {
   sceneId?: string

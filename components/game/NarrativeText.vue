@@ -1,27 +1,7 @@
 <script setup lang="ts">
 import type { NarrativeEntry } from '~/types/game'
-import { usePlayerStore } from '~/stores/player'
-import { collectNames, highlightNames } from '~/utils/highlight'
 
 const props = defineProps<{ entries: NarrativeEntry[] }>()
-
-const playerStore = usePlayerStore()
-
-/** Tout ce qui vient des données du joueur et mérite d'être repérable. */
-const names = computed(() => {
-  const scene = playerStore.scene
-  if (!scene) return []
-  return collectNames([
-    scene.place?.name,
-    scene.key_item?.name,
-    scene.quest?.artifact,
-    ...scene.npcs.map(n => n.name),
-    ...(scene.decor ?? []).map(d => d.name),
-    ...(scene.interactables ?? []).map(i => i.label),
-  ])
-})
-
-const render = (text: string) => highlightNames(text, names.value)
 
 const scrollContainer = ref<HTMLElement | null>(null)
 
@@ -61,9 +41,8 @@ watch(
         <TypewriterText
           v-if="entry === entries[entries.length - 1] && ['narration', 'npc_speech'].includes(entry.type)"
           :text="entry.text"
-          :names="names"
         />
-        <span v-else v-html="render(entry.text)" />
+        <span v-else>{{ entry.text }}</span>
       </div>
     </TransitionGroup>
   </div>

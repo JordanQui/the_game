@@ -77,15 +77,16 @@ export interface TurnRules {
   steer_instruction: string
   /** Variante employée tant que l'objet-clé n'est pas obtenu. */
   steer_instruction_missing_item: string
-  /** Tour à partir duquel la partie se bloque faute d'être sortie. */
-  lock_after_turns: number
+  /** Variante employée tant que le joueur ignore qui détient l'objet. */
+  steer_instruction_missing_informant: string
+  /** Tour où les personnages viennent au joueur et dénouent la scène. */
+  resolution_after_turns: number
+  /** Narration de ce dénouement. */
+  resolution_prompt: string
   /** Plafond dur de tours facturés, si le comptage de tokens venait à manquer. */
   hard_turn_cap: number
   /** Ce que dit la scène quand elle passe en autonomie. */
   autonomous_notice: string
-  /** Prompts du verdict de blocage. Le modèle répond en JSON. */
-  lock_system_prompt: string
-  lock_prompt_template: string
 
   /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
   key_item_context: string

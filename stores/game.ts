@@ -28,9 +28,8 @@ export const useGameStore = defineStore('game', {
     inventory: [] as Array<{ id: string; label: string }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
-    /** Verdict de fin quand le joueur n'est jamais sorti. */
-    lockVerdict: null as string | null,
-    lockRecap: [] as string[],
+    /** La scène a été dénouée : les personnages sont venus au joueur. */
+    resolved: false,
     conversationHistory: [] as Array<{ role: 'user' | 'assistant'; content: string }>,
     /** Dernière commande jouée, pour pouvoir relancer un tour qui a échoué. */
     lastCommand: null as string | null,
@@ -164,12 +163,8 @@ export const useGameStore = defineStore('game', {
       if (!this.talkedToNpcIds.includes(npcId)) this.talkedToNpcIds.push(npcId)
     },
 
-    /** Le joueur a trop traîné : la partie se ferme sur un constat. */
-    lockGame(verdict: string, recap: string[]) {
-      this.lockVerdict = verdict
-      this.lockRecap = recap
-      this.playingSubState = 'awaiting_input'
-      this.currentScreen = 'locked'
+    markResolved() {
+      this.resolved = true
     },
 
     triggerPaywall() {
@@ -194,8 +189,7 @@ export const useGameStore = defineStore('game', {
       this.informedAboutItem = false
       this.pendingKeyItem = false
       this.talkedToNpcIds = []
-      this.lockVerdict = null
-      this.lockRecap = []
+      this.resolved = false
       this.conversationHistory = []
       this.lastCommand = null
       this.lastMode = null

@@ -4,7 +4,7 @@ import type { UserProfile } from '~/types/user'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import { consumeQuota } from '~/server/utils/session-quota'
-import { mockKey, readMock, writeMock, wantsFresh } from '~/server/utils/dev-mocks'
+import { mockKey, readMock, writeMock, wantsFresh, scriptFingerprint } from '~/server/utils/dev-mocks'
 
 /**
  * Phase 1 du pipeline : le texte.
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   // En développement, on rejoue la dernière scène enregistrée plutôt que de
   // repayer la même génération à chaque relance. `?fresh=1` la renouvelle.
-  const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}`)
+  const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}`, scriptFingerprint(runtime.script))
   if (import.meta.dev && !wantsFresh(event)) {
     const cached = await readMock<SceneTextResponse>('scene', key)
     if (cached) return cached

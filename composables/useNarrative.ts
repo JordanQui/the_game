@@ -1,7 +1,8 @@
-import type { SceneNPC, TurnContext, TurnMode, LockResponse, TurnUsage } from '~/types/scene'
+import type { SceneNPC, TurnContext, TurnMode, TurnUsage } from '~/types/scene'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
+import { normalize } from '~/utils/text-match'
 
 /** Durée totale au-delà de laquelle on considère le tour perdu. */
 const TURN_TIMEOUT_MS = 60_000
@@ -31,11 +32,29 @@ export function useNarrative() {
     }
   }
 
-  /** Trouve le PNJ interpellé par son prénom. */
+  /**
+   * Trouve le personnage interpellé.
+   *
+   * Le prénom d'abord, puis le rôle : « je parle au barman » doit fonctionner
+   * autant que « parler à Leo ». Sans ça, une commande adressée à quelqu'un
+   * partait en narration d'ambiance et aucun personnage ne répondait jamais —
+   * la chaîne informateur puis détenteur ne pouvait pas s'ouvrir.
+   */
   function findAddressedNpc(input: string): SceneNPC | undefined {
-    const lower = input.toLowerCase()
-    return playerStore.npcs.find(npc =>
-      npc.name.split(' ').some(part => part.length > 2 && lower.includes(part.toLowerCase()))
+    const text = normalize(input)
+    const npcs = playerStore.npcs
+
+    const byName = npcs.find(npc =>
+      normalize(npc.name).split(' ').some(part => part.length > 2 && text.includes(part))
+    )
+    if (byName) return byName
+
+    // Les mots courts de l'archétype ne discriminent rien : « de », « du »,
+    // « ancien » se retrouvent chez plusieurs personnages.
+    return npcs.find(npc =>
+      normalize(npc.archetype ?? '')
+        .split(/[^a-z0-9]+/)
+        .some(word => word.length > 4 && text.includes(word))
     )
   }
 
@@ -163,12 +182,26 @@ export function useNarrative() {
 
     const item = playerStore.scene?.key_item
     const handover = !mode && isHandoverTurn(npc)
-    const effectiveMode: TurnMode | undefined = handover ? 'handover' : mode
+
+    // Au seuil du script, la salle vient au joueur : les personnages disent ce
+    // qu'ils savent et posent l'objet devant lui. Ce n'est pas une fin de
+    // partie, c'est le moment où le monde arrête de résister.
+    const resolving = !mode && !handover && needsResolution()
+    const effectiveMode: TurnMode | undefined =
+      resolving ? 'resolution' : handover ? 'handover' : mode
 
     if (npc) gameStore.recordNpcTalk(npc.id)
 
     // Parler à l'informateur ouvre la chaîne.
     if (npc && item && npc.id === item.informant_npc_id && !gameStore.informedAboutItem) {
+      gameStore.markInformedAboutItem()
+    }
+
+    // L'aide active fait venir l'informateur au joueur et lui fait nommer le
+    // détenteur. Sans ce relais, l'état n'avancerait que si le joueur pensait
+    // à l'interpeller : il se ferait aborder en boucle sans jamais progresser.
+    const steerFrom = playerStore.scene?.pacing?.steer_after_turns
+    if (item && !gameStore.informedAboutItem && steerFrom && gameStore.turnCount >= steerFrom + 2) {
       gameStore.markInformedAboutItem()
     }
 
@@ -190,40 +223,21 @@ export function useNarrative() {
       gameStore.offerKeyItem()
     }
 
-    await lockIfOverstayed()
+    if (resolving && item) {
+      gameStore.markResolved()
+      gameStore.markInformedAboutItem()
+      if (!gameStore.hasKeyItem) gameStore.offerKeyItem()
+    }
+
   }
 
-  /**
-   * Le joueur n'est jamais sorti : au seuil du script, la partie se ferme.
-   *
-   * Le tour vient d'être joué et reste lisible à l'écran ; c'est l'écran de
-   * blocage qui prend la main juste après, avec le constat et le rappel.
-   */
-  async function lockIfOverstayed() {
+  /** Le joueur a-t-il atteint le seuil où la scène se dénoue d'elle-même ? */
+  function needsResolution(): boolean {
     const scene = playerStore.scene
-    const limit = scene?.pacing?.lock_after_turns
-    if (!scene || !limit || gameStore.turnCount < limit) return
-    if (gameStore.currentScreen !== 'playing') return
-
-    const context = buildContext()
-    if (!context) return
-
-    try {
-      const verdict = await $fetch<LockResponse>('/api/narrative/lock', {
-        method: 'POST',
-        body: {
-          sceneId: scene.scene_id,
-          context,
-          turnCount: gameStore.turnCount,
-          history: gameStore.conversationHistory,
-        },
-      })
-      gameStore.lockGame(verdict.verdict, verdict.recap)
-    } catch {
-      // Un verdict manquant ne doit pas laisser le joueur tourner en rond :
-      // on ferme quand même, avec le texte de porte du script.
-      gameStore.lockGame(scene.paywall.gate_text, [])
-    }
+    const at = scene?.pacing?.resolution_after_turns
+    if (!scene?.key_item || !at || gameStore.resolved) return false
+    if (gameStore.hasKeyItem || gameStore.pendingKeyItem) return false
+    return gameStore.turnCount + 1 >= at
   }
 
   /**
@@ -257,8 +271,7 @@ export function useNarrative() {
         const local = resolveLocally(input, scene, state)
         if (local) {
           answerLocally(input, local.text, local.npcName)
-          await lockIfOverstayed()
-          return
+                return
         }
 
         // Autonomie : au premier des deux plafonds atteint. Le compte de tours
@@ -270,8 +283,7 @@ export function useNarrative() {
         if (capReached || budgetReached) {
           const notice = pacing.autonomous_notice
           answerLocally(input, `${notice}\n\n${buildGuidance(scene, state)}`)
-          await lockIfOverstayed()
-          return
+                return
         }
       }
     }

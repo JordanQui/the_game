@@ -137,7 +137,7 @@ export class SceneRuntime {
   get pacing() {
     return {
       steer_after_turns: this.scene.turn.steer_after_turns,
-      lock_after_turns: this.scene.turn.lock_after_turns,
+      resolution_after_turns: this.scene.turn.resolution_after_turns,
       hard_turn_cap: this.scene.turn.hard_turn_cap,
       autonomous_notice: this.scene.turn.autonomous_notice,
       budget_usd: this.script.pricing.scene_budget_usd,
@@ -305,6 +305,11 @@ ${lines}`)
     if (!item.informant_npc_id || item.informant_npc_id === item.npc_id) {
       throw new Error('Scène invalide : key_item.informant_npc_id doit désigner un AUTRE PNJ')
     }
+    // Le barman ouvre la liste : il expose la situation, il ne résout rien.
+    const barman = generated.npcs[0]?.id
+    if (barman && (item.npc_id === barman || item.informant_npc_id === barman)) {
+      throw new Error('Scène invalide : le barman ne peut être ni détenteur ni informateur')
+    }
     if (!generated.npcs.some(n => n.id === item.informant_npc_id)) {
       throw new Error(`Scène invalide : informant_npc_id "${item.informant_npc_id}" ne désigne aucun PNJ`)
     }
@@ -330,16 +335,6 @@ ${lines}`)
       accent: { ...audit.palette.accent, coverage_pct: ratio.accent_pct },
     }
     const scene = { ...generated, palette }
-
-    // Le détenteur ne doit jamais ouvrir la liste : sans ça le joueur tombe
-    // dessus au premier essai et la chaîne informateur -> détenteur s'effondre.
-    // Le modèle l'oublie régulièrement, on le corrige plutôt que de refuser.
-    const npcs = [...scene.npcs]
-    if (npcs.length > 1 && npcs[0]?.id === scene.key_item.npc_id) {
-      const swapWith = npcs.findIndex(n => n.id !== scene.key_item.npc_id)
-      if (swapWith > 0) [npcs[0], npcs[swapWith]] = [npcs[swapWith], npcs[0]]
-    }
-    scene.npcs = npcs
 
     // Les interactables obligatoires sont réinjectés même si le modèle les a oubliés.
     const interactables = [...(scene.interactables ?? [])]
@@ -451,37 +446,26 @@ ${lines}`)
 
     // Tant que l'objet manque, pousser vers le sas enverrait le joueur sur une
     // issue fermée : on l'oriente d'abord vers celui qui le détient.
-    const needsItem = Boolean(ctx.key_item) && !ctx.has_key_item
-    const steer = needsItem
-      ? interpolate(t.steer_instruction_missing_item, {
-          item_name: ctx.key_item?.name ?? "l'objet",
-          npc_name: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
-        })
-      : t.steer_instruction
+    const item = ctx.key_item
+    const nameOf = (id?: string) => ctx.npcs.find(n => n.id === id)?.name ?? 'un habitué'
+
+    // Trois orientations selon l'endroit où le joueur est bloqué. Pousser vers
+    // le détenteur avant qu'il connaisse la piste l'envoyait sur un personnage
+    // programmé pour ne rien dire.
+    let steer = t.steer_instruction
+    if (item && !ctx.has_key_item && !ctx.informed_about_item) {
+      steer = interpolate(t.steer_instruction_missing_informant, {
+        quest_title: ctx.quest.title,
+        npc_name: nameOf(item.informant_npc_id),
+      })
+    } else if (item && !ctx.has_key_item) {
+      steer = interpolate(t.steer_instruction_missing_item, {
+        item_name: item.name,
+        npc_name: nameOf(item.npc_id),
+      })
+    }
 
     return `${themed}\n\n${steer}`
-  }
-
-  /** Prompt du verdict de fin, quand le joueur n'est jamais sorti. */
-  buildLockPrompt(ctx: TurnContext, turnCount: number): string {
-    const t = this.scene.turn
-    const npcList = ctx.npcs.length
-      ? ctx.npcs.map(n => `${n.name} (${n.archetype})`).join(', ')
-      : 'personne'
-
-    return interpolate(t.lock_prompt_template, {
-      player_name: ctx.player_name,
-      place_name: ctx.place.name,
-      place_reputation: ctx.place.reputation,
-      quest_title: ctx.quest.title,
-      quest_objective: ctx.quest.objective,
-      quest_stakes: ctx.quest.stakes,
-      quest_artifact: ctx.quest.artifact,
-      quest_why_leave: ctx.quest.why_leave,
-      npc_list: npcList,
-      turn_count: String(turnCount),
-      exit_label: this.scene.exits[0]?.label ?? 'la sortie',
-    })
   }
 
   /** Prompt utilisateur : ambiance, relance vers la sortie, ou réplique d'un PNJ. */
@@ -496,6 +480,18 @@ ${lines}`)
         player_input: input,
         item_name: ctx.key_item.name,
         item_description: ctx.key_item.description,
+        item_why: ctx.key_item.why,
+        exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+      })
+    }
+
+    if (mode === 'resolution' && ctx.key_item) {
+      return interpolate(t.resolution_prompt, {
+        player_input: input,
+        quest_title: ctx.quest.title,
+        informant_name: ctx.npcs.find(n => n.id === ctx.key_item?.informant_npc_id)?.name ?? 'un habitué',
+        holder_name: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un autre',
+        item_name: ctx.key_item.name,
         item_why: ctx.key_item.why,
         exit_label: this.scene.exits[0]?.label ?? 'la sortie',
       })
