@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import type { GeneratedScene } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
-import { ScriptRuntime, loadUserFixture } from '~/utils/script-runtime'
+import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 
 /**
@@ -65,5 +65,5 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return scene.assembleText(generated)
+  return scene.assembleText(generated, resolveTheme(user, runtime.script))
 })

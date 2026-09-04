@@ -4,6 +4,7 @@ export type GameScreen =
   | 'facebook_loading'
   | 'scene_build_loading'
   | 'playing'
+  | 'locked'
   | 'paywall'
   | 'payment_processing'
   | 'payment_success'

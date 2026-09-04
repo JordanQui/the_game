@@ -91,6 +91,10 @@ export interface SceneTextResponse extends GeneratedScene {
   image_prompt: string
   /** Chemin d'une illustration figée, ou null si la scène doit la générer. */
   static_image: string | null
+  /** Seuils de relance et de blocage, portés par le script. */
+  pacing: ScenePacing
+  /** Thème intime du joueur. Les PNJ s'en nourrissent sans jamais le nommer. */
+  theme: PlayerTheme | null
   paywall: ScenePaywall
   /** Trace de la correction d'accent appliquée côté serveur. */
   palette_audit: {
@@ -105,6 +109,39 @@ export interface SceneTextResponse extends GeneratedScene {
 }
 
 /** Requête de la phase 2. Volontairement pas de prompt libre. */
+/** Le thème intime du joueur, résolu côté serveur depuis sa date et son nom. */
+export interface PlayerTheme {
+  /** Signe, ou null si la date de naissance manque. */
+  sign: { key: string; name: string; element: string; tension: string; resolution: string } | null
+  /** Nombres indiens et ce qu'ils portent. Chaque facette peut manquer. */
+  numbers: {
+    drive: string | null
+    destiny: string | null
+    reception: string | null
+  }
+}
+
+export interface ScenePacing {
+  /** Tour à partir duquel le narrateur oriente vers la sortie. */
+  steer_after_turns: number
+  /** Tour à partir duquel la partie se bloque. */
+  lock_after_turns: number
+}
+
+/** Verdict de fin de partie quand le joueur n'est jamais sorti. */
+export interface LockRequest {
+  sceneId?: string
+  context: TurnContext
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
+}
+
+export interface LockResponse {
+  /** Le constat, à la deuxième personne : tu es resté boire. */
+  verdict: string
+  /** Ce qu'il fallait comprendre pour sortir, une idée par ligne. */
+  recap: string[]
+}
+
 export interface SceneImageRequest {
   scene_id: string
   place_name: string
@@ -129,6 +166,8 @@ export interface TurnContext {
   place: ScenePlace
   quest: SceneQuest
   npcs: SceneNPC[]
+  /** Reporté depuis la scène : ce que les PNJ doivent faire affleurer. */
+  theme?: PlayerTheme | null
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */
@@ -138,6 +177,8 @@ export interface TurnRequest {
   sceneId?: string
   context: TurnContext
   input: string
+  /** Nombre de tours déjà joués. Décide de l'orientation vers la sortie. */
+  turnCount?: number
   mode?: TurnMode
   /** Si renseigné, c'est ce PNJ qui répond au lieu du narrateur. */
   npcId?: string

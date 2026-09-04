@@ -65,16 +65,17 @@
       "structure": [
         "1 phrase de localisation",
         "3 à 5 phrases de description reprenant les slots de décor",
-        "1 ligne 'Sorties :' listant les sorties",
+        "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
         "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action disponibles"
       ],
       "max_words": 140,
       "forbidden": [
         "mention d'IA",
         "question directe au joueur",
-        "vocabulaire moderne",
+        "vocabulaire médiéval ou fantasy",
         "bris du quatrième mur"
-      ]
+      ],
+      "vocabulary": "LEXIQUE IMPOSÉ — le monde est cyberpunk, pas médiéval.\nLa sortie est un SAS. N'écris jamais « porte », « battant », « seuil » ni « huis » : c'est un sas, et le mot doit apparaître tel quel dans la ligne « Sorties : » comme dans le verbe d'action.\nDe même : un bar ou un comptoir, jamais une auberge ni une taverne ; des néons, des écrans et des tubes, jamais des torches, des lanternes ni des bougies ; un barman, jamais un aubergiste ; des câbles et des structures, jamais des poutres."
     },
     "turn": {
       "max_tokens": 220,
@@ -82,7 +83,12 @@
       "system_prompt_template": "Tu es le narrateur de {{scene_title}} — {{place_name}}, dans un jeu d'aventure textuel cyberpunk en français.\n\nJoueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nPersonnages présents : {{npc_list}}\n\n{{narrative_instruction}}\n\nRègles absolues :\n- Réponds toujours en français.\n- Ne dépasse jamais {{max_words}} mots.\n- N'invente aucune sortie : la seule issue de ce lieu est {{exit_label}}.\n- Ne fais jamais franchir cette sortie au joueur, quoi qu'il tape.\n- Ne brise jamais le quatrième mur, ne mentionne jamais que tu es une IA.",
       "ambient_prompt": "Le joueur tape : « {{player_input}} ». Réponds par 1 à 2 phrases de narration à la deuxième personne du singulier, dans le style du jeu textuel des années 80. Décris ce qui se passe ou ce qu'il découvre. Nomme explicitement tout nouvel objet manipulable. Pas de dialogue direct, pas de question au joueur.",
       "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français parlé, sec, teinté d'argot de mégapole, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.",
-      "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers le sas de façon détournée : la pluie qui bat contre le battant, une sirène qui passe dans la rue, un habitué qui jette un regard vers lui, la lueur d'un néon qui filtre par l'interstice.\nRappelle que ce sas est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre."
+      "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers le sas de façon détournée : la pluie qui bat contre le battant, une sirène qui passe dans la rue, un habitué qui jette un regard vers lui, la lueur d'un néon qui filtre par l'interstice.\nRappelle que ce sas est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre.",
+      "steer_after_turns": 5,
+      "lock_after_turns": 8,
+      "steer_instruction": "ORIENTATION VERS LA SORTIE — le joueur traîne, il a déjà joué plusieurs tours sans partir.\nÀ partir de maintenant, termine CHAQUE réponse en rendant la sortie plus présente : ce que le joueur a appris et qui rend le départ nécessaire, ce qu'un habitué laisse entendre sur ce qui l'attend dehors, ou un signe concret venu du sas. Sois de plus en plus direct à chaque tour.\nTu peux nommer explicitement ce qu'il faut faire — franchir le sas — mais jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets. Tu décris le monde, tu ne pilotes pas le joueur.",
+      "lock_system_prompt": "Tu es le narrateur d'un jeu d'aventure textuel cyberpunk en français. La partie s'arrête : le joueur est resté au comptoir sans jamais franchir le sas. Tu écris le constat de fin, sur un ton sec, un peu narquois, jamais moralisateur ni insultant. Tu réponds exclusivement en JSON valide, sans markdown, sans commentaire.",
+      "lock_prompt_template": "Joueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nRaison de partir : {{quest_why_leave}}\nSortie : {{exit_label}}\nPersonnages présents : {{npc_list}}\n\nLe joueur a joué {{turn_count}} tours sans jamais franchir le sas.\n\nProduis un objet JSON avec exactement deux champs :\n- \"verdict\" : 2 à 3 phrases à la deuxième personne du singulier, au présent. Constate qu'il a préféré rester à boire au comptoir plutôt que partir à l'aventure. Appuie-toi sur ce qui s'est réellement passé dans la conversation. Ton sec et un peu narquois, sans insulte, sans morale.\n- \"recap\" : un tableau de 3 à 4 chaînes. Chacune est une phrase courte rappelant ce qu'il fallait comprendre pour sortir : ce que la quête réclamait, ce que les habitués avaient laissé entendre, et le fait que le sas était la seule issue. Factuel, à la deuxième personne.\n\nAucun autre champ. Réponds en français."
     },
     "generation": {
       "model": "gpt-4o",
@@ -224,11 +230,11 @@
       ],
       "npcs": {
         "count": 3,
-        "instruction": "Crée des habitués du bar qui incarnent métaphoriquement les passions du joueur, jamais littéralement. Chacun connaît un fragment de la quête. Prénom court et alias de mégapole, en français.",
+        "instruction": "Crée des habitués du bar qui incarnent métaphoriquement les passions du joueur, jamais littéralement. Chacun porte un rapport DIFFÉRENT à la tension intime décrite dans la section SIGNE — l'un l'a résolue et en a payé le prix, l'un s'y est brisé, l'un la nie encore. Chacun connaît un fragment de la quête. Prénom court et alias de mégapole, en français.",
         "source": "passions"
       },
       "quest": {
-        "instruction": "Construis la quête comme une métaphore du parcours réel du joueur, jamais une transposition littérale. Elle doit être entièrement exposée dans le bar et rendre la sortie désirable : le joueur doit avoir une raison précise de franchir le sas.",
+        "instruction": "Construis la quête comme une métaphore du parcours réel du joueur, jamais une transposition littérale. Son OBJECTIF doit être la résolution, en acte concret, de la tension intime décrite dans la section SIGNE. Elle doit être entièrement exposée dans le bar et rendre la sortie désirable : le joueur doit avoir une raison précise de franchir le sas.",
         "source": "trajectory.turning_points",
         "structure": {
           "title": "Titre court et tranchant, 2 à 5 mots",
@@ -244,7 +250,7 @@
         "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu.",
         "always_include": [
           {
-            "id": "porte",
+            "id": "sas",
             "label": "le sas",
             "verb": "sortir",
             "triggers_paywall": true
@@ -313,5 +319,135 @@
     "sub_cta": "Débloque la suite de {{quest_title}}",
     "amount_cents": 1000,
     "currency": "EUR"
+  },
+  "zodiac": {
+    "note": "Le signe est calculé depuis identity.birthday par utils/zodiac.ts. Ce bloc porte tout le texte : la tension du signe avec la société, et ce à quoi ressemble sa résolution.",
+    "generation_instruction": "SIGNE DU JOUEUR — c'est la colonne vertébrale de la scène, pas un ornement.\nLa tension ci-dessous est le conflit intérieur que son signe lui inflige dans son rapport à la société. Elle doit se ressentir partout, sans jamais être nommée :\n- l'OBJECTIF de la quête EST la résolution de cette tension, transposée en acte concret dans le monde cyberpunk. Ce que le joueur doit accomplir dehors doit être exactement ce qu'il n'arrive pas à faire dans sa vie.\n- CHAQUE personnage porte un rapport différent à cette même tension : l'un l'a résolue et en a payé le prix, l'un s'y est brisé, l'un la nie encore. C'est ce qui rend leurs répliques utiles.\n- INTERDIT ABSOLU : ne nomme jamais le signe, ni l'astrologie, ni le zodiaque, ni un élément, ni un trait de caractère « typique ». Aucun personnage ne lit dans les astres. La tension se montre par les situations et les choix, jamais par une étiquette.",
+    "turn_instruction": "Tension intime du joueur, à faire affleurer sans jamais la nommer : {{tension}}\nLes personnages y réagissent chacun à leur manière. Ne mentionne jamais l'astrologie ni le signe.",
+    "signs": {
+      "belier": {
+        "name": "Bélier",
+        "element": "Feu",
+        "tension": "Tu pars avant les autres, et on te le reproche. Ton élan passe pour de l'impatience dans un monde qui récompense ceux qui attendent leur tour.",
+        "resolution": "Ouvrir une voie que personne n'osait prendre, et s'y tenir assez longtemps pour que d'autres suivent."
+      },
+      "taureau": {
+        "name": "Taureau",
+        "element": "Terre",
+        "tension": "Tu as besoin que les choses durent, dans une époque qui exige de tout recommencer sans cesse. Ta constance passe pour de l'immobilisme.",
+        "resolution": "Défendre une seule chose jusqu'au bout, et prouver que tenir vaut mieux que changer."
+      },
+      "gemeaux": {
+        "name": "Gémeaux",
+        "element": "Air",
+        "tension": "Tu es plusieurs à la fois et on te somme de choisir qui tu es. Ta mobilité passe pour de l'inconstance.",
+        "resolution": "Faire de cette multiplicité l'outil que personne d'autre ne possède, au moment où il n'y a que ça qui marche."
+      },
+      "cancer": {
+        "name": "Cancer",
+        "element": "Eau",
+        "tension": "Tu as besoin d'un refuge et on te reproche de t'y terrer. Ta façon de protéger passe pour de la peur.",
+        "resolution": "Quitter le refuge, non pas pour soi, mais pour protéger quelqu'un d'autre."
+      },
+      "lion": {
+        "name": "Lion",
+        "element": "Feu",
+        "tension": "Tu as besoin d'être vu, et l'époque punit ceux qui le montrent. Ton besoin de lumière passe pour de la vanité.",
+        "resolution": "Prendre toute la place, au vu de tous, pour une cause qui ne te concerne pas."
+      },
+      "vierge": {
+        "name": "Vierge",
+        "element": "Terre",
+        "tension": "Tu vois précisément ce qui cloche et personne ne veut l'entendre. Ton exigence passe pour de la manie.",
+        "resolution": "Réparer une chose que tout le monde avait décidé d'ignorer, et que l'on ne peut plus ignorer une fois réparée."
+      },
+      "balance": {
+        "name": "Balance",
+        "element": "Air",
+        "tension": "Tu cherches l'équilibre et on te demande de trancher. Ta nuance passe pour de l'indécision.",
+        "resolution": "Trancher une fois, franchement, sans revenir dessus, en sachant ce que ça coûte."
+      },
+      "scorpion": {
+        "name": "Scorpion",
+        "element": "Eau",
+        "tension": "Tu ne sais pas faire tiède et l'époque ne tolère que le tiède. Ton intensité passe pour une menace.",
+        "resolution": "Mettre cette intensité au service d'une vérité que personne n'ose déterrer."
+      },
+      "sagittaire": {
+        "name": "Sagittaire",
+        "element": "Feu",
+        "tension": "Tu as besoin d'horizon et on t'assigne à résidence. Ton envie d'ailleurs passe pour de la fuite.",
+        "resolution": "Aller au bout d'un seul chemin, au lieu d'en commencer dix."
+      },
+      "capricorne": {
+        "name": "Capricorne",
+        "element": "Terre",
+        "tension": "Tu montes, et tu ne comptes pas ce que ça coûte à ceux qui restent en bas. Ta rigueur passe pour de la froideur.",
+        "resolution": "Renoncer à une marche pour ne laisser personne derrière, et découvrir que ça ne t'a rien enlevé."
+      },
+      "verseau": {
+        "name": "Verseau",
+        "element": "Air",
+        "tension": "Tu penses de travers et le groupe te le fait payer. Ta singularité passe pour de l'arrogance.",
+        "resolution": "Faire adopter cette idée de travers par ceux-là mêmes qui la refusaient."
+      },
+      "poissons": {
+        "name": "Poissons",
+        "element": "Eau",
+        "tension": "Tu absorbes ce que ressentent les autres et on te demande d'avoir des frontières. Ta porosité passe pour de la faiblesse.",
+        "resolution": "Poser une limite, une seule, et ne pas la déplacer, quoi qu'il en coûte."
+      }
+    }
+  },
+  "numerology": {
+    "note": "Numérologie indienne calculée par utils/numerology.ts depuis identity.birthday et identity.name. moolank (jour de naissance) = manière d'agir ; bhagyank (date entière) = forme de l'objectif ; namank (table chaldéenne appliquée au nom) = façon dont le monde reçoit le joueur. Ce bloc porte tout le texte.",
+    "generation_instruction": "TROIS COUCHES, ET ELLES NE SE CONCURRENCENT PAS.\n1. La MATIÈRE du monde vient du profil : villes, métiers, formations, tournants de vie, passions. C'est avec ça que tu fabriques les décors, les objets et les personnages.\n2. Le CONFLIT vient de la section SIGNE : c'est ce que la quête doit résoudre, son sens.\n3. La FORME vient de la section NOMBRES : la manière d'agir donne le style des actions possibles, la forme de l'objectif donne la nature concrète de ce qu'il faut accomplir, et la réception donne la façon dont les personnages traitent le joueur dès la première réplique.\nINTERDIT ABSOLU : ne nomme jamais un nombre, une planète, la numérologie, l'astrologie ni aucun signe. Rien de tout cela n'existe dans la fiction. Ces couches se voient dans les situations, jamais dans une étiquette.",
+    "numbers": {
+      "1": {
+        "drive": "Tu avances seul et tu décides seul ; déléguer te coûte plus cher que de tout porter.",
+        "destiny": "Prendre la tête de quelque chose que personne ne veut diriger.",
+        "reception": "On te suit ou on te conteste, mais on ne t'ignore jamais."
+      },
+      "2": {
+        "drive": "Tu perçois les rapports de force avant les mots, et tu t'ajustes sans qu'on le voie.",
+        "destiny": "Réconcilier deux camps qui ont juré de ne plus se parler.",
+        "reception": "On te confie ce qu'on ne dit à personne d'autre."
+      },
+      "3": {
+        "drive": "Tu comprends vite et tu ne supportes pas de garder ça pour toi.",
+        "destiny": "Transmettre un savoir que quelqu'un a intérêt à voir disparaître.",
+        "reception": "On vient te demander conseil, et parfois on t'en veut de l'avoir donné."
+      },
+      "4": {
+        "drive": "Tu fais les choses de travers et ça fonctionne, jusqu'au moment où ça ne fonctionne plus.",
+        "destiny": "Défaire un système de l'intérieur, sans qu'il s'en aperçoive à temps.",
+        "reception": "On se méfie de toi sans savoir dire pourquoi."
+      },
+      "5": {
+        "drive": "Tu bouges, tu négocies, tu trouves l'angle ; rester en place t'étouffe.",
+        "destiny": "Faire circuler une chose que tout le monde s'était entendu pour bloquer.",
+        "reception": "On te croit sur parole une fois de trop."
+      },
+      "6": {
+        "drive": "Tu tiens à ce qui est beau et à ceux qui t'entourent, quitte à fermer les yeux.",
+        "destiny": "Sauver quelque chose que tous ont jugé sans valeur.",
+        "reception": "On s'attache à toi vite, et on te demande beaucoup."
+      },
+      "7": {
+        "drive": "Tu cherches ce qu'il y a derrière, et tu t'éloignes de ce qu'il y a devant.",
+        "destiny": "Exhumer ce qui a été enterré, puis décider quoi en faire.",
+        "reception": "On te trouve absent même quand tu es là."
+      },
+      "8": {
+        "drive": "Tu encaisses, tu recommences, et tu n'oublies rien.",
+        "destiny": "Obtenir réparation pour une dette que personne ne veut reconnaître.",
+        "reception": "On te respecte tard, et rarement à voix haute."
+      },
+      "9": {
+        "drive": "Tu vas au conflit là où les autres contournent.",
+        "destiny": "Tenir une position que tout le monde a abandonnée.",
+        "reception": "On t'appelle quand ça tourne mal, jamais avant."
+      }
+    }
   }
 }

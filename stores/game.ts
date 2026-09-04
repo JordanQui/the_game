@@ -12,6 +12,9 @@ export const useGameStore = defineStore('game', {
     sceneImageError: null as string | null,
     activeNpcId: null as string | null,
     paywallTriggered: false,
+    /** Verdict de fin quand le joueur n'est jamais sorti. */
+    lockVerdict: null as string | null,
+    lockRecap: [] as string[],
     conversationHistory: [] as Array<{ role: 'user' | 'assistant'; content: string }>,
     /** Dernière commande jouée, pour pouvoir relancer un tour qui a échoué. */
     lastCommand: null as string | null,
@@ -108,6 +111,14 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    /** Le joueur a trop traîné : la partie se ferme sur un constat. */
+    lockGame(verdict: string, recap: string[]) {
+      this.lockVerdict = verdict
+      this.lockRecap = recap
+      this.playingSubState = 'awaiting_input'
+      this.currentScreen = 'locked'
+    },
+
     triggerPaywall() {
       this.paywallTriggered = true
       this.currentScreen = 'paywall'
@@ -123,6 +134,8 @@ export const useGameStore = defineStore('game', {
       this.sceneImageError = null
       this.activeNpcId = null
       this.paywallTriggered = false
+      this.lockVerdict = null
+      this.lockRecap = []
       this.conversationHistory = []
       this.lastCommand = null
       this.lastMode = null

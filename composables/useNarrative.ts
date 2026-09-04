@@ -1,4 +1,4 @@
-import type { SceneNPC, TurnContext, TurnMode } from '~/types/scene'
+import type { SceneNPC, TurnContext, TurnMode, LockResponse } from '~/types/scene'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 
@@ -23,6 +23,7 @@ export function useNarrative() {
       place: scene.place,
       quest: scene.quest,
       npcs: scene.npcs,
+      theme: scene.theme ?? null,
     }
   }
 
@@ -67,6 +68,7 @@ export function useNarrative() {
           input,
           npcId: npc?.id,
           mode,
+          turnCount: gameStore.turnCount,
           history: gameStore.conversationHistory,
         }),
       })
@@ -130,7 +132,43 @@ export function useNarrative() {
     gameStore.setActiveNpc(npc?.id ?? null)
 
     const text = await streamTurn(input, npc, mode)
-    if (text) gameStore.incrementTurn(input, text)
+    if (!text) return
+
+    gameStore.incrementTurn(input, text)
+    await lockIfOverstayed()
+  }
+
+  /**
+   * Le joueur n'est jamais sorti : au seuil du script, la partie se ferme.
+   *
+   * Le tour vient d'être joué et reste lisible à l'écran ; c'est l'écran de
+   * blocage qui prend la main juste après, avec le constat et le rappel.
+   */
+  async function lockIfOverstayed() {
+    const scene = playerStore.scene
+    const limit = scene?.pacing?.lock_after_turns
+    if (!scene || !limit || gameStore.turnCount < limit) return
+    if (gameStore.currentScreen !== 'playing') return
+
+    const context = buildContext()
+    if (!context) return
+
+    try {
+      const verdict = await $fetch<LockResponse>('/api/narrative/lock', {
+        method: 'POST',
+        body: {
+          sceneId: scene.scene_id,
+          context,
+          turnCount: gameStore.turnCount,
+          history: gameStore.conversationHistory,
+        },
+      })
+      gameStore.lockGame(verdict.verdict, verdict.recap)
+    } catch {
+      // Un verdict manquant ne doit pas laisser le joueur tourner en rond :
+      // on ferme quand même, avec le texte de porte du script.
+      gameStore.lockGame(scene.paywall.gate_text, [])
+    }
   }
 
   async function handlePlayerInput(input: string, mode?: TurnMode) {

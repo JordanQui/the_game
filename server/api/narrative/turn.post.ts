@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     max_tokens: scene.turn.max_tokens,
     stream: true,
     messages: [
-      { role: 'system', content: scene.buildTurnSystemPrompt(body.context) },
+      { role: 'system', content: scene.buildTurnSystemPrompt(body.context, body.turnCount ?? 0) },
       ...buildConversationHistory(body.history ?? []),
       { role: 'user', content: scene.buildTurnUserPrompt(body.context, body.input, npc, body.mode) },
     ],

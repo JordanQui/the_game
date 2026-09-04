@@ -6,6 +6,7 @@ import type {
   ResolvedScene,
   SceneExit,
 } from '~/types/script'
+import type { PlayerTheme } from '~/types/scene'
 import type {
   GeneratedScene,
   SceneTextResponse,
@@ -19,6 +20,8 @@ import type { UserProfile } from '~/types/user'
 import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
+import { zodiacKey } from '~/utils/zodiac'
+import { numerologyOf } from '~/utils/numerology'
 
 // Les JSON sont importés, pas lus sur le disque : en serverless (Vercel) le
 // process ne voit que le bundle, jamais l'arborescence du repo. L'import les
@@ -82,6 +85,34 @@ export function describeUser(user: UserProfile): string {
   return lines.join('\n')
 }
 
+/**
+ * Résout le thème intime du joueur : signe et nombres.
+ *
+ * Les calculs sont dans utils/zodiac.ts et utils/numerology.ts, les textes dans
+ * script.json. Cette fonction ne fait que les apparier — et tolère qu'il manque
+ * la date ou le nom : chaque facette retombe indépendamment sur null.
+ */
+export function resolveTheme(user: UserProfile, script: Script): PlayerTheme | null {
+  const key = zodiacKey(user.identity.birthday)
+  const entry = key ? script.zodiac?.signs?.[key] : undefined
+  const numbers = numerologyOf(user.identity.birthday, user.identity.name)
+  const table = script.numerology?.numbers ?? {}
+
+  const facet = (n: number | null | undefined, field: 'drive' | 'destiny' | 'reception') =>
+    n ? table[String(n)]?.[field] ?? null : null
+
+  const sign = key && entry ? { key, ...entry } : null
+  const resolved = {
+    drive: facet(numbers?.moolank, 'drive'),
+    destiny: facet(numbers?.bhagyank, 'destiny'),
+    reception: facet(numbers?.namank, 'reception'),
+  }
+
+  const hasNumbers = Boolean(resolved.drive || resolved.destiny || resolved.reception)
+  if (!sign && !hasNumbers) return null
+  return { sign, numbers: resolved }
+}
+
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
 
 /**
@@ -102,6 +133,13 @@ export class SceneRuntime {
   get fallbacks() { return this.scene.error_fallbacks }
   /** Illustration figée de la scène, ou null si elle doit être générée. */
   get staticImage() { return this.scene.static_image ?? null }
+  /** Seuils de relance et de blocage, envoyés au client avec la scène. */
+  get pacing() {
+    return {
+      steer_after_turns: this.scene.turn.steer_after_turns,
+      lock_after_turns: this.scene.turn.lock_after_turns,
+    }
+  }
 
   /** Message utilisateur envoyé à gpt-4o pour produire la scène. */
   buildGenerationPrompt(user: UserProfile): string {
@@ -115,9 +153,12 @@ export class SceneRuntime {
       .map(([k, v]) => `  - ${k} : ${v}`)
       .join('\n')
 
+    const theme = resolveTheme(user, this.script)
+    const themeBlock = theme ? this.describeTheme(theme) : ''
+
     return `PROFIL DU JOUEUR
 ${describeUser(user)}
-
+${themeBlock}
 NOM DU LIEU
 ${s.naming.instruction}
 
@@ -139,6 +180,8 @@ ${questFields}
 
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
+${s.narrative.vocabulary}
+La sortie de ce lieu se nomme exactement : ${s.exits[0]?.label ?? 'le sas'}.
 Structure imposée :
 ${s.narrative.structure.map((x, i) => `  ${i + 1}. ${x}`).join('\n')}
 Maximum ${s.narrative.max_words} mots. Interdit : ${s.narrative.forbidden.join(', ')}.
@@ -147,6 +190,35 @@ Le champ "interactables" doit lister exactement les objets nommés dans le texte
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
 ${JSON.stringify(s.generation.output_schema, null, 2)}`
+  }
+
+  /** Les sections SIGNE et NOMBRES du prompt de génération. */
+  private describeTheme(theme: PlayerTheme): string {
+    const parts: string[] = []
+
+    if (theme.sign) {
+      parts.push(`
+SIGNE
+${this.script.zodiac.generation_instruction}
+Tension : ${theme.sign.tension}
+Résolution recherchée : ${theme.sign.resolution}`)
+    }
+
+    const n = theme.numbers
+    if (n.drive || n.destiny || n.reception) {
+      const lines = [
+        n.drive ? `  - Manière d'agir : ${n.drive}` : '',
+        n.destiny ? `  - Forme de l'objectif : ${n.destiny}` : '',
+        n.reception ? `  - Accueil du monde : ${n.reception}` : '',
+      ].filter(Boolean).join('\n')
+
+      parts.push(`
+NOMBRES
+${this.script.numerology.generation_instruction}
+${lines}`)
+    }
+
+    return parts.join('\n')
   }
 
   /**
@@ -218,7 +290,7 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
   }
 
   /** Fusionne la sortie du modèle avec les parties statiques du script. */
-  assembleText(generated: GeneratedScene): SceneTextResponse {
+  assembleText(generated: GeneratedScene, theme: PlayerTheme | null = null): SceneTextResponse {
     const exit = this.scene.exits[0]
 
     // Le modèle produit des couleurs qui ne tiennent pas la hiérarchie Dark Deco.
@@ -261,6 +333,8 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
         decor: scene.decor,
       }),
       static_image: this.staticImage,
+      pacing: this.pacing,
+      theme,
       palette_audit: {
         adjusted: audit.adjusted,
         original_dominant: audit.original_dominant,
@@ -282,14 +356,20 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     }
   }
 
-  /** Prompt système d'un tour de jeu : les faits de la scène, figés. */
-  buildTurnSystemPrompt(ctx: TurnContext): string {
+  /**
+   * Prompt système d'un tour de jeu : les faits de la scène, figés.
+   *
+   * Passé `steer_after_turns`, une consigne d'orientation vers la sortie est
+   * ajoutée. Elle vient du script, jamais du client : c'est la même règle que
+   * pour le reste du prompt.
+   */
+  buildTurnSystemPrompt(ctx: TurnContext, turnCount = 0): string {
     const t = this.scene.turn
     const npcList = ctx.npcs.length
       ? ctx.npcs.map(n => `${n.name} (${n.archetype})`).join(', ')
       : 'personne'
 
-    return interpolate(t.system_prompt_template, {
+    const base = interpolate(t.system_prompt_template, {
       scene_title: this.scene.title,
       player_name: ctx.player_name,
       place_name: ctx.place.name,
@@ -299,8 +379,37 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
       quest_stakes: ctx.quest.stakes,
       quest_artifact: ctx.quest.artifact,
       npc_list: npcList,
-      narrative_instruction: this.scene.narrative.instruction,
+      narrative_instruction: `${this.scene.narrative.instruction}\n${this.scene.narrative.vocabulary}`,
       max_words: String(t.max_words),
+      exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+    })
+
+    const themed = ctx.theme?.sign
+      ? `${base}\n\n${interpolate(this.script.zodiac.turn_instruction, { tension: ctx.theme.sign.tension })}`
+      : base
+
+    if (turnCount < t.steer_after_turns) return themed
+    return `${themed}\n\n${t.steer_instruction}`
+  }
+
+  /** Prompt du verdict de fin, quand le joueur n'est jamais sorti. */
+  buildLockPrompt(ctx: TurnContext, turnCount: number): string {
+    const t = this.scene.turn
+    const npcList = ctx.npcs.length
+      ? ctx.npcs.map(n => `${n.name} (${n.archetype})`).join(', ')
+      : 'personne'
+
+    return interpolate(t.lock_prompt_template, {
+      player_name: ctx.player_name,
+      place_name: ctx.place.name,
+      place_reputation: ctx.place.reputation,
+      quest_title: ctx.quest.title,
+      quest_objective: ctx.quest.objective,
+      quest_stakes: ctx.quest.stakes,
+      quest_artifact: ctx.quest.artifact,
+      quest_why_leave: ctx.quest.why_leave,
+      npc_list: npcList,
+      turn_count: String(turnCount),
       exit_label: this.scene.exits[0]?.label ?? 'la sortie',
     })
   }

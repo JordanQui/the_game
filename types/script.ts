@@ -57,6 +57,8 @@ export interface NarrativeRules {
   structure: string[]
   max_words: number
   forbidden: string[]
+  /** Lexique imposé du monde. Appliqué à la génération comme aux tours. */
+  vocabulary: string
 }
 
 export interface TurnRules {
@@ -66,6 +68,16 @@ export interface TurnRules {
   ambient_prompt: string
   npc_dialogue_prompt: string
   exit_nudge_prompt: string
+
+  /** Tour à partir duquel le narrateur oriente activement vers la sortie. */
+  steer_after_turns: number
+  /** Consigne ajoutée au prompt système une fois ce seuil franchi. */
+  steer_instruction: string
+  /** Tour à partir duquel la partie se bloque faute d'être sortie. */
+  lock_after_turns: number
+  /** Prompts du verdict de blocage. Le modèle répond en JSON. */
+  lock_system_prompt: string
+  lock_prompt_template: string
 }
 
 export interface GenerationConfig {
@@ -145,6 +157,37 @@ export interface SceneScript {
   generation?: Partial<GenerationConfig>
 }
 
+export interface ZodiacSignScript {
+  name: string
+  element: string
+  /** Le conflit intérieur que le signe inflige dans le rapport à la société. */
+  tension: string
+  /** À quoi ressemble sa résolution, en acte. */
+  resolution: string
+}
+
+export interface ZodiacScript {
+  note?: string
+  generation_instruction: string
+  turn_instruction: string
+  signs: Record<string, ZodiacSignScript>
+}
+
+export interface NumerologyNumberScript {
+  /** Manière d'agir — porté par le moolank. */
+  drive: string
+  /** Forme concrète de l'objectif — porté par le bhagyank. */
+  destiny: string
+  /** Façon dont le monde reçoit le joueur — porté par le namank. */
+  reception: string
+}
+
+export interface NumerologyScript {
+  note?: string
+  generation_instruction: string
+  numbers: Record<string, NumerologyNumberScript>
+}
+
 export interface PaywallConfig {
   gate_text: string
   cta: string
@@ -161,6 +204,8 @@ export interface Script {
   defaults: ScriptDefaults
   scenes: SceneScript[]
   paywall: PaywallConfig
+  zodiac: ZodiacScript
+  numerology: NumerologyScript
 }
 
 /** Une scène dont les defaults ont été résolus : plus aucun champ optionnel. */

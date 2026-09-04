@@ -47,6 +47,36 @@ export function useSceneCommands() {
       },
     },
     {
+      name: 'blocage',
+      help: 'force la fin de nuit : verdict et rappel de ce qu\'il fallait comprendre',
+      run() {
+        const scene = playerStore.scene
+        if (!scene) {
+          say('Aucune scène chargée.')
+          return
+        }
+        say('Fin de nuit forcée.')
+        // On passe par le même endpoint que le blocage réel : ce que tu vois
+        // ici est exactement ce que verra un joueur au huitième tour.
+        void $fetch<{ verdict: string; recap: string[] }>('/api/narrative/lock', {
+          method: 'POST',
+          body: {
+            sceneId: scene.scene_id,
+            context: {
+              player_name: playerStore.playerName,
+              place: scene.place,
+              quest: scene.quest,
+              npcs: scene.npcs,
+            },
+            turnCount: gameStore.turnCount,
+            history: gameStore.conversationHistory,
+          },
+        })
+          .then(res => gameStore.lockGame(res.verdict, res.recap))
+          .catch(() => gameStore.lockGame(scene.paywall.gate_text, []))
+      },
+    },
+    {
       name: 'aide',
       help: 'liste les commandes disponibles',
       run() {
