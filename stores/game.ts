@@ -12,6 +12,12 @@ export const useGameStore = defineStore('game', {
     sceneImageError: null as string | null,
     activeNpcId: null as string | null,
     paywallTriggered: false,
+    /** Objet-clé : sans lui, le sas reste fermé. */
+    hasKeyItem: false,
+    /** Échanges déjà eus avec le détenteur de l'objet. */
+    keyItemExchanges: 0,
+    /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
+    talkedToNpcIds: [] as string[],
     /** Verdict de fin quand le joueur n'est jamais sorti. */
     lockVerdict: null as string | null,
     lockRecap: [] as string[],
@@ -111,6 +117,19 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    /** Un échange de plus avec le détenteur de l'objet. */
+    recordKeyItemExchange() {
+      this.keyItemExchanges++
+    },
+
+    receiveKeyItem() {
+      this.hasKeyItem = true
+    },
+
+    recordNpcTalk(npcId: string) {
+      if (!this.talkedToNpcIds.includes(npcId)) this.talkedToNpcIds.push(npcId)
+    },
+
     /** Le joueur a trop traîné : la partie se ferme sur un constat. */
     lockGame(verdict: string, recap: string[]) {
       this.lockVerdict = verdict
@@ -134,6 +153,9 @@ export const useGameStore = defineStore('game', {
       this.sceneImageError = null
       this.activeNpcId = null
       this.paywallTriggered = false
+      this.hasKeyItem = false
+      this.keyItemExchanges = 0
+      this.talkedToNpcIds = []
       this.lockVerdict = null
       this.lockRecap = []
       this.conversationHistory = []

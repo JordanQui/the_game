@@ -61,21 +61,25 @@
     },
     "narrative": {
       "style": "text_adventure_80s",
-      "instruction": "Écris à la manière d'un jeu d'aventure textuel des années 80. Présent, deuxième personne du singulier. Phrases courtes et factuelles. D'abord où tu es, puis ce que tu vois, puis ce que tu peux faire. Nomme explicitement chaque objet et chaque sortie manipulable : le joueur ne peut interagir qu'avec ce qui est nommé. Aucune prose romanesque, aucune métaphore filée, aucune question au joueur.",
+      "instruction": "Écris à la manière d'un jeu d'aventure textuel des années 80. Présent, deuxième personne du singulier. Phrases courtes et factuelles. D'abord POURQUOI tu es sorti ce soir, puis où tu es, puis ce que tu vois, puis ce que tu peux faire. Nomme explicitement chaque objet et chaque sortie manipulable : le joueur ne peut interagir qu'avec ce qui est nommé. Aucune prose romanesque, aucune métaphore filée, aucune question au joueur.",
       "structure": [
+        "1 à 2 phrases d'ouverture : pourquoi tu es sorti ce soir",
         "1 phrase de localisation",
         "3 à 5 phrases de description reprenant les slots de décor",
+        "1 à 2 phrases sur ce qui se murmure ici ce soir : l'amorce de la quête",
+        "1 ligne 'Ici ce soir :' nommant les trois personnes présentes et ce que chacune semble savoir",
         "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
-        "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action disponibles"
+        "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action, dont parler à quelqu'un"
       ],
-      "max_words": 140,
+      "max_words": 230,
       "forbidden": [
         "mention d'IA",
         "question directe au joueur",
         "vocabulaire médiéval ou fantasy",
         "bris du quatrième mur"
       ],
-      "vocabulary": "LEXIQUE IMPOSÉ — le monde est cyberpunk, pas médiéval.\nLa sortie est un SAS. N'écris jamais « porte », « battant », « seuil » ni « huis » : c'est un sas, et le mot doit apparaître tel quel dans la ligne « Sorties : » comme dans le verbe d'action.\nDe même : un bar ou un comptoir, jamais une auberge ni une taverne ; des néons, des écrans et des tubes, jamais des torches, des lanternes ni des bougies ; un barman, jamais un aubergiste ; des câbles et des structures, jamais des poutres."
+      "vocabulary": "LEXIQUE IMPOSÉ — le monde est cyberpunk, pas médiéval.\nLa sortie est un SAS. N'écris jamais « porte », « battant », « seuil » ni « huis » : c'est un sas, et le mot doit apparaître tel quel dans la ligne « Sorties : » comme dans le verbe d'action.\nDe même : un bar ou un comptoir, jamais une auberge ni une taverne ; des néons, des écrans et des tubes, jamais des torches, des lanternes ni des bougies ; un barman, jamais un aubergiste ; des câbles et des structures, jamais des poutres.",
+      "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti ce soir : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif doit s'accorder à la tension intime décrite dans la section SIGNE, sans jamais la nommer — c'est ce qu'il fuit ce soir qui sera exactement ce qu'il devra affronter dehors.\nEnsuite, en une ou deux phrases, ce qui se dit ici ce soir : l'affaire de la quête, ce qui ne tourne plus rond dans la ville. Assez pour donner envie, pas assez pour tout comprendre."
     },
     "turn": {
       "max_tokens": 220,
@@ -88,7 +92,11 @@
       "lock_after_turns": 8,
       "steer_instruction": "ORIENTATION VERS LA SORTIE — le joueur traîne, il a déjà joué plusieurs tours sans partir.\nÀ partir de maintenant, termine CHAQUE réponse en rendant la sortie plus présente : ce que le joueur a appris et qui rend le départ nécessaire, ce qu'un habitué laisse entendre sur ce qui l'attend dehors, ou un signe concret venu du sas. Sois de plus en plus direct à chaque tour.\nTu peux nommer explicitement ce qu'il faut faire — franchir le sas — mais jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets. Tu décris le monde, tu ne pilotes pas le joueur.",
       "lock_system_prompt": "Tu es le narrateur d'un jeu d'aventure textuel cyberpunk en français. La partie s'arrête : le joueur est resté au comptoir sans jamais franchir le sas. Tu écris le constat de fin, sur un ton sec, un peu narquois, jamais moralisateur ni insultant. Tu réponds exclusivement en JSON valide, sans markdown, sans commentaire.",
-      "lock_prompt_template": "Joueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nRaison de partir : {{quest_why_leave}}\nSortie : {{exit_label}}\nPersonnages présents : {{npc_list}}\n\nLe joueur a joué {{turn_count}} tours sans jamais franchir le sas.\n\nProduis un objet JSON avec exactement deux champs :\n- \"verdict\" : 2 à 3 phrases à la deuxième personne du singulier, au présent. Constate qu'il a préféré rester à boire au comptoir plutôt que partir à l'aventure. Appuie-toi sur ce qui s'est réellement passé dans la conversation. Ton sec et un peu narquois, sans insulte, sans morale.\n- \"recap\" : un tableau de 3 à 4 chaînes. Chacune est une phrase courte rappelant ce qu'il fallait comprendre pour sortir : ce que la quête réclamait, ce que les habitués avaient laissé entendre, et le fait que le sas était la seule issue. Factuel, à la deuxième personne.\n\nAucun autre champ. Réponds en français."
+      "lock_prompt_template": "Joueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nArtefact : {{quest_artifact}}\nRaison de partir : {{quest_why_leave}}\nSortie : {{exit_label}}\nPersonnages présents : {{npc_list}}\n\nLe joueur a joué {{turn_count}} tours sans jamais franchir le sas.\n\nProduis un objet JSON avec exactement deux champs :\n- \"verdict\" : 2 à 3 phrases à la deuxième personne du singulier, au présent. Constate qu'il a préféré rester à boire au comptoir plutôt que partir à l'aventure. Appuie-toi sur ce qui s'est réellement passé dans la conversation. Ton sec et un peu narquois, sans insulte, sans morale.\n- \"recap\" : un tableau de 3 à 4 chaînes. Chacune est une phrase courte rappelant ce qu'il fallait comprendre pour sortir : ce que la quête réclamait, ce que les habitués avaient laissé entendre, et le fait que le sas était la seule issue. Factuel, à la deuxième personne.\n\nAucun autre champ. Réponds en français.",
+      "key_item_context": "OBJET-CLÉ DE LA SCÈNE : {{item_name}} — {{item_description}}\nDétenu par {{item_holder}}. Il permet de rétablir : {{item_why}}\nCe personnage attend d'abord ceci du joueur : {{item_handover_hint}}\nTant que le joueur ne l'a pas, franchir {{exit_label}} ne sert à rien, et tous les personnages le savent. Ne remets jamais l'objet de ta propre initiative : on te dira quand.",
+      "handover_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}.\nLe joueur t'a dit : « {{player_input}} ».\nIl t'a assez parlé : tu lui remets MAINTENANT {{item_name}} ({{item_description}}).\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Dis pourquoi tu t'en sépares, et ce qu'il doit en faire : {{item_why}}. Termine en le poussant vers {{exit_label}}. Tu parles, tu ne décris pas ton geste à la troisième personne.",
+      "blocked_exit_prompt": "Le joueur veut franchir {{exit_label}} : « {{player_input}} ». Il n'a pas encore {{item_name}}, et sans cet objet, sortir ne servirait à rien.\nÉcris 1 à 2 phrases de narration à la deuxième personne : il approche du sas, et quelque chose le retient — il lui manque ce que {{npc_name}} garde encore.\nInterdits absolus : ne dis jamais quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions.",
+      "steer_instruction_missing_item": "ORIENTATION VERS L'OBJET — le joueur traîne et n'a toujours pas {{item_name}}.\nÀ partir de maintenant, termine CHAQUE réponse en ramenant l'attention vers {{npc_name}} : ce que ce personnage laisse entendre, un regard, une phrase surprise à une autre table, un détail qui dit qu'il en sait plus que les autres. Sois de plus en plus direct à chaque tour.\nNe pousse PAS vers le sas : sans l'objet, sortir ne mène nulle part, et le joueur doit le sentir. Tu peux nommer le personnage, jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets."
     },
     "generation": {
       "model": "gpt-4o",
@@ -147,7 +155,8 @@
           "stakes": "string",
           "artifact": "string",
           "antagonist_hint": "string",
-          "why_leave": "string"
+          "why_leave": "string",
+          "restoration": "string"
         },
         "interactables": [
           {
@@ -156,14 +165,22 @@
             "verb": "string"
           }
         ],
-        "scene_text": "string (texte années 80, structure imposée, sauts de ligne inclus)"
+        "scene_text": "string (texte années 80, structure imposée, sauts de ligne inclus)",
+        "key_item": {
+          "npc_id": "string (l'id d'un des npcs ci-dessus)",
+          "name": "string (nom de l'objet, court)",
+          "description": "string (à quoi il ressemble, une phrase)",
+          "why": "string (ce qu'il permet de rétablir dans la ville, une phrase)",
+          "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)"
+        }
       }
     },
     "error_fallbacks": {
       "narrative_error": "Le barman lève les yeux de son comptoir. « Répète un peu ça. »",
       "loading_message": "Le monde se dessine...",
       "image_loading": "La pluie brouille encore les néons...",
-      "image_error": "L'image ne se forme pas. Le texte, lui, tient toujours."
+      "image_error": "L'image ne se forme pas. Le texte, lui, tient toujours.",
+      "key_item_received": "Tu tiens maintenant {{item_name}}."
     }
   },
   "scenes": [
@@ -243,7 +260,8 @@
           "stakes": "Ce qui est perdu en cas d'échec, une phrase",
           "artifact": "L'objet à retrouver ou détruire",
           "antagonist_hint": "Allusion à la menace, sans la nommer",
-          "why_leave": "La raison concrète pour laquelle rester au comptoir n'est plus tenable"
+          "why_leave": "La raison concrète pour laquelle rester au comptoir n'est plus tenable",
+          "restoration": "Ce qu'il faut rétablir dans la ville — l'équilibre rompu, directement lié à la tension intime du joueur"
         }
       },
       "interactables": {
@@ -308,9 +326,14 @@
             "hatch"
           ],
           "min_turns_before_trigger": 2,
-          "leads_to": "PAYWALL"
+          "leads_to": "PAYWALL",
+          "requires_key_item": true
         }
-      ]
+      ],
+      "key_item": {
+        "instruction": "OBJET-CLÉ — sans lui, impossible de franchir le sas. C'est le coeur de la scène.\nChoisis TOI-MÊME lequel des personnages le détient, et ce que c'est. L'objet doit être concret, tenir dans une main, et appartenir à l'univers cyberpunk du lieu.\nIl n'est pas un trophée : il sert à RÉTABLIR quelque chose dans la ville — l'équilibre décrit dans quest.restoration. Ce déséquilibre est la transposition urbaine de la tension intime du joueur : ce qu'il n'arrive pas à faire dans sa vie, la ville en souffre à son échelle.\nLe personnage qui le détient est celui dont le rapport à cette tension rend la remise signifiante. Il ne le donne pas d'emblée : `handover_hint` dit ce qu'il attend du joueur d'abord — qu'on l'écoute, qu'on admette quelque chose, qu'on lui pose la bonne question.",
+        "exchanges_before_handover": 2
+      }
     }
   ],
   "paywall": {

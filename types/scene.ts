@@ -36,6 +36,20 @@ export interface SceneNPC {
   portraitUrl?: string
 }
 
+/** L'objet remis par un PNJ, sans lequel la sortie est fermée. */
+export interface SceneKeyItem {
+  /** Id du PNJ qui le détient. Choisi par le modèle. */
+  npc_id: string
+  name: string
+  description: string
+  /** Ce qu'il permet de rétablir dans la ville. */
+  why: string
+  /** Ce que le détenteur attend du joueur avant de le céder. */
+  handover_hint: string
+  /** Nombre d'échanges avec le détenteur avant la remise. */
+  exchanges_before_handover: number
+}
+
 export interface SceneQuest {
   title: string
   hook: string
@@ -44,6 +58,8 @@ export interface SceneQuest {
   artifact: string
   antagonist_hint: string
   why_leave: string
+  /** L'équilibre rompu dans la ville, que l'objet-clé permet de rétablir. */
+  restoration: string
 }
 
 export interface Interactable {
@@ -69,6 +85,8 @@ export interface GeneratedScene {
   quest: SceneQuest
   interactables: Interactable[]
   scene_text: string
+  /** Choisi par le modèle : qui détient l'objet, et lequel. */
+  key_item: Omit<SceneKeyItem, 'exchanges_before_handover'>
 }
 
 export interface ScenePaywall {
@@ -95,6 +113,8 @@ export interface SceneTextResponse extends GeneratedScene {
   pacing: ScenePacing
   /** Thème intime du joueur. Les PNJ s'en nourrissent sans jamais le nommer. */
   theme: PlayerTheme | null
+  /** Objet sans lequel le sas reste fermé. */
+  key_item: SceneKeyItem | null
   paywall: ScenePaywall
   /** Trace de la correction d'accent appliquée côté serveur. */
   palette_audit: {
@@ -168,10 +188,14 @@ export interface TurnContext {
   npcs: SceneNPC[]
   /** Reporté depuis la scène : ce que les PNJ doivent faire affleurer. */
   theme?: PlayerTheme | null
+  /** Reporté depuis la scène : l'objet qui conditionne la sortie. */
+  key_item?: SceneKeyItem | null
+  /** Le joueur le détient-il déjà ? Décide vers quoi le narrateur oriente. */
+  has_key_item?: boolean
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */
-export type TurnMode = 'ambient' | 'npc' | 'exit_nudge'
+export type TurnMode = 'ambient' | 'npc' | 'exit_nudge' | 'handover' | 'blocked_exit'
 
 export interface TurnRequest {
   sceneId?: string

@@ -59,6 +59,8 @@ export interface NarrativeRules {
   forbidden: string[]
   /** Lexique imposé du monde. Appliqué à la génération comme aux tours. */
   vocabulary: string
+  /** Pourquoi le joueur est sorti ce soir. N'existe que pour le texte initial. */
+  opening: string
 }
 
 export interface TurnRules {
@@ -73,11 +75,20 @@ export interface TurnRules {
   steer_after_turns: number
   /** Consigne ajoutée au prompt système une fois ce seuil franchi. */
   steer_instruction: string
+  /** Variante employée tant que l'objet-clé n'est pas obtenu. */
+  steer_instruction_missing_item: string
   /** Tour à partir duquel la partie se bloque faute d'être sortie. */
   lock_after_turns: number
   /** Prompts du verdict de blocage. Le modèle répond en JSON. */
   lock_system_prompt: string
   lock_prompt_template: string
+
+  /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
+  key_item_context: string
+  /** Réplique du détenteur au moment où il remet l'objet. */
+  handover_prompt: string
+  /** Narration quand le joueur veut sortir sans l'objet. */
+  blocked_exit_prompt: string
 }
 
 export interface GenerationConfig {
@@ -148,6 +159,8 @@ export interface SceneScript {
   quest: { instruction: string; source: string; structure: Record<string, string> }
   interactables: { instruction: string; always_include: AlwaysIncludeInteractable[] }
   exits: SceneExit[]
+  /** Règle de conception de l'objet sans lequel on ne peut pas sortir. */
+  key_item: { instruction: string; exchanges_before_handover: number }
 
   /** Surcharges optionnelles des defaults, scène par scène. */
   art_direction?: Partial<ArtDirection>

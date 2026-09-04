@@ -32,7 +32,15 @@ export function usePaywall() {
     const paywall = playerStore.scene?.paywall
     if (!paywall) return false
     if (gameStore.turnCount < paywall.min_turns_before_trigger) return false
+    // Sans l'objet-clé, sortir n'a pas de sens : le sas reste fermé.
+    if (playerStore.scene?.key_item && !gameStore.hasKeyItem) return false
     return matchesKeyword(input, paywall.exit_keywords)
+  }
+
+  /** Le joueur veut sortir mais il lui manque l'objet. */
+  function blockedByKeyItem(input: string): boolean {
+    if (!playerStore.scene?.key_item || gameStore.hasKeyItem) return false
+    return matchesKeyword(input, playerStore.scene.paywall.exit_keywords)
   }
 
   /** Le joueur parle de sortir, mais il est trop tôt : on le relance vers la porte. */
@@ -113,5 +121,5 @@ export function usePaywall() {
     }
   }
 
-  return { checkPaywallTrigger, mentionsExit, initSquarePayments, fetchPaymentIntent, submitPayment }
+  return { checkPaywallTrigger, blockedByKeyItem, mentionsExit, initSquarePayments, fetchPaymentIntent, submitPayment }
 }

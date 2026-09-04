@@ -24,6 +24,8 @@ export function useNarrative() {
       quest: scene.quest,
       npcs: scene.npcs,
       theme: scene.theme ?? null,
+      key_item: scene.key_item ?? null,
+      has_key_item: gameStore.hasKeyItem,
     }
   }
 
@@ -125,16 +127,48 @@ export function useNarrative() {
     }
   }
 
+  /**
+   * Le détenteur remet-il l'objet à ce tour ?
+   *
+   * La remise est décidée ici, pas par le modèle : on compte les échanges avec
+   * le bon personnage. Sinon elle dépendrait du bon vouloir de la génération,
+   * et la sortie pourrait rester fermée indéfiniment.
+   */
+  function isHandoverTurn(npc?: SceneNPC): boolean {
+    const item = playerStore.scene?.key_item
+    if (!item || !npc || gameStore.hasKeyItem) return false
+    if (npc.id !== item.npc_id) return false
+    return gameStore.keyItemExchanges + 1 >= item.exchanges_before_handover
+  }
+
   /** Joue un tour à partir d'une commande déjà inscrite dans l'historique. */
   async function runTurn(input: string, mode?: TurnMode) {
     // Une relance vers la sortie est narrée, jamais jouée par un PNJ.
-    const npc = mode === 'exit_nudge' ? undefined : findAddressedNpc(input)
+    const narrated = mode === 'exit_nudge' || mode === 'blocked_exit'
+    const npc = narrated ? undefined : findAddressedNpc(input)
     gameStore.setActiveNpc(npc?.id ?? null)
 
-    const text = await streamTurn(input, npc, mode)
+    const item = playerStore.scene?.key_item
+    const handover = !mode && isHandoverTurn(npc)
+    const effectiveMode: TurnMode | undefined = handover ? 'handover' : mode
+
+    if (npc) gameStore.recordNpcTalk(npc.id)
+    if (npc && item && npc.id === item.npc_id && !gameStore.hasKeyItem) {
+      gameStore.recordKeyItemExchange()
+    }
+
+    const text = await streamTurn(input, npc, effectiveMode)
     if (!text) return
 
     gameStore.incrementTurn(input, text)
+
+    // La remise n'est actée qu'une fois la réplique arrivée : sinon le joueur
+    // verrait l'objet apparaître avant qu'on lui explique pourquoi.
+    if (handover && item) {
+      gameStore.receiveKeyItem()
+      gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
+    }
+
     await lockIfOverstayed()
   }
 

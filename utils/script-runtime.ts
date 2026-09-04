@@ -6,7 +6,7 @@ import type {
   ResolvedScene,
   SceneExit,
 } from '~/types/script'
-import type { PlayerTheme } from '~/types/scene'
+import type { PlayerTheme, SceneKeyItem } from '~/types/scene'
 import type {
   GeneratedScene,
   SceneTextResponse,
@@ -178,10 +178,14 @@ QUÊTE
 ${s.quest.instruction}
 ${questFields}
 
+OBJET-CLÉ
+${s.key_item.instruction}
+
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
 ${s.narrative.vocabulary}
 La sortie de ce lieu se nomme exactement : ${s.exits[0]?.label ?? 'le sas'}.
+${s.narrative.opening}
 Structure imposée :
 ${s.narrative.structure.map((x, i) => `  ${i + 1}. ${x}`).join('\n')}
 Maximum ${s.narrative.max_words} mots. Interdit : ${s.narrative.forbidden.join(', ')}.
@@ -284,6 +288,15 @@ ${lines}`)
     }
 
     if (!generated.quest?.title) throw new Error('Scène invalide : quest.title manquant')
+
+    const item = generated.key_item
+    if (!item?.name || !item?.npc_id) {
+      throw new Error('Scène invalide : key_item.name ou key_item.npc_id manquant')
+    }
+    // Un détenteur inconnu rendrait la sortie impossible à débloquer.
+    if (!generated.npcs?.some(n => n.id === item.npc_id)) {
+      throw new Error(`Scène invalide : key_item.npc_id "${item.npc_id}" ne désigne aucun PNJ`)
+    }
     if (!Array.isArray(generated.npcs) || generated.npcs.length === 0) {
       throw new Error('Scène invalide : aucun PNJ')
     }
@@ -335,6 +348,10 @@ ${lines}`)
       static_image: this.staticImage,
       pacing: this.pacing,
       theme,
+      key_item: {
+        ...generated.key_item,
+        exchanges_before_handover: this.scene.key_item.exchanges_before_handover,
+      },
       palette_audit: {
         adjusted: audit.adjusted,
         original_dominant: audit.original_dominant,
@@ -384,12 +401,34 @@ ${lines}`)
       exit_label: this.scene.exits[0]?.label ?? 'la sortie',
     })
 
-    const themed = ctx.theme?.sign
-      ? `${base}\n\n${interpolate(this.script.zodiac.turn_instruction, { tension: ctx.theme.sign.tension })}`
+    const withItem = ctx.key_item
+      ? `${base}\n\n${interpolate(t.key_item_context, {
+          item_name: ctx.key_item.name,
+          item_description: ctx.key_item.description,
+          item_why: ctx.key_item.why,
+          item_handover_hint: ctx.key_item.handover_hint,
+          item_holder: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
+          exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+        })}`
       : base
 
+    const themed = ctx.theme?.sign
+      ? `${withItem}\n\n${interpolate(this.script.zodiac.turn_instruction, { tension: ctx.theme.sign.tension })}`
+      : withItem
+
     if (turnCount < t.steer_after_turns) return themed
-    return `${themed}\n\n${t.steer_instruction}`
+
+    // Tant que l'objet manque, pousser vers le sas enverrait le joueur sur une
+    // issue fermée : on l'oriente d'abord vers celui qui le détient.
+    const needsItem = Boolean(ctx.key_item) && !ctx.has_key_item
+    const steer = needsItem
+      ? interpolate(t.steer_instruction_missing_item, {
+          item_name: ctx.key_item?.name ?? "l'objet",
+          npc_name: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
+        })
+      : t.steer_instruction
+
+    return `${themed}\n\n${steer}`
   }
 
   /** Prompt du verdict de fin, quand le joueur n'est jamais sorti. */
@@ -417,6 +456,28 @@ ${lines}`)
   /** Prompt utilisateur : ambiance, relance vers la sortie, ou réplique d'un PNJ. */
   buildTurnUserPrompt(ctx: TurnContext, input: string, npc?: SceneNPC, mode?: TurnMode): string {
     const t = this.scene.turn
+
+    if (mode === 'handover' && npc && ctx.key_item) {
+      return interpolate(t.handover_prompt, {
+        npc_name: npc.name,
+        npc_archetype: npc.archetype,
+        npc_personality: npc.personality,
+        player_input: input,
+        item_name: ctx.key_item.name,
+        item_description: ctx.key_item.description,
+        item_why: ctx.key_item.why,
+        exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+      })
+    }
+
+    if (mode === 'blocked_exit' && ctx.key_item) {
+      return interpolate(t.blocked_exit_prompt, {
+        player_input: input,
+        exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+        item_name: ctx.key_item.name,
+        npc_name: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
+      })
+    }
 
     if (mode === 'exit_nudge') {
       return interpolate(t.exit_nudge_prompt, {

@@ -9,18 +9,27 @@ import { useSceneCommands } from '~/composables/useSceneCommands'
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
 const { handlePlayerInput, retryLastTurn } = useNarrative()
-const { checkPaywallTrigger, mentionsExit } = usePaywall()
+const { checkPaywallTrigger, blockedByKeyItem, mentionsExit } = usePaywall()
 const { generateSceneImage } = useImageGen()
 const { isCommand, run: runSceneCommand } = useSceneCommands()
 
-/** Les PNJ prennent de la place sur petit écran : repliés par défaut. */
-const showNpcs = ref(false)
+/**
+ * Ouvert par défaut : le joueur doit voir tout de suite avec qui parler, c'est
+ * par là que passe la progression. Il peut toujours replier pour lire.
+ */
+const showNpcs = ref(true)
 
 async function onCommand(input: string) {
   // Le canal '#' parle au scénario, pas au modèle : il passe avant tout le
   // reste et rien ne part chez gpt-4o.
   if (isCommand(input)) {
     runSceneCommand(input)
+    return
+  }
+
+  // Il veut sortir mais l'objet lui manque : on le renvoie vers son détenteur.
+  if (blockedByKeyItem(input)) {
+    await handlePlayerInput(input, 'blocked_exit')
     return
   }
 
@@ -63,10 +72,11 @@ function retryImage() {
 
 <template>
   <div class="flex flex-col h-[100dvh] bg-ink-900">
-    <!-- Mobile : le 16/9 de SceneImage donne la hauteur, plein cadre.
-         Desktop : hauteur imposée, sinon l'aspect-ratio la calcule depuis la
-         largeur, déborde du cadre et on n'en voit que la tranche du haut. -->
-    <div class="shrink-0 sm:h-[45dvh]">
+    <!-- Le cadre reste 16/9 sur les deux tailles. Mobile : il prend toute la
+         largeur. Desktop : c'est la hauteur qui le dimensionne, et il se centre
+         — un 16/9 pleine largeur y ferait 810px de haut, sans place pour le
+         texte. -->
+    <div class="shrink-0 flex justify-center">
       <SceneImage
         :src="gameStore.currentSceneImageUrl"
         :loading="gameStore.sceneImageLoading"
@@ -85,7 +95,7 @@ function retryImage() {
         class="shrink-0 text-xs text-amber-600/80 hover:text-amber-400 transition-colors py-1 px-2 -my-1"
         @click="showNpcs = !showNpcs"
       >
-        {{ playerStore.npcs.length }} présents {{ showNpcs ? '▴' : '▾' }}
+        {{ playerStore.npcs.length }} à qui parler {{ showNpcs ? '▴' : '▾' }}
       </button>
     </div>
 
@@ -96,6 +106,7 @@ function retryImage() {
           v-for="npc in playerStore.npcs"
           :key="npc.id"
           :npc="npc"
+          :talked="gameStore.talkedToNpcIds.includes(npc.id)"
           class="shrink-0 w-44 sm:w-48"
         />
       </div>
