@@ -510,7 +510,7 @@
     "scene_budget_usd": 0.75
   },
   "limits": {
-    "note": "Quota par session, tenu dans un cookie signé (server/utils/session-quota.ts). Le bloc `free` s'applique avant paiement, `paid` après. Vise l'abus par rechargement : sans lui, recharger la page relance une génération de scène à chaque fois. Effacer ses cookies réinitialise le compteur gratuit — limite assumée.",
+    "note": "Quota par session, tenu dans un cookie signé (server/utils/session-quota.ts). DÉSACTIVÉ pendant la phase de test via `enabled: false` — remettre à true avant toute mise en avant publique, sinon rien ne borne la dépense. Le bloc `free` s'applique avant paiement, `paid` après. Effacer ses cookies réinitialise le compteur gratuit : limite assumée.",
     "window_hours": 24,
     "scenes_per_session": 1,
     "turns_per_session": 10,
@@ -531,7 +531,8 @@
         "images": "Plus rien à dessiner pour l'instant."
       },
       "note": "Deux expériences complètes (9 scènes chacune), soit une partie et une reprise. Effacer ses cookies fait perdre l'accès payant en même temps que le compteur : un payant n'a donc aucun intérêt à contourner."
-    }
+    },
+    "enabled": false
   },
   "economics": {
     "note": "Hypothèses de prévision, pour /admin/marge. Ce ne sont PAS des mesures : seuls les prix unitaires de `pricing` viennent de la facture réelle. À réviser dès que du trafic réel existe.",

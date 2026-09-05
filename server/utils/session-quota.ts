@@ -158,9 +158,10 @@ export function consumeQuota(
   kind: 'scenes' | 'turns' | 'images',
   limits: LimitsConfig
 ): SessionQuota {
-  // En développement, aucun quota : on doit pouvoir relancer l'expérience
-  // autant de fois qu'il le faut pour la mettre au point.
-  if (import.meta.dev) return readQuota(event, limits.window_hours)
+  // Interrupteur global, et développement : dans les deux cas on ne décompte
+  // rien. Le premier est temporaire — le laisser à false en production revient
+  // à n'avoir aucune borne de dépense.
+  if (!limits.enabled || import.meta.dev) return readQuota(event, limits.window_hours)
 
   const access = readAccess(event)
 

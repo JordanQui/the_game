@@ -226,6 +226,8 @@ export interface PricingConfig {
 /** Quota par session, contre l'abus par rechargement. */
 export interface LimitsConfig {
   note?: string
+  /** Interrupteur global. À false, aucune requête n'est décomptée ni refusée. */
+  enabled: boolean
   window_hours: number
   scenes_per_session: number
   turns_per_session: number
