@@ -13,6 +13,14 @@ export type TermKind = 'name' | 'object'
 export interface Term {
   value: string
   kind: TermKind
+  /**
+   * L'identité de la chose, pour un terme `object`.
+   *
+   * C'est elle qui décide de ce qui est déchiffré : sans elle, tous les objets
+   * d'une scène partageaient l'id de l'objet scellé, et réussir une épreuve les
+   * révélait tous d'un coup.
+   */
+  id?: string
 }
 
 export interface TextSegment {
@@ -21,6 +29,8 @@ export interface TextSegment {
   name?: string
   /** Nature du terme, pour choisir le composant de rendu. */
   kind?: TermKind
+  /** L'identité de la chose, reportée depuis le terme. */
+  id?: string
   /** Position du fragment dans le texte d'origine, pour la frappe progressive. */
   start: number
 }
@@ -46,7 +56,7 @@ export function splitByNames(text: string, terms: Array<string | Term>): TextSeg
   // Insensible à la casse : le modèle écrit « la Carte Ambre » en début de
   // phrase et « la carte ambre » plus loin. Une correspondance exacte laissait
   // alors la moitié des occurrences en clair, sans qu'on comprenne pourquoi.
-  const byValue = new Map(usable.map(t => [t.value.toLowerCase(), t.kind]))
+  const byValue = new Map(usable.map(t => [t.value.toLowerCase(), t]))
   const pattern = new RegExp(`(${usable.map(t => escapeRegex(t.value)).join('|')})`, 'gi')
   const segments: TextSegment[] = []
   let cursor = 0
@@ -54,10 +64,12 @@ export function splitByNames(text: string, terms: Array<string | Term>): TextSeg
   for (const match of text.matchAll(pattern)) {
     const at = match.index ?? 0
     if (at > cursor) segments.push({ text: text.slice(cursor, at), start: cursor })
+    const term = byValue.get(match[0].toLowerCase())
     segments.push({
       text: match[0],
       name: match[0],
-      kind: byValue.get(match[0].toLowerCase()) ?? 'name',
+      kind: term?.kind ?? 'name',
+      id: term?.id,
       start: at,
     })
     cursor = at + match[0].length

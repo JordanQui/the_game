@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { NarrativeEntry } from '~/types/game'
+import type { Term } from '~/utils/glitch'
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
+import { isTakeable } from '~/utils/interactables'
 
 const props = defineProps<{ entries: NarrativeEntry[] }>()
 
@@ -9,27 +11,45 @@ const playerStore = usePlayerStore()
 const gameStore = useGameStore()
 
 /**
- * Ce qui se brouille dans le texte : les identités et les choses.
+ * Ce qui se brouille dans le texte : les identités et les choses qu'on acquiert.
  *
  * Les gens et les objets ne se brouillent pas pareil — des caractères qui
  * défilent pour une identité, des blocs géométriques pour une chose — et ne se
  * lisent pas pareil : l'oeil révèle un nom, la loupe ouvre une épreuve.
  *
- * L'OBJET-CLÉ en fait partie. Il en était absent, si bien que la carte d'accès
- * d'une scène s'affichait en clair : elle n'était plus une chose à déchiffrer,
- * juste un mot dans une phrase.
+ * NE se brouille QUE ce qui S'ACQUIERT : l'objet-clé, l'objet scellé reçu au fil
+ * d'une conversation, et le décor qu'on peut fouiller pour en tirer quelque
+ * chose. Le décor ordinaire reste en clair — une voûte de béton ne se ramasse
+ * pas, et la chiffrer noierait le signal sous le mobilier.
+ *
+ * Chaque chose porte SON id : c'est lui qui décide de ce qui est déchiffré. Ils
+ * partageaient autrefois celui de l'objet scellé, si bien qu'une seule épreuve
+ * réussie les révélait tous.
  */
-const names = computed(() => {
+const names = computed<Term[]>(() => {
   const scene = playerStore.scene
   if (!scene) return []
-  const people = scene.npcs.map(n => ({ value: n.name, kind: 'name' as const })).filter(t => t.value)
-  const things = [scene.key_item?.name, scene.sealed_object?.name]
-    .filter((v): v is string => Boolean(v))
-    .map(value => ({ value, kind: 'object' as const }))
+
+  const people: Term[] = scene.npcs
+    .filter(n => n.name)
+    .map(n => ({ value: n.name, kind: 'name' }))
+
+  const things: Term[] = []
+  // L'objet-clé de la scène. Son id est celui que `collectKeyItem` lui donnera :
+  // déchiffré dans le récit, il reste déchiffré une fois dans l'inventaire.
+  if (scene.key_item?.name) {
+    things.push({ value: scene.key_item.name, kind: 'object', id: `cle_${scene.scene_id}` })
+  }
+  if (scene.sealed_object?.name) {
+    things.push({ value: scene.sealed_object.name, kind: 'object', id: scene.sealed_object.id })
+  }
+  for (const obj of scene.interactables ?? []) {
+    if (!obj.label || !isTakeable(obj)) continue
+    things.push({ value: obj.label, kind: 'object', id: obj.id })
+  }
+
   return [...people, ...things]
 })
-
-defineEmits<{ challenge: [] }>()
 
 const scrollContainer = ref<HTMLElement | null>(null)
 
@@ -74,9 +94,8 @@ watch(
           v-if="entry === entries[entries.length - 1] && ['narration', 'npc_speech'].includes(entry.type)"
           :text="entry.text"
           :names="names"
-          @challenge="$emit('challenge')"
         />
-        <GlitchText v-else :text="entry.text" :names="names" @challenge="$emit('challenge')" />
+        <GlitchText v-else :text="entry.text" :names="names" />
       </div>
     </TransitionGroup>
   </div>

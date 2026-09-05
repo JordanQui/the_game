@@ -75,13 +75,17 @@ export const useGameStore = defineStore('game', {
     /** Le nom en cours de lecture. Le reste du texte s'efface pendant ce temps. */
     revealing: null as string | null,
     /**
-     * Une épreuve d'analyse est demandée.
+     * L'objet dont l'analyse est demandée, ou null.
      *
-     * Posée ici plutôt que remontée par événement : la demande vient soit de la
+     * Posé ici plutôt que remonté par événement : la demande vient soit de la
      * souris, soit de l'oeil gyroscopique, et ces deux chemins n'ont aucun
      * composant en commun.
+     *
+     * Porte l'objet et non un booléen : depuis que le décor fouillé et les
+     * objets reçus se déchiffrent eux aussi, l'épreuve n'est plus forcément
+     * celle de l'objet scellé — il faut savoir LEQUEL est sous la loupe.
      */
-    pendingChallenge: false,
+    pendingChallenge: null as { id: string; label: string } | null,
     /** Lecture refusée : tout le texte se brouille un instant. */
     readDenied: false,
     /**
@@ -330,12 +334,12 @@ export const useGameStore = defineStore('game', {
       return added
     },
 
-    requestChallenge() {
-      this.pendingChallenge = true
+    requestChallenge(id: string, label: string) {
+      this.pendingChallenge = { id, label }
     },
 
     clearChallenge() {
-      this.pendingChallenge = false
+      this.pendingChallenge = null
     },
 
     markDecrypted(id: string) {
@@ -422,7 +426,7 @@ export const useGameStore = defineStore('game', {
       this.lastMode = null
       this.lastEffects = []
       this.turnError = null
-      this.pendingChallenge = false
+      this.pendingChallenge = null
     },
 
     resetGame() {

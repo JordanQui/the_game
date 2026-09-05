@@ -3,9 +3,21 @@ import { useGameStore } from '~/stores/game'
 import { GLYPHS } from '~/utils/psychotest'
 
 const props = defineProps<{ id: string; label: string }>()
-const emit = defineEmits<{ challenge: [] }>()
 
 const gameStore = useGameStore()
+
+/**
+ * La demande passe par le store, jamais par un événement.
+ *
+ * Elle remontait autrefois de composant en composant jusqu'à `GameShell`, qui
+ * ouvrait l'épreuve de l'objet scellé — le seul qu'il connaissait. Depuis que
+ * le décor fouillé et les objets reçus se déchiffrent aussi, c'est CET objet-ci
+ * qu'il faut désigner, et le store est déjà le point de rendez-vous des deux
+ * chemins de visée : la souris et l'oeil gyroscopique.
+ */
+function ask() {
+  gameStore.requestChallenge(props.id, props.label)
+}
 
 /**
  * Le brouillage des OBJETS, distinct de celui des personnages.
@@ -48,7 +60,7 @@ const readable = computed(() =>
 function onEnter() {
   if (!readable.value) return
   cancel()
-  dwell = setTimeout(() => emit('challenge'), DWELL_MS)
+  dwell = setTimeout(ask, DWELL_MS)
 }
 
 function cancel() {
@@ -67,7 +79,7 @@ function onActivate() {
     gameStore.denyRead()
     return
   }
-  emit('challenge')
+  ask()
 }
 </script>
 
@@ -82,6 +94,7 @@ function onActivate() {
     :role="decrypted ? undefined : 'button'"
     :aria-label="decrypted ? label : 'Objet scellé — analyse requise'"
     :data-glitch-object="decrypted ? undefined : id"
+    :data-glitch-label="decrypted ? undefined : label"
     @mouseenter="onEnter"
     @mouseleave="cancel"
     @click="onActivate"

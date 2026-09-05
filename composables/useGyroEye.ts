@@ -176,9 +176,11 @@ export function useGyroEye() {
         dwellOn = id
         dwellSince = Date.now()
         dwellSpent = false
-      } else if (id && !dwellSpent && Date.now() - dwellSince >= OBJECT_DWELL_MS) {
+      } else if (id && node && !dwellSpent && Date.now() - dwellSince >= OBJECT_DWELL_MS) {
         dwellSpent = true
-        gameStore.requestChallenge()
+        // L'objet visé, pas « un objet » : plusieurs choses se déchiffrent dans
+        // une même scène, et l'épreuve est celle de celle-ci.
+        gameStore.requestChallenge(id, node.dataset.glitchLabel ?? id)
       }
     } else {
       dwellOn = null

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import type { Term } from '~/utils/glitch'
+
 const props = defineProps<{
   text: string
   speed?: number
-  /** Noms à chiffrer dans le texte tapé. */
-  names?: string[]
+  /** Termes à chiffrer dans le texte tapé : identités et objets. */
+  names?: Array<string | Term>
 }>()
 
 const emit = defineEmits<{ done: [] }>()

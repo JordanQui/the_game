@@ -4,6 +4,7 @@ import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
+import { isTakeable } from '~/utils/interactables'
 import { normalize } from '~/utils/text-match'
 
 const gameStore = useGameStore()
@@ -19,9 +20,6 @@ const { play } = useStorylets()
  * par là que passe la progression. Il peut toujours replier pour lire.
  */
 const showNpcs = ref(true)
-
-/** Verbes qui désignent une prise. Le reste — examiner, parler — n'en est pas une. */
-const TAKE_VERBS = ['prendre', 'ramasser', 'recuperer', 'récupérer', 'empocher', 'saisir', 'voler', 'emporter']
 
 /**
  * L'objet qui vient d'arriver dans la conversation, et qu'on peut prendre.
@@ -46,8 +44,9 @@ const justAppeared = computed(() => {
   ].filter(n => n.length > 2)
 
   return scene.interactables.find((obj) => {
-    if (obj.triggers_paywall) return false
-    if (!TAKE_VERBS.includes(normalize(obj.verb ?? ''))) return false
+    // Même règle que pour le chiffrement du texte : ce qui se ramasse et ce qui
+    // se déchiffre sont la même liste.
+    if (!isTakeable(obj)) return false
     if (gameStore.inventory.some(o => o.id === obj.id)) return false
 
     const label = normalize(obj.label).replace(/^(l['’]|le |la |les |un |une |des )/, '')
@@ -58,9 +57,8 @@ const justAppeared = computed(() => {
   }) ?? null
 })
 
-/** Refermer l'épreuve doit aussi retirer la demande, sinon elle se rouvre. */
+/** Refermer l'épreuve, c'est retirer la demande : elle n'a pas d'autre état. */
 function closeTest() {
-  testing.value = false
   gameStore.clearChallenge()
 }
 
@@ -69,28 +67,31 @@ function pickUp(obj: { id: string; label: string }) {
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
 }
 
-/** L'épreuve d'analyse de l'objet scellé. */
-const testing = ref(false)
-
-// La demande vient soit du survol à la souris, soit de l'oeil gyroscopique :
-// les deux chemins passent par le store, seul point commun entre eux.
-watch(() => gameStore.pendingChallenge, (asked) => {
-  if (asked) testing.value = true
-})
-
 /**
- * Analyse réussie : le nom devient lisible et l'observation s'inscrit dans le
- * fil. Ce texte a été écrit à la génération de la scène — l'afficher ne coûte
- * donc aucun appel au modèle.
+ * Analyse réussie : le nom de CET objet devient lisible, définitivement.
+ *
+ * L'épreuve portait autrefois toujours sur l'objet scellé, le seul que cet
+ * écran connaissait. Elle porte maintenant sur celui qui était sous la loupe —
+ * une carte d'accès, un objet trouvé dans le décor —, et c'est le store qui
+ * l'a désigné : les deux chemins de visée, la souris et l'oeil gyroscopique,
+ * n'ont que lui en commun.
  */
 function onSolved() {
-  const sealed = playerStore.scene?.sealed_object
-  testing.value = false
+  const target = gameStore.pendingChallenge
   gameStore.clearChallenge()
-  if (!sealed) return
-  gameStore.markDecrypted(sealed.id)
-  gameStore.addNarrativeEntry('system', `${sealed.name} — analyse terminée.`)
-  gameStore.addNarrativeEntry('narration', sealed.observation)
+  if (!target) return
+
+  gameStore.markDecrypted(target.id)
+  gameStore.addNarrativeEntry('system', `${target.label} — analyse terminée.`)
+
+  // Ce que l'analyse révèle : l'objet scellé le porte, et depuis peu les objets
+  // qu'on ramasse dans le décor aussi. Ces textes ont été écrits à la
+  // génération de la scène — les afficher ne coûte aucun appel au modèle.
+  const sealed = playerStore.scene?.sealed_object
+  const observation = sealed?.id === target.id
+    ? sealed?.observation
+    : playerStore.scene?.interactables?.find(o => o.id === target.id)?.observation
+  if (observation) gameStore.addNarrativeEntry('narration', observation)
 }
 
 /** Le joueur prend l'objet que le détenteur lui tend. */
@@ -98,9 +99,9 @@ function collectItem() {
   const item = playerStore.scene?.key_item
   if (!item) return
   gameStore.collectKeyItem(playerStore.scene?.grants_augmentation ?? false, {
-    id: playerStore.scene?.key_item?.npc_id
-      ? `cle_${playerStore.scene.scene_id}`
-      : undefined,
+    // Toujours le même id que celui sous lequel le récit l'a chiffré : déchiffré
+    // dans le texte, il doit rester déchiffré dans l'inventaire.
+    id: `cle_${playerStore.scene?.scene_id}`,
     name: playerStore.scene?.key_item?.name ?? '',
     from: playerStore.scene?.place?.name,
     color: playerStore.scene?.key_item?.color,
@@ -183,12 +184,12 @@ function retryImage() {
 
     <!-- Narration. L'historique tient lieu d'inventaire : l'objet scellé y
          reste visible, et l'on y revient avec la loupe. -->
-    <NarrativeText :entries="gameStore.narrativeHistory" @challenge="testing = true" />
+    <NarrativeText :entries="gameStore.narrativeHistory" />
 
     <PsychoTest
-      v-if="testing && playerStore.scene?.sealed_object"
-      :object-id="playerStore.scene.sealed_object.id"
-      :object-name="playerStore.scene.sealed_object.name"
+      v-if="gameStore.pendingChallenge"
+      :object-id="gameStore.pendingChallenge.id"
+      :object-name="gameStore.pendingChallenge.label"
       @solved="onSolved"
       @close="closeTest"
     />

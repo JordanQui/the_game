@@ -20,6 +20,7 @@ import type { UserProfile } from '~/types/user'
 import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
+import { enforceNameCaps, fold } from '~/utils/naming'
 import { sanitizeHtml } from '~/utils/sanitize-html'
 import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import { zodiacKey } from '~/utils/zodiac'
@@ -603,6 +604,21 @@ ${lines}`)
       throw new Error('Scène invalide : aucun PNJ')
     }
 
+    // Un personnage que le TEXTE ne nomme pas est un personnage inatteignable.
+    // Le panneau du haut n'affiche que des tirets tant qu'on ne lui a pas parlé,
+    // et on ne peut lui parler qu'en tapant son nom : le récit est la seule
+    // source. Une scène qui décrit « un homme en uniforme gris » sans le nommer
+    // n'a rien à chiffrer, donc rien à chercher, et sa chaîne informateur puis
+    // détenteur ne peut jamais s'ouvrir. Elle est injouable, pas imparfaite.
+    const written = fold(generated.scene_text)
+    const unnamed = generated.npcs.filter(n => n.name && !written.includes(fold(n.name)))
+    if (unnamed.length) {
+      throw new Error(
+        `Scène invalide : ${unnamed.map(n => n.name).join(', ')} `
+        + `${unnamed.length > 1 ? 'ne sont pas nommés' : "n'est pas nommé"} dans le texte `
+        + '— le joueur ne pourrait s\'adresser à personne')
+    }
+
     const item = generated.key_item
     if (!item?.name || !item?.npc_id) {
       throw new Error('Scène invalide : key_item.name ou key_item.npc_id manquant')
@@ -668,6 +684,29 @@ ${lines}`)
       else interactables.push(forced)
     }
 
+    // La Majuscule de Titre est le seul signal d'interaction du jeu. Le modèle
+    // l'applique à la liste `interactables` et l'oublie dans la prose : le même
+    // objet y est « un tourniquet de contrôle », donc invisible comme objet.
+    // La règle est dans le prompt depuis toujours et n'a jamais suffi — on la
+    // fait respecter ici, sans un token de plus.
+    const naming = enforceNameCaps(scene.scene_text, [
+      ...interactables.map(i => i.label),
+      ...(scene.decor ?? []).map(d => d.name),
+      scene.place.name,
+      scene.key_item?.name,
+      scene.sealed_object?.name,
+    ].filter((n): n is string => Boolean(n)))
+
+    if (naming.fixed.length) {
+      console.warn(`[scene/${this.scene.id}] majuscules recalées : ${naming.fixed.join(' · ')}`)
+    }
+    // Un nom déclaré que le texte ne prononce pas est un objet que le joueur ne
+    // rencontrera jamais : la liste `interactables` promet ce que la prose ne
+    // montre pas.
+    if (naming.missing.length) {
+      console.warn(`[scene/${this.scene.id}] déclarés mais absents du texte : ${naming.missing.join(' · ')}`)
+    }
+
     const vars = {
       quest_title: scene.quest.title,
       quest_artifact: scene.quest.artifact,
@@ -676,6 +715,7 @@ ${lines}`)
 
     return {
       ...scene,
+      scene_text: naming.text,
       interactables,
       scene_id: this.scene.id,
       scene_title: this.scene.title,

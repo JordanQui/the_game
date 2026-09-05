@@ -77,7 +77,7 @@
         "1 phrase de localisation",
         "3 à 5 phrases de description reprenant les slots de décor",
         "2 à 4 phrases sur ce qui ne va pas ICI, montré par la situation : ce qui bloque, ce qui manque, ce que les gens attendent. Pas de récapitulatif de la quête, pas de rappel de ce qui s'est passé avant — le joueur l'a vécu. Une de ces phrases doit rendre PERCEPTIBLE qu'il y a ici quelque chose à prendre — sans dire quoi ni où précisément : une chose posée là qui n'y a pas sa place, quelqu'un qui tient un objet sans le lâcher, un tiroir mal refermé",
-        "1 à 2 phrases nommant les personnes présentes et ce que chacune semble savoir. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche",
+        "1 à 2 phrases présentant les personnes et ce que chacune semble savoir. CHACUNE EST DÉSIGNÉE PAR SON NOM, écrit exactement comme dans son champ `name`. Le récit est le SEUL endroit où le joueur peut lire un nom : le panneau des personnages n'affiche que des tirets tant qu'il ne leur a pas parlé, et il ne peut leur parler qu'en tapant leur nom. Une personne décrite sans être nommée — « un homme en uniforme gris », « une femme aux lunettes opaques » — est un personnage injouable. Le nom vient EN PREMIER, la description ensuite. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche",
         "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
         "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action, dont parler à quelqu'un"
       ],
@@ -124,7 +124,7 @@
     "generation": {
       "model": "gpt-4o",
       "temperature": 0.9,
-      "max_tokens": 3200,
+      "max_tokens": 3400,
       "system_prompt": "Tu es l'architecte narratif d'un jeu d'aventure textuel cyberpunk en français. Tu reçois le profil réel d'un joueur et tu le transposes en fiction. Règle absolue : rien du profil réel n'apparaît littéralement — ni nom de ville, ni nom d'entreprise, ni nom d'école, ni titre d'oeuvre. Tout est transposé en équivalent cyberpunk. Tu réponds exclusivement en JSON valide, sans markdown, sans commentaire.",
       "output_schema": {
         "place": {
@@ -187,7 +187,8 @@
             "id": "string",
             "label": "string (en Majuscules de Titre s'il compte)",
             "verb": "string",
-            "lock_color": "string (si cet élément est verrouillé, la couleur affichée par sa serrure ou son lecteur — le joueur saura quelle carte présenter. Vide sinon)"
+            "lock_color": "string (si cet élément est verrouillé, la couleur affichée par sa serrure ou son lecteur — le joueur saura quelle carte présenter. Vide sinon)",
+            "observation": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. 1 à 2 phrases révélées après analyse à la loupe : ce que l'objet EST précisément, puis ce qu'il laisse entendre de la quête — jamais son usage, jamais une consigne. Vide pour tout ce qui se contente d'être examiné, lu ou écouté)"
           }
         ],
         "scene_text": "string (texte années 80, structure imposée, sauts de ligne inclus)",
@@ -367,11 +368,11 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé : il n'est pas dans la salle, il est sur un personnage.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé : il n'est pas dans la salle, il est sur un personnage. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": [
           {
             "id": "sas",
-            "label": "le sas",
+            "label": "le Sas",
             "verb": "sortir",
             "triggers_paywall": true
           }
@@ -380,7 +381,7 @@
       "exits": [
         {
           "id": "exit_door",
-          "label": "Le sas, vers la pluie",
+          "label": "Le Sas, vers la pluie",
           "keywords": [
             "sortir",
             "sors",
@@ -453,8 +454,8 @@
           "1 à 2 phrases d'ouverture : pourquoi tu es sorti, et le fait que tu pousses la porte de ce bar",
           "1 phrase de localisation",
           "3 à 5 phrases de description reprenant les slots de décor",
-          "2 à 4 phrases de ce que LE BARMAN te dit en te servant. IL NE FAIT PAS LE POINT : il raconte UNE chose, une seule — quelqu'un qui est sorti sans de quoi lire les noms, et ce que ça lui a coûté. C'est cette histoire qui donne envie d'en trouver une, pas une explication. Il ne récite ni l'état de la ville, ni ce qu'il te faut, ni ce que tu pourras en faire. Il finit sur le fait que quelqu'un dans cette salle en porte une, sans dire qui",
-          "1 à 2 phrases nommant les habitués présents et ce que chacun semble savoir — dont celui qui a l'air d'en savoir plus que les autres. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche. On les découvre dans la salle, pas dans une liste",
+          "2 à 4 phrases de ce que LE BARMAN te dit en te servant. IL NE FAIT PAS LE POINT : il raconte UNE chose, une seule — quelqu'un qui est sorti sans de quoi lire les noms, et ce que ça lui a coûté. C'est cette histoire qui donne envie d'en trouver une, pas une explication. Il ne récite ni l'état de la ville, ni ce qu'il te faut, ni ce que tu pourras en faire. Le barman est DÉSIGNÉ PAR SON NOM dès la première de ces phrases, sinon le joueur ne pourra jamais lui répondre. Il finit sur le fait que quelqu'un dans cette salle en porte une, sans dire qui",
+          "1 à 2 phrases présentant les habitués et ce que chacun semble savoir — dont celui qui a l'air d'en savoir plus que les autres. CHACUNE EST DÉSIGNÉE PAR SON NOM, écrit exactement comme dans son champ `name`. Le récit est le SEUL endroit où le joueur peut lire un nom : le panneau des personnages n'affiche que des tirets tant qu'il ne leur a pas parlé, et il ne peut leur parler qu'en tapant leur nom. Une personne décrite sans être nommée — « un homme en uniforme gris », « une femme aux lunettes opaques » — est un personnage injouable. Le nom vient EN PREMIER, la description ensuite. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche. On les découvre dans la salle, pas dans une liste",
           "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
           "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action, dont parler à quelqu'un"
         ],
@@ -520,13 +521,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "Le passage sous voie",
+          "label": "Le Passage sous Voie",
           "keywords": [
             "sortir",
             "sors",
@@ -653,13 +654,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "Le funiculaire, vers les hauteurs",
+          "label": "Le Funiculaire, vers les hauteurs",
           "keywords": [
             "sortir",
             "sors",
@@ -791,13 +792,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "La passerelle, vers la crête",
+          "label": "La Passerelle, vers la crête",
           "keywords": [
             "sortir",
             "sors",
@@ -923,13 +924,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "La station relais",
+          "label": "La Station Relais",
           "keywords": [
             "sortir",
             "sors",
@@ -1056,13 +1057,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "L'étage technique",
+          "label": "L'Étage Technique",
           "keywords": [
             "sortir",
             "sors",
@@ -1194,13 +1195,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "La descente, vers le building",
+          "label": "La Descente, vers le building",
           "keywords": [
             "sortir",
             "sors",
@@ -1327,13 +1328,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "L'ascenseur, vers le premier étage",
+          "label": "L'Ascenseur, vers le premier étage",
           "keywords": [
             "sortir",
             "sors",
@@ -1459,13 +1460,13 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [
         {
           "id": "exit_next",
-          "label": "L'escalier de service, vers le sommet",
+          "label": "L'Escalier de Service, vers le sommet",
           "keywords": [
             "sortir",
             "sors",
@@ -1597,7 +1598,7 @@
         "source": "trajectory.turning_points"
       },
       "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.",
         "always_include": []
       },
       "exits": [

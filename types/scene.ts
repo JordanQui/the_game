@@ -113,6 +113,14 @@ export interface Interactable {
   label: string
   verb: string
   triggers_paywall?: boolean
+  /**
+   * Ce que l'analyse révèle, pour un objet qu'on peut PRENDRE.
+   *
+   * Écrite à la génération de la scène, donc gratuite à l'affichage — c'est la
+   * même économie que `SealedObject.observation`. Absente de tout ce qui se
+   * contente d'être examiné : le décor ordinaire ne se déchiffre pas.
+   */
+  observation?: string
 }
 
 /** Le lieu de la scène : auberge, forêt, donjon... */
