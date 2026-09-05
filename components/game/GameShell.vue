@@ -94,6 +94,23 @@ function pickUp(obj: { id: string; label: string }) {
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
 }
 
+/** L'épreuve d'analyse de l'objet scellé. */
+const testing = ref(false)
+
+/**
+ * Analyse réussie : le nom devient lisible et l'observation s'inscrit dans le
+ * fil. Ce texte a été écrit à la génération de la scène — l'afficher ne coûte
+ * donc aucun appel au modèle.
+ */
+function onSolved() {
+  const sealed = playerStore.scene?.sealed_object
+  testing.value = false
+  if (!sealed) return
+  gameStore.markDecrypted(sealed.id)
+  gameStore.addNarrativeEntry('system', `${sealed.name} — analyse terminée.`)
+  gameStore.addNarrativeEntry('narration', sealed.observation)
+}
+
 /** Le joueur prend l'objet que le détenteur lui tend. */
 function collectItem() {
   const item = playerStore.scene?.key_item
@@ -152,6 +169,9 @@ function retryImage() {
 
     </div>
 
+    <!-- Outils de lecture -->
+    <ToolRail />
+
     <!-- Liste des PNJ -->
     <Transition name="slide">
       <div v-if="showNpcs" class="shrink-0 flex gap-2 px-4 py-2 border-b border-neon-700/30 overflow-x-auto">
@@ -166,8 +186,17 @@ function retryImage() {
     </Transition>
 
 
-    <!-- Narration -->
-    <NarrativeText :entries="gameStore.narrativeHistory" />
+    <!-- Narration. L'historique tient lieu d'inventaire : l'objet scellé y
+         reste visible, et l'on y revient avec la loupe. -->
+    <NarrativeText :entries="gameStore.narrativeHistory" @challenge="testing = true" />
+
+    <PsychoTest
+      v-if="testing && playerStore.scene?.sealed_object"
+      :object-id="playerStore.scene.sealed_object.id"
+      :object-name="playerStore.scene.sealed_object.name"
+      @solved="onSolved"
+      @close="testing = false"
+    />
 
     <!-- Un objet vient d'apparaître : on le prend d'un clic, pas en le tapant -->
     <Transition name="slide">

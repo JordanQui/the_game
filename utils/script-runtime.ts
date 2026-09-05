@@ -190,6 +190,9 @@ ${questFields}
 OBJET-CLÉ
 ${s.key_item.instruction}
 
+OBJET SCELLÉ
+${interpolate(s.sealed_object.instruction, { quest_title: 'la quête' })}
+
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
 ${s.narrative.vocabulary}

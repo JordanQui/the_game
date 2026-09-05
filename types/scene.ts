@@ -41,14 +41,22 @@ export interface SceneNPC {
   posture?: string
 }
 
-/** L'objet remis par un PNJ, sans lequel la sortie est fermée. */
+/**
+ * L'augmentation remise par un PNJ.
+ *
+ * Ce n'est pas l'objet de la quête mais une CAPACITÉ : sans elle, les choses
+ * du dehors n'ont pas de nom lisible, donc rien n'est manipulable. C'est le
+ * laissez-passer vers la scène suivante.
+ */
 export interface SceneKeyItem {
   /** Id du PNJ qui le détient. Choisi par le modèle. */
   npc_id: string
   name: string
   description: string
-  /** Ce qu'il permet de rétablir dans la ville. */
+  /** Ce qu'elle permet de percevoir dehors. */
   why: string
+  /** Comment elle se porte : à l'oeil, sous la peau, au poignet. */
+  worn?: string
   /** Ce que le détenteur attend du joueur avant de le céder. */
   handover_hint: string
   /** L'autre personnage, celui qui met sur la piste. Jamais le détenteur. */
@@ -59,6 +67,23 @@ export interface SceneKeyItem {
   hook_story: string
   /** Nombre d'échanges avec le détenteur avant la remise. */
   exchanges_before_handover: number
+}
+
+/**
+ * L'objet scellé de la scène.
+ *
+ * Reçu au fil d'une conversation, il reste dans l'historique du chat — qui
+ * tient lieu d'inventaire. On y revient avec l'augmentation pour en déchiffrer
+ * le nom, puis on l'observe : ce qu'il révèle ne débloque rien, il donne de la
+ * profondeur à la quête.
+ */
+export interface SealedObject {
+  id: string
+  name: string
+  /** Id du PNJ qui le donne, ou « trouve ». */
+  given_by: string
+  /** Révélé après l'analyse. Écrit à la génération, donc gratuit à l'affichage. */
+  observation: string
 }
 
 export interface SceneQuest {
@@ -98,6 +123,8 @@ export interface GeneratedScene {
   scene_text: string
   /** Choisi par le modèle : qui détient l'objet, et lequel. */
   key_item: Omit<SceneKeyItem, 'exchanges_before_handover'>
+  /** L'objet à analyser pour approfondir la quête. */
+  sealed_object?: SealedObject
 }
 
 export interface ScenePaywallPitch {

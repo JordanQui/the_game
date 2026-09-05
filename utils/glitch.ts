@@ -7,10 +7,20 @@
  * et où ils finissent.
  */
 
+/** Une identité ne se brouille pas comme une chose : le rendu diffère. */
+export type TermKind = 'name' | 'object'
+
+export interface Term {
+  value: string
+  kind: TermKind
+}
+
 export interface TextSegment {
   text: string
-  /** Renseigné si ce fragment est un nom à chiffrer. */
+  /** Renseigné si ce fragment est un terme à chiffrer. */
   name?: string
+  /** Nature du terme, pour choisir le composant de rendu. */
+  kind?: TermKind
   /** Position du fragment dans le texte d'origine, pour la frappe progressive. */
   start: number
 }
@@ -25,18 +35,23 @@ function escapeRegex(text: string): string {
  * Les noms les plus longs sont testés en premier : sinon « Seru » masquerait
  * « Serumito », dont il est un préfixe.
  */
-export function splitByNames(text: string, names: string[]): TextSegment[] {
-  const usable = names.filter(n => n.trim().length > 1).sort((a, b) => b.length - a.length)
+export function splitByNames(text: string, terms: Array<string | Term>): TextSegment[] {
+  const normalized: Term[] = terms.map(t => (typeof t === 'string' ? { value: t, kind: 'name' } : t))
+  const usable = normalized
+    .filter(t => t.value.trim().length > 1)
+    .sort((a, b) => b.value.length - a.value.length)
+
   if (!usable.length) return [{ text, start: 0 }]
 
-  const pattern = new RegExp(`(${usable.map(escapeRegex).join('|')})`, 'g')
+  const byValue = new Map(usable.map(t => [t.value, t.kind]))
+  const pattern = new RegExp(`(${usable.map(t => escapeRegex(t.value)).join('|')})`, 'g')
   const segments: TextSegment[] = []
   let cursor = 0
 
   for (const match of text.matchAll(pattern)) {
     const at = match.index ?? 0
     if (at > cursor) segments.push({ text: text.slice(cursor, at), start: cursor })
-    segments.push({ text: match[0], name: match[0], start: at })
+    segments.push({ text: match[0], name: match[0], kind: byValue.get(match[0]) ?? 'name', start: at })
     cursor = at + match[0].length
   }
 

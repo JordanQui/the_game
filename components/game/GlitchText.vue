@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { splitByNames } from '~/utils/glitch'
+import { splitByNames, type Term } from '~/utils/glitch'
+import { usePlayerStore } from '~/stores/player'
 
 const props = defineProps<{
   text: string
-  names: string[]
+  names: Array<string | Term>
   /** Nombre de caractères déjà tapés. Omis, tout le texte est affiché. */
   visible?: number
 }>()
@@ -15,6 +16,11 @@ const props = defineProps<{
  * écrire : tronquer la chaîne AVANT le découpage couperait les noms en deux et
  * en laisserait une moitié lisible en clair — ce qui viderait la mécanique.
  */
+const playerStore = usePlayerStore()
+const sealedId = computed(() => playerStore.scene?.sealed_object?.id ?? 'objet')
+
+defineEmits<{ challenge: [] }>()
+
 const segments = computed(() => {
   const limit = props.visible ?? props.text.length
   return splitByNames(props.text, props.names)
@@ -30,8 +36,13 @@ const segments = computed(() => {
 </script>
 
 <template>
-  <span><template v-for="(seg, i) in segments" :key="i"><GlitchName
-    v-if="seg.name"
+  <span><template v-for="(seg, i) in segments" :key="i"><GlitchObject
+    v-if="seg.name && seg.kind === 'object'"
+    :id="sealedId"
+    :label="seg.name"
+    @challenge="$emit('challenge')"
+  /><GlitchName
+    v-else-if="seg.name"
     :name="seg.name"
   /><template v-else>{{ seg.text }}</template></template></span>
 </template>

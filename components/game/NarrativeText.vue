@@ -14,7 +14,18 @@ const gameStore = useGameStore()
  * Le chiffrement porte sur l'identité des gens, pas sur les choses : un objet
  * qu'on ne peut pas lire n'ajoute aucun enjeu, il empêche juste de jouer.
  */
-const names = computed(() => playerStore.scene?.npcs.map(n => n.name).filter(Boolean) ?? [])
+const names = computed(() => {
+  const scene = playerStore.scene
+  if (!scene) return []
+  const people = scene.npcs.map(n => ({ value: n.name, kind: 'name' as const })).filter(t => t.value)
+  // L'objet scellé se brouille autrement : c'est une chose, pas une identité.
+  const sealed = scene.sealed_object?.name
+    ? [{ value: scene.sealed_object.name, kind: 'object' as const }]
+    : []
+  return [...people, ...sealed]
+})
+
+defineEmits<{ challenge: [] }>()
 
 const scrollContainer = ref<HTMLElement | null>(null)
 
@@ -59,8 +70,9 @@ watch(
           v-if="entry === entries[entries.length - 1] && ['narration', 'npc_speech'].includes(entry.type)"
           :text="entry.text"
           :names="names"
+          @challenge="$emit('challenge')"
         />
-        <GlitchText v-else :text="entry.text" :names="names" />
+        <GlitchText v-else :text="entry.text" :names="names" @challenge="$emit('challenge')" />
       </div>
     </TransitionGroup>
   </div>

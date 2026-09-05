@@ -24,6 +24,14 @@ export const useGameStore = defineStore('game', {
     informedAboutItem: false,
     /** L'objet est proposé : il reste au joueur à le récupérer. */
     pendingKeyItem: false,
+    /**
+     * L'outil en main.
+     *
+     * `eye` lit les identités des gens, `lens` analyse les objets scellés —
+     * cette dernière n'est disponible qu'une fois l'augmentation obtenue.
+     * Le curseur, sur desktop, prend la forme de l'outil actif.
+     */
+    activeTool: 'eye' as 'eye' | 'lens',
     /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
     eyeActive: false,
     /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
@@ -32,6 +40,8 @@ export const useGameStore = defineStore('game', {
     revealing: null as string | null,
     /** Lecture refusée : tout le texte se brouille un instant. */
     readDenied: false,
+    /** Objets dont l'épreuve a été réussie : leur nom est lisible. */
+    decryptedObjectIds: [] as string[],
     /** Objets ramassés dans la scène, par identifiant. */
     inventory: [] as Array<{ id: string; label: string }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
@@ -157,6 +167,13 @@ export const useGameStore = defineStore('game', {
       this.pendingKeyItem = true
     },
 
+    setTool(tool: 'eye' | 'lens') {
+      // La loupe n'existe pas tant que l'augmentation n'a pas été obtenue.
+      if (tool === 'lens' && !this.hasKeyItem) return
+      this.activeTool = tool
+      this.revealing = null
+    },
+
     setEyeActive(active: boolean) {
       this.eyeActive = active
       if (!active) this.revealing = null
@@ -181,6 +198,10 @@ export const useGameStore = defineStore('game', {
     denyRead() {
       this.readDenied = true
       setTimeout(() => { this.readDenied = false }, 700)
+    },
+
+    markDecrypted(id: string) {
+      if (!this.decryptedObjectIds.includes(id)) this.decryptedObjectIds.push(id)
     },
 
     pickUp(id: string, label: string) {

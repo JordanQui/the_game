@@ -177,11 +177,18 @@
           "npc_id": "string (l'id d'un des npcs ci-dessus)",
           "name": "string (nom de l'objet, court, en Majuscules de Titre)",
           "description": "string (à quoi il ressemble, une phrase)",
-          "why": "string (ce qu'il permet de rétablir dans la ville, une phrase)",
+          "why": "string (ce que cette augmentation permet de percevoir dehors, et pourquoi on ne peut pas s'en passer — une phrase)",
           "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)",
           "hook_story": "string (2 phrases : l'histoire de quelqu'un qui a affronté la même tension, racontée par le détenteur)",
           "informant_npc_id": "string (l'id d'un AUTRE npc, différent de npc_id)",
-          "informant_hint": "string (2 phrases : ce que l'informateur sait de l'objet sans le nommer précisément)"
+          "informant_hint": "string (2 phrases : ce que l'informateur sait de l'objet sans le nommer précisément)",
+          "worn": "string (comment elle se porte : à l'oeil, sous la peau, au poignet — quelques mots)"
+        },
+        "sealed_object": {
+          "id": "string (identifiant court, sans espace)",
+          "name": "string (nom de l'objet, en Majuscules de Titre)",
+          "given_by": "string (l'id du PNJ qui le donne, ou \"trouve\" si le joueur le ramasse seul)",
+          "observation": "string (3 à 4 phrases révélées après analyse, approfondissant la quête)"
         }
       }
     },
@@ -343,8 +350,16 @@
         }
       ],
       "key_item": {
-        "instruction": "OBJET-CLÉ — sans lui, impossible de franchir le sas. C'est le coeur de la scène.\nL'objet doit être concret, tenir dans une main, et appartenir à l'univers cyberpunk du lieu.\nIL N'EST PAS DANS LE DÉCOR. Il n'apparaît dans aucun élément de décor, dans aucun interactable, et le texte de scène ne le mentionne jamais. Rien ne brille sur une table : le joueur ne peut ni le trouver, ni le prendre, ni le voler. Il l'obtient UNIQUEMENT parce qu'un personnage le lui cède.\nIl n'est pas un trophée : c'est LA CONDITION D'ENTRÉE dans la suite de l'aventure. Sans lui, ce qui attend le joueur dehors est hors d'atteinte. Il sert à rétablir l'équilibre décrit dans quest.restoration — transposition urbaine de la tension intime du joueur — et c'est par lui que commence vraiment la quête.\n\nDEUX PERSONNAGES, DEUX RÔLES DISTINCTS, choisis PARMI LES TROIS HABITUÉS — jamais le barman, qui est le premier de la liste. Ils doivent être différents l'un de l'autre.\n- `npc_id` : LE DÉTENTEUR. Ne le place JAMAIS en premier dans la liste des personnages : le joueur ne doit pas tomber dessus par hasard au premier essai.\n- `informant_npc_id` : L'INFORMATEUR, un autre habitué. Il ne détient rien, mais il sait que le détenteur garde quelque chose. `informant_hint` est ce qu'il en dit : assez pour donner un nom, une piste, une raison d'aller voir l'autre — jamais assez pour se passer de lui.\n`handover_hint` dit ce que le détenteur attend du joueur avant de céder l'objet.\n`hook_story` est l'histoire qu'il raconte : celle de quelqu'un qui a affronté — ou fui — la même tension que le joueur, et ce que ça lui a coûté.",
+        "instruction": "L'AUGMENTATION — ce n'est PAS un trophée ni l'objet de la quête. C'est un implant, un module, une greffe : une CAPACITÉ que le joueur acquiert et emporte avec lui.\n\nCE QU'ELLE FAIT, littéralement : dehors, les choses ne portent pas de nom lisible. Sans elle, le joueur ne peut rien identifier, donc rien manipuler, donc pas se repérer. Elle déchiffre l'identité des objets. C'est son laissez-passer vers l'extérieur, et la raison pour laquelle franchir le sas sans elle n'aurait aucun sens.\nDécris-la comme un objet cyberpunk concret qui tient dans une main et se porte : lentille, greffe corticale, module d'analyse, filtre optique. Pas un talisman, pas une clé magique.\n\nCE QU'ELLE DIT DU JOUEUR — et c'est là qu'elle doit être personnelle : sa forme et son nom dérivent de la MANIÈRE D'AGIR du joueur (section NOMBRES) et de la tension de son SIGNE. Celui qui absorbe ce que ressentent les autres reçoit un filtre ; celui qui fonce reçoit une visée. L'augmentation compense ou prolonge ce qu'il est — jamais un gadget interchangeable.\n\nELLE N'EST PAS DANS LE DÉCOR. Aucun élément de décor, aucun interactable, aucune mention dans le texte de scène. Rien à trouver, rien à voler : elle s'obtient UNIQUEMENT parce qu'un personnage décide de la céder, au fil d'une conversation.\n\nDEUX PERSONNAGES, DEUX RÔLES DISTINCTS, choisis PARMI LES TROIS HABITUÉS — jamais le barman, qui est le premier de la liste. Ils doivent être différents l'un de l'autre.\n- `npc_id` : LE PORTEUR. Ne le place JAMAIS en premier dans la liste.\n- `informant_npc_id` : L'INFORMATEUR, un autre habitué. Il ne détient rien mais sait qui porte l'augmentation. `informant_hint` est ce qu'il en dit : de quoi aller voir l'autre, jamais assez pour s'en passer.\n`handover_hint` dit ce que le porteur attend du joueur avant de la céder.\n`hook_story` est l'histoire qu'il raconte : celle de quelqu'un qui est sorti sans elle, et de ce que ça lui a coûté.",
         "exchanges_before_handover": 1
+      },
+      "objective": {
+        "note": "Ce qu'il faut accomplir pour passer à la scène suivante. Chaque scène en aura un.",
+        "kind": "acquire_augmentation",
+        "statement": "Obtenir l'augmentation qui rend le dehors lisible, puis franchir le sas."
+      },
+      "sealed_object": {
+        "instruction": "L'OBJET SCELLÉ — un second objet, distinct de l'augmentation. Un personnage le donne au joueur au fil de la conversation, ou celui-ci le trouve sur lui. Il le ramasse, il le garde, et il ne peut RIEN en faire tant qu'il ne l'a pas analysé.\nSon nom n'est pas lisible : c'est une chose du dehors, et le dehors ne se nomme pas de soi-même. Il faudra l'augmentation pour le déchiffrer.\n\n`observation` est ce que le joueur découvre une fois l'objet analysé. Ce texte ne fait pas avancer la quête et ne débloque aucune porte : il l'APPROFONDIT. Il révèle un pan de {{quest_title}} que personne n'a dit à voix haute — d'où vient le déséquilibre, qui en a profité, ce qu'on a tu. Trois à quatre phrases, dans le style du jeu textuel.\nIl doit s'accrocher au profil du joueur : ce que l'objet révèle touche la tension de son SIGNE, vue de l'extérieur cette fois — non plus ce qu'il ressent, mais ce que la ville en a fait."
       }
     }
   ],

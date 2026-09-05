@@ -48,6 +48,8 @@ onUnmounted(() => { if (revealed.value) stopChime(props.name) })
 
 /** Sur desktop, la souris EST l'instrument : aucun mode à activer. */
 function onEnter() {
+  // Avec la loupe en main, on analyse les objets — pas les gens.
+  if (gameStore.activeTool !== 'eye') return
   gameStore.setRevealing(props.name)
 }
 function onLeave() {
@@ -75,7 +77,10 @@ function onTouch() {
   -->
   <span
     class="glitch-name"
-    :class="[revealed ? 'cursor-eye-open is-revealed' : 'cursor-eye']"
+    :class="[
+      gameStore.activeTool === 'eye' ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : 'cursor-lens',
+      revealed && 'is-revealed',
+    ]"
     :data-glitch-name="name"
     :data-archetype="assigned.voice.key"
     tabindex="0"

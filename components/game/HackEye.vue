@@ -42,7 +42,17 @@ const style = computed(() => ({
       :style="style"
       aria-hidden="true"
     >
-      <svg viewBox="0 0 24 16" class="w-10 h-7" fill="none" stroke="currentColor" stroke-width="1.2">
+      <!-- La loupe en main : le réticule change de forme, comme le curseur. -->
+      <svg
+        v-if="gameStore.activeTool === 'lens'"
+        viewBox="0 0 20 20" class="w-9 h-9" fill="none" stroke="currentColor" stroke-width="1.3"
+      >
+        <circle cx="8.5" cy="8.5" r="6" />
+        <path d="M13 13l5 5" stroke-linecap="round" />
+        <path v-if="!gameStore.revealing" d="M8.5 5.2v6.6M5.2 8.5h6.6" stroke-width="0.8" opacity="0.6" />
+      </svg>
+
+      <svg v-else viewBox="0 0 24 16" class="w-10 h-7" fill="none" stroke="currentColor" stroke-width="1.2">
         <path d="M1 8s4-6.5 11-6.5S23 8 23 8s-4 6.5-11 6.5S1 8 1 8Z" />
         <!-- Pupille retirée dès qu'un nom est verrouillé : elle se poserait
              pile sur les lettres qu'on essaie de lire. -->

@@ -172,8 +172,12 @@ export interface SceneScript {
   quest: { instruction: string; source: string; structure: Record<string, string> }
   interactables: { instruction: string; always_include: AlwaysIncludeInteractable[] }
   exits: SceneExit[]
-  /** Règle de conception de l'objet sans lequel on ne peut pas sortir. */
+  /** Règle de conception de l'augmentation sans laquelle on ne peut pas sortir. */
   key_item: { instruction: string; exchanges_before_handover: number }
+  /** Règle de conception de l'objet scellé, à analyser. */
+  sealed_object: { instruction: string }
+  /** Ce qu'il faut accomplir pour passer à la scène suivante. */
+  objective: { note?: string; kind: string; statement: string }
 
   /** Surcharges optionnelles des defaults, scène par scène. */
   art_direction?: Partial<ArtDirection>
