@@ -469,6 +469,7 @@ ${lines}`)
           item_name: ctx.key_item.name,
           item_description: ctx.key_item.description,
           item_why: ctx.key_item.why,
+          item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
           item_handover_hint: ctx.key_item.handover_hint || "qu'on l'écoute vraiment",
           item_holder: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
           exit_label: this.scene.exits[0]?.label ?? 'la sortie',
@@ -518,6 +519,7 @@ ${lines}`)
         item_name: ctx.key_item.name,
         item_description: ctx.key_item.description,
         item_why: ctx.key_item.why,
+        item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
         exit_label: this.scene.exits[0]?.label ?? 'la sortie',
       })
     }
@@ -530,6 +532,7 @@ ${lines}`)
         holder_name: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un autre',
         item_name: ctx.key_item.name,
         item_why: ctx.key_item.why,
+        item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
         exit_label: this.scene.exits[0]?.label ?? 'la sortie',
       })
     }

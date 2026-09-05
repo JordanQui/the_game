@@ -65,6 +65,14 @@ export interface SceneKeyItem {
   informant_hint: string
   /** L'histoire qu'il raconte pour rendre l'objet désirable. */
   hook_story: string
+  /**
+   * L'acte que le joueur pourra accomplir une fois les noms lisibles.
+   *
+   * Déchiffrer n'est pas un but : c'est le moyen. Cet acte est ce que
+   * l'augmentation rend possible et ce qui règle ce qui doit l'être — généré
+   * pour ce joueur-là, d'après sa manière d'agir et la tension de son signe.
+   */
+  resolving_action?: string
   /** Nombre d'échanges avec le détenteur avant la remise. */
   exchanges_before_handover: number
 }
