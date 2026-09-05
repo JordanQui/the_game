@@ -13,23 +13,14 @@ import { unlockAudio } from '~/composables/useNameChime'
  */
 
 /**
- * Roulis, axe horizontal.
+ * Débattement, en degrés, pour parcourir la moitié de l'écran.
  *
- * Référence ABSOLUE : à plat comme en main, un téléphone tenu droit a un
- * roulis nul. Zéro degré doit donc placer l'oeil au centre, sans calibrage.
- * Le calibrage relatif d'avant prenait la toute première mesure comme origine,
- * si bien qu'une inclinaison au moment du tap envoyait l'oeil dans un coin.
+ * Une seule valeur pour les deux axes : c'est ce qui donnait au geste sa
+ * cohérence, un même quart de tour couvrant la même distance à l'horizontale
+ * et à la verticale. Les avoir séparés à 28 et 26 rendait le déplacement mou
+ * et différent selon la direction, sans rien résoudre.
  */
-const ROLL_RANGE_DEG = 28
-
-/**
- * Tangage, axe vertical.
- *
- * Relatif, lui : on lit un téléphone à plat sur une table comme incliné à
- * quarante-cinq degrés dans la main. Il n'existe pas de tangage neutre
- * universel, seule la posture de départ fait référence.
- */
-const PITCH_RANGE_DEG = 26
+const RANGE_DEG = 22
 
 /**
  * Hauteur de l'oeil au repos, en fraction d'écran.
@@ -42,16 +33,20 @@ const PITCH_RANGE_DEG = 26
 const NEUTRAL_Y = 0.25
 
 /**
- * Correction de tangage selon la posture déclarée.
+ * Ce que la posture change vraiment : l'amplitude, pas l'origine.
  *
- * Assis, on tient l'appareil incliné vers soi : le zéro est déjà bien placé.
- * Allongé, on le tient presque à plat au-dessus du visage, ce qui décale le
- * tangage d'une vingtaine de degrés — sans compensation, l'oeil se colle en
- * haut de l'écran et viser une ligne de texte devient impossible.
+ * Corriger le tangage d'une vingtaine de degrés était une double correction :
+ * le calibrage relatif annule DÉJÀ la posture de départ, quelle qu'elle soit.
+ * S'y ajouter ne recentrait rien, ça décalait l'oeil vers le haut en
+ * permanence dès qu'on cochait « allongé ».
+ *
+ * Ce qui diffère réellement, c'est le débattement disponible : allongé, le
+ * bras tient l'appareil au-dessus du visage et ne peut plus l'incliner
+ * beaucoup. Il faut donc que moins de degrés suffisent à traverser l'écran.
  */
-const POSTURE_OFFSET_DEG: Record<string, number> = {
-  assis: 0,
-  allonge: -20,
+const POSTURE_RANGE_SCALE: Record<string, number> = {
+  assis: 1,
+  allonge: 0.7,
 }
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
