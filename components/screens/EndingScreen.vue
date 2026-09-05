@@ -137,6 +137,23 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
+/*
+ * La lecture finale, mise à part.
+ *
+ * C'est le seul paragraphe qui sort de la fiction et s'adresse au joueur : il
+ * ne doit pas se lire comme la suite du récit. Un filet et un retrait suffisent
+ * — le HTML n'autorise aucun attribut, on ne peut donc pas le cibler par une
+ * classe, mais il est toujours le dernier.
+ */
+.prose :deep(p:last-of-type) {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  padding-left: 1rem;
+  border-top: 1px solid rgb(var(--neon-600) / 0.45);
+  border-left: 2px solid rgb(var(--neon-500) / 0.6);
+  color: rgb(var(--ink-100));
+}
+
 .prose :deep(em) {
   font-style: normal;
   color: rgb(var(--neon-300));

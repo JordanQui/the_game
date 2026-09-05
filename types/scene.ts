@@ -211,6 +211,8 @@ export interface PlayerTheme {
 }
 
 export interface ScenePacing {
+  /** Échanges avec un personnage avant qu'il livre ce qu'il sait. */
+  exchanges_before_steer?: number
   /** Tour à partir duquel le narrateur oriente vers la sortie. */
   steer_after_turns: number
   /** Tour où les personnages viennent dénouer la scène. */
@@ -251,6 +253,8 @@ export interface SceneImageResponse {
 
 /** Faits de la scène nécessaires pour narrer un tour. Envoyés par le client. */
 export interface TurnContext {
+  /** Échanges déjà eus avec le PNJ à qui l'on parle. Décide quand il s'ouvre. */
+  npc_exchanges?: number
   player_name: string
   place: ScenePlace
   quest: SceneQuest

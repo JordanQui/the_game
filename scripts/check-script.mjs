@@ -55,6 +55,17 @@ for (const s of script.scenes) {
     }
     // La fin doit viser la résolution déclarée, sinon elle n'est plus la fin
     // de CETTE histoire mais une conclusion interchangeable.
+    // La lecture finale est ce que le joueur emporte : elle doit être demandée,
+    // et ses registres tenus par le script plutôt que laissés au modèle.
+    if (!s.generation?.instruction?.includes('{{counsel}}')) {
+      errors.push(`"${s.id}" (épilogue) : l'instruction n'interpole pas {{counsel}}`)
+    }
+    if (!s.counsel?.registers?.length) {
+      errors.push(`"${s.id}" (épilogue) : aucun registre pour la lecture finale`)
+    }
+    if (!s.counsel?.instruction?.includes('{{registers}}')) {
+      errors.push(`"${s.id}" (épilogue) : counsel n'interpole pas {{registers}}`)
+    }
     for (const token of ['{{tension}}', '{{resolution}}', '{{acts}}']) {
       if (!s.theme_frame?.instruction?.includes(token)) {
         errors.push(`"${s.id}" (épilogue) : theme_frame n'interpole pas ${token}`)

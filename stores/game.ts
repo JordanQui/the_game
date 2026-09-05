@@ -100,6 +100,14 @@ export const useGameStore = defineStore('game', {
     inventory: [] as Array<{ id: string; label: string; from?: string }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
+    /**
+     * Nombre d'échanges par personnage.
+     *
+     * Un PNJ qui livre ce qu'il sait à la première réplique n'a pas de
+     * consistance : il faut lui avoir parlé deux ou trois fois. C'est ce
+     * compteur qui décide quand il s'ouvre.
+     */
+    npcExchanges: {} as Record<string, number>,
     /** La scène a été dénouée : les personnages sont venus au joueur. */
     resolved: false,
     conversationHistory: [] as Array<{ role: 'user' | 'assistant'; content: string }>,
@@ -299,6 +307,7 @@ export const useGameStore = defineStore('game', {
 
     recordNpcTalk(npcId: string) {
       if (!this.talkedToNpcIds.includes(npcId)) this.talkedToNpcIds.push(npcId)
+      this.npcExchanges[npcId] = (this.npcExchanges[npcId] ?? 0) + 1
     },
 
     markResolved() {
@@ -335,6 +344,7 @@ export const useGameStore = defineStore('game', {
       this.informedAboutItem = false
       this.pendingKeyItem = false
       this.talkedToNpcIds = []
+      this.npcExchanges = {}
       this.resolved = false
       this.conversationHistory = []
       this.lastCommand = null
@@ -367,6 +377,7 @@ export const useGameStore = defineStore('game', {
       this.informedAboutItem = false
       this.pendingKeyItem = false
       this.talkedToNpcIds = []
+      this.npcExchanges = {}
       this.resolved = false
       this.conversationHistory = []
       this.lastCommand = null

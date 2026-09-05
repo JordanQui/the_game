@@ -33,6 +33,18 @@ export function useNarrative() {
   }
 
   /**
+   * Le contexte, complété du compteur d'échanges avec CE personnage.
+   *
+   * Il ne peut pas vivre dans `buildContext()`, qui ne sait pas à qui l'on
+   * parle : c'est au moment d'envoyer le tour qu'on connaît l'interlocuteur.
+   */
+  function contextFor(npc?: SceneNPC): TurnContext | null {
+    const ctx = buildContext()
+    if (!ctx) return null
+    return { ...ctx, npc_exchanges: npc ? gameStore.npcExchanges[npc.id] ?? 0 : 0 }
+  }
+
+  /**
    * Trouve le personnage interpellé.
    *
    * Le prénom d'abord, puis le rôle : « je parle au barman » doit fonctionner
@@ -64,7 +76,7 @@ export function useNarrative() {
   }
 
   async function streamTurn(input: string, npc?: SceneNPC, mode?: TurnMode): Promise<string> {
-    const context = buildContext()
+    const context = contextFor(npc)
     if (!context) return ''
 
     gameStore.clearTurnError()
@@ -197,8 +209,12 @@ export function useNarrative() {
 
     if (npc) gameStore.recordNpcTalk(npc.id)
 
-    // Parler à l'informateur ouvre la chaîne.
-    if (npc && item && npc.id === item.informant_npc_id && !gameStore.informedAboutItem) {
+    // Parler à l'informateur ouvre la chaîne — mais pas au premier bonjour. Il
+    // faut lui avoir parlé deux ou trois fois : avant, il jauge, et il ne
+    // nomme personne.
+    const beforeSteer = playerStore.scene?.pacing?.exchanges_before_steer ?? 2
+    if (npc && item && npc.id === item.informant_npc_id && !gameStore.informedAboutItem
+      && (gameStore.npcExchanges[npc.id] ?? 0) >= beforeSteer) {
       gameStore.markInformedAboutItem()
     }
 

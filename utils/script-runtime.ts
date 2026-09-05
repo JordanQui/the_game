@@ -144,6 +144,8 @@ export class SceneRuntime {
   get pacing() {
     return {
       steer_after_turns: this.scene.turn.steer_after_turns,
+      // Échanges avec un personnage avant qu'il livre ce qu'il sait.
+      exchanges_before_steer: this.scene.turn.exchanges_before_steer ?? 2,
       resolution_after_turns: this.scene.turn.resolution_after_turns,
       hard_turn_cap: this.scene.turn.hard_turn_cap,
       autonomous_notice: this.scene.turn.autonomous_notice,
@@ -196,7 +198,9 @@ ${journal.length ? renderJournal(journal, journal.length) : "Il n'a traversé au
 
 ${this.describeCarried(carried, true)}
 
-${s.generation.instruction}
+${this.script.defaults.deep_theme.instruction}
+
+${this.describeCounsel()}
 
 DIRECTION ARTISTIQUE
 ${s.art_direction.render}
@@ -210,6 +214,25 @@ Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mot
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
 ${JSON.stringify(s.generation.output_schema, null, 2)}`
+  }
+
+  /**
+   * L'instruction de l'épilogue, avec sa lecture finale.
+   *
+   * Le quatrième mouvement est le SEUL endroit du jeu où l'on s'adresse au
+   * joueur en clair plutôt que par la fiction. Il a donc ses propres registres,
+   * tenus par le script : sans eux le modèle glisse vers l'horoscope ou vers le
+   * développement personnel, deux registres que tout le reste refuse.
+   */
+  private describeCounsel(): string {
+    const s = this.scene
+    const counsel = s.counsel
+    if (!counsel) return s.generation.instruction
+
+    const registers = counsel.registers.map(r => `  - ${r}`).join('\n')
+    return interpolate(s.generation.instruction, {
+      counsel: interpolate(counsel.instruction, { registers }),
+    })
   }
 
   /**
@@ -297,6 +320,12 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     carried: CarriedItem[] = [],
   ): string {
     const s = this.scene
+    // L'épilogue n'a ni quête ni personnages : le passer ici échouait sur un
+    // « Cannot read properties of undefined » qui ne disait pas où chercher.
+    if (this.kind === 'ending') {
+      throw new Error(
+        `La scène "${s.id}" est un épilogue : utilise buildEndingPrompt, pas buildGenerationPrompt`)
+    }
 
     const slots = s.decor_slots
       .map(slot => `  - ${slot.id} (poids visuel : ${slot.visual_weight}) : ${slot.role} — source : ${slot.source}`)
@@ -341,6 +370,8 @@ ${this.describeObjective(theme)}
 PERSONNAGES
 ${s.npcs.instruction} Exactement ${s.npcs.count} personnages.
 ${this.describeCast()}
+
+${this.script.defaults.deep_theme.instruction}
 
 QUÊTE
 ${s.quest.instruction}
@@ -765,8 +796,22 @@ ${lines}`)
   buildTurnUserPrompt(ctx: TurnContext, input: string, npc?: SceneNPC, mode?: TurnMode): string {
     const t = this.scene.turn
 
+    /**
+     * Les deux règles communes à toute réplique de personnage.
+     *
+     * Aucun prompt ne demandait de RÉPONDRE à ce que le joueur venait de dire :
+     * ils passaient sa phrase puis donnaient aussitôt un ordre du jour, et l'un
+     * d'eux ordonnait même de parler d'autre chose. D'où des personnages qui
+     * dévisagent et enchaînent. Répondre d'abord, orienter ensuite.
+     */
+    const rules = {
+      reply_rule: t.reply_rule ?? '',
+      steer_rule: interpolate(t.steer_rule ?? '', { quest_objective: ctx.quest.objective }),
+    }
+
     if (mode === 'handover' && npc && ctx.key_item) {
       return interpolate(t.handover_prompt, {
+        ...rules,
         npc_name: npc.name,
         npc_archetype: npc.archetype,
         npc_personality: npc.personality,
@@ -815,9 +860,27 @@ ${lines}`)
     const item = ctx.key_item
     const holderName = () => ctx.npcs.find(n => n.id === item?.npc_id)?.name ?? 'un habitué'
 
+    // Deux ou trois échanges avant qu'il s'ouvre : un personnage qui livre ce
+    // qu'il sait à la première réplique n'a aucune consistance. Avant ça il
+    // parle vraiment, lâche au mieux un fragment, et jauge son interlocuteur.
+    const warmedUp = (ctx.npc_exchanges ?? 0) >= (t.exchanges_before_steer ?? 2)
+
+    if (item && !ctx.has_key_item && npc.id === item.informant_npc_id && !warmedUp) {
+      return interpolate(t.informant_warmup_prompt, {
+        ...rules,
+        npc_name: npc.name,
+        npc_archetype: npc.archetype,
+        npc_personality: npc.personality,
+        npc_knows: npc.knows,
+        player_input: input,
+        quest_title: ctx.quest.title,
+      })
+    }
+
     // L'informateur met sur la piste : c'est lui qui ouvre la chaîne.
     if (item && !ctx.has_key_item && npc.id === item.informant_npc_id) {
       return interpolate(t.informant_prompt, {
+        ...rules,
         npc_name: npc.name,
         npc_archetype: npc.archetype,
         npc_personality: npc.personality,
@@ -832,6 +895,7 @@ ${lines}`)
     // de ce qu'il garde. On peut l'aborder, on ne peut rien en tirer.
     if (item && !ctx.has_key_item && !ctx.informed_about_item && npc.id === item.npc_id) {
       return interpolate(t.holder_locked_prompt, {
+        ...rules,
         npc_name: npc.name,
         npc_archetype: npc.archetype,
         npc_personality: npc.personality,
@@ -844,6 +908,7 @@ ${lines}`)
     // Le détenteur, une fois informé : il raconte, et il relance.
     if (item && !ctx.has_key_item && npc.id === item.npc_id) {
       return interpolate(t.holder_prompt, {
+        ...rules,
         npc_name: npc.name,
         npc_archetype: npc.archetype,
         npc_personality: npc.personality,
@@ -856,6 +921,7 @@ ${lines}`)
     }
 
     return interpolate(t.npc_dialogue_prompt, {
+      ...rules,
       npc_name: npc.name,
       npc_archetype: npc.archetype,
       npc_personality: npc.personality,

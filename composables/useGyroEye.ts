@@ -1,5 +1,6 @@
 import { useGameStore } from '~/stores/game'
 import { unlockAudio } from '~/composables/useNameChime'
+import { upVector, calibrationFrom, aimFrom, type Up, type Neutral } from '~/utils/gyro-aim'
 
 /**
  * L'oeil qu'on déplace en inclinant le téléphone.
@@ -15,12 +16,13 @@ import { unlockAudio } from '~/composables/useNameChime'
 /**
  * Débattement, en degrés, pour parcourir la moitié de l'écran.
  *
- * Une seule valeur pour les deux axes : c'est ce qui donnait au geste sa
+ * Une seule valeur pour les deux axes : c'est ce qui donne au geste sa
  * cohérence, un même quart de tour couvrant la même distance à l'horizontale
- * et à la verticale. Les avoir séparés à 28 et 26 rendait le déplacement mou
- * et différent selon la direction, sans rien résoudre.
+ * et à la verticale.
  */
 const RANGE_DEG = 22
+
+
 
 /**
  * Hauteur de l'oeil au repos, en fraction d'écran.
@@ -33,20 +35,18 @@ const RANGE_DEG = 22
 const NEUTRAL_Y = 0.25
 
 /**
- * Ce que la posture change vraiment : l'amplitude, pas l'origine.
+ * Le réglage de posture, réduit à ce qu'il doit être : un appoint.
  *
- * Corriger le tangage d'une vingtaine de degrés était une double correction :
- * le calibrage relatif annule DÉJÀ la posture de départ, quelle qu'elle soit.
- * S'y ajouter ne recentrait rien, ça décalait l'oeil vers le haut en
- * permanence dès qu'on cochait « allongé ».
- *
- * Ce qui diffère réellement, c'est le débattement disponible : allongé, le
- * bras tient l'appareil au-dessus du visage et ne peut plus l'incliner
- * beaucoup. Il faut donc que moins de degrés suffisent à traverser l'écran.
+ * Il a longtemps porté des corrections qui n'étaient pas les siennes — un
+ * décalage de tangage, puis un rapport d'amplitude de 0,7 posé au jugé. Or
+ * l'origine est déjà annulée par le calibrage, et l'écart de sensibilité entre
+ * assis et allongé est maintenant calculé à partir de l'inclinaison réelle. Il
+ * ne reste qu'une nuance de confort : allongé, le bras porte l'appareil et le
+ * geste est plus court.
  */
 const POSTURE_RANGE_SCALE: Record<string, number> = {
   assis: 1,
-  allonge: 0.7,
+  allonge: 0.85,
 }
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
@@ -70,32 +70,44 @@ export function useGyroEye() {
 
   let raf: number | null = null
   let target = { x: 0.5, y: NEUTRAL_Y }
-  /** L'inclinaison de départ, sur les DEUX axes : c'est elle qui fait le zéro. */
-  let neutral: { beta: number; gamma: number } | null = null
+  /**
+   * L'attitude de départ : la verticale telle que l'appareil la voyait, et le
+   * rattrapage de roulis qui va avec. C'est elle qui fait le zéro.
+   */
+  let neutral: Neutral | null = null
   let settleAt = 0
+  /**
+   * Mesures accumulées pour fixer l'origine.
+   *
+   * Prendre UN échantillon, c'est figer le zéro sur l'instant précis où la main
+   * bougeait encore après le tap. On en moyenne une demi-seconde : le calibrage
+   * cesse de dépendre d'un hasard.
+   */
+  let samples: Up[] = []
+  let calibrateUntil = 0
 
   function onOrientation(event: DeviceOrientationEvent) {
     const { beta, gamma } = event
     if (beta === null || gamma === null) return
 
-    // On laisse l'appareil se stabiliser avant de figer l'origine : les toutes
-    // premières mesures arrivent pendant que la main bouge encore, et c'est
-    // ÇA qui envoyait l'oeil dans un coin — pas le principe du calibrage.
-    // Passer le roulis en absolu réglait le symptôme au prix du reste :
-    // personne ne tient un téléphone parfaitement droit, si bien que l'oeil
-    // restait décentré en permanence.
+    const up = upVector(beta, gamma)
+
+    // Calibrage : on laisse d'abord l'appareil se stabiliser — les premières
+    // mesures arrivent pendant que la main bouge encore après le tap — puis on
+    // moyenne une demi-seconde de mesures pour fixer l'origine.
     if (neutral === null) {
-      if (Date.now() < settleAt) return
-      neutral = { beta, gamma }
+      const now = Date.now()
+      if (now < settleAt) return
+      samples.push(up)
+      if (now < calibrateUntil) return
+
+      neutral = calibrationFrom(samples)
+      samples = []
+      if (!neutral) return
     }
 
     const range = RANGE_DEG * (POSTURE_RANGE_SCALE[gameStore.posture] ?? 1)
-    const dx = (gamma - neutral.gamma) / range
-    const dy = (beta - neutral.beta) / range
-    target = {
-      x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
-      y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
-    }
+    target = aimFrom(up, neutral, range, NEUTRAL_Y)
   }
 
   /**
@@ -186,7 +198,9 @@ export function useGyroEye() {
    */
   function recalibrate() {
     neutral = null
+    samples = []
     settleAt = Date.now() + 400
+    calibrateUntil = settleAt + 500
   }
 
   async function enable(): Promise<boolean> {

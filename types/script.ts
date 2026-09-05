@@ -92,6 +92,14 @@ export interface TurnRules {
 
   /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
   key_item_context: string
+  /** Répondre d'abord à ce que dit le joueur. Commune à tous les personnages. */
+  reply_rule?: string
+  /** Orienter vers l'objectif sans jamais le dicter. */
+  steer_rule?: string
+  /** Échanges avec un personnage avant qu'il livre ce qu'il sait. */
+  exchanges_before_steer?: number
+  /** Ce que dit l'informateur tant qu'il jauge encore le joueur. */
+  informant_warmup_prompt: string
   /** Réplique de l'informateur : il révèle qui détient l'objet. */
   informant_prompt: string
   /** Réplique du détenteur tant que le joueur n'a pas été informé : il ne lâche rien. */
@@ -161,6 +169,8 @@ export interface Continuity {
 
 export interface ScriptDefaults {
   continuity: Continuity
+  /** Ce que le récit vise à restaurer, sous la quête apparente. */
+  deep_theme: { note?: string; instruction: string }
   /** Le schéma des champs de quête, commun à toutes les scènes. */
   quest: { note?: string; structure: Record<string, string> }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
@@ -258,6 +268,8 @@ export interface SceneScript {
   kind?: 'scene' | 'ending'
   /** Cadrage du thème propre à l'épilogue : le point d'arrivée, pas la construction. */
   theme_frame?: { note?: string; instruction: string }
+  /** La lecture finale : le seul moment du jeu qui parle au joueur en clair. */
+  counsel?: { note?: string; registers: string[]; instruction: string }
   is_final?: boolean
   /**
    * Ce qui gouverne la scène côté joueur.
