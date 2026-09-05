@@ -151,6 +151,22 @@
     );
   }
 
+  /**
+   * CURSEURS-OUTILS.
+   *
+   * Sur desktop, le curseur n'indique pas où l'on pointe mais CE QU'IL FAIT au
+   * texte survolé. L'oeil bionique déchiffre les identités ; d'autres modes de
+   * lecture viendront, chacun avec son curseur. C'est pourquoi ils sont
+   * regroupés ici plutôt que dispersés dans les composants.
+   *
+   * Le point chaud est au centre de la pupille. Le tracé porte un contour
+   * sombre : sans lui, l'oeil disparaît sur les zones claires de l'image.
+   */
+  .cursor-eye {
+    /* base64 : les guillemets et chevrons du SVG casseraient la chaîne CSS. */
+    cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDE2Ij48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwODBiMTIiIHN0cm9rZS13aWR0aD0iMy4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMS41IDhTNS4yIDIgMTIgMnMxMC41IDYgMTAuNSA2LTMuNyA2LTEwLjUgNlMxLjUgOCAxLjUgOFoiLz48cGF0aCBkPSJNMTIgLjh2Mi40TTEyIDEyLjh2Mi40TS40IDhoMi4yTTIxLjQgOGgyLjIiLz48L2c+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmYyZTg4IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEuNSA4UzUuMiAyIDEyIDJzMTAuNSA2IDEwLjUgNi0zLjcgNi0xMC41IDZTMS41IDggMS41IDhaIi8+PHBhdGggZD0iTTEyIC44djIuNE0xMiAxMi44djIuNE0uNCA4aDIuMk0yMS40IDhoMi4yIiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSIzIiBmaWxsPSIjZmYyZTg4Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSIxLjEiIGZpbGw9IiMwODBiMTIiLz48L3N2Zz4=") 16 12, crosshair;
+  }
+
   /** Un trait de pluie. La chute est portée par l'animation rain-fall. */
   .rain-drop {
     @apply absolute w-px;

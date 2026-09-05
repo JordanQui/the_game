@@ -261,6 +261,16 @@ export interface EconomicsConfig {
   paying_customer: { note?: string; scenes: number; turns: number; images: number }
 }
 
+/** Syllabaire construit : chaque syllabe porte un sens, les noms se composent. */
+export interface OnomasticsConfig {
+  note?: string
+  instruction: string
+  /** Syllabe initiale : ce que le personnage porte. */
+  matiere: Record<string, string>
+  /** Syllabe finale : ce qu'il en fait. */
+  posture: Record<string, string>
+}
+
 export interface PaywallConfig {
   gate_text: string
   cta: string
@@ -282,6 +292,7 @@ export interface Script {
   numerology: NumerologyScript
   pricing: PricingConfig
   limits: LimitsConfig
+  onomastics: OnomasticsConfig
   economics: EconomicsConfig
 }
 

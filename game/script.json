@@ -258,7 +258,7 @@
       ],
       "npcs": {
         "count": 4,
-        "instruction": "QUATRE personnages, dans cet ordre exact.\n\nLE PREMIER est LE BARMAN (ou la barmaid) — la figure fixe du lieu, derrière le comptoir. C'est lui qui accueille le joueur et qui EXPOSE la situation : ce qui ne tourne plus rond dans la ville, pourquoi ça dure, et ce qu'il faudrait pour que ça cesse. Son `opening_line` est ce qu'il dit au joueur qui vient de s'asseoir, et cette réplique porte l'amorce de la quête.\nCe qu'il décrit de la ville est la transposition urbaine de la tension intime du joueur (section SIGNE) : la ville souffre à son échelle de ce que le joueur n'arrive pas à faire à la sienne. Ne nomme jamais cette tension, montre-la par la situation.\nLe barman ne détient JAMAIS l'objet-clé et n'est JAMAIS l'informateur : il pose le décor, il ne résout rien.\n\nLES TROIS SUIVANTS sont des habitués. Ils incarnent métaphoriquement les passions du joueur, jamais littéralement. Chacun porte un rapport DIFFÉRENT à la tension intime — l'un l'a résolue et en a payé le prix, l'un s'y est brisé, l'un la nie encore. Chacun connaît un fragment de la quête. C'est parmi eux que se trouvent l'informateur et le détenteur de l'objet.\n\nPrénom court et alias de mégapole, en français, pour tous.\n\nLE CHAMP `archetype` EST AFFICHÉ AU JOUEUR, sous le nom du personnage. Il dit ce que celui-ci EST dans la ville : un métier, un passé, une posture, une image. 2 à 4 mots, en Majuscules de Titre. « Ancienne Régulatrice de Fret », « Voix du Quai Sept », « Dernier Client du Vendredi ».\nIL NE DIT JAMAIS SA FONCTION DANS LA MÉCANIQUE DU JEU. Les mots suivants y sont absolument interdits, comme toute périphrase équivalente : informateur, informatrice, détenteur, détentrice, porteur, gardien de l'objet, guide, indice, contact, PNJ, personnage-clé, témoin-clé. Le joueur doit deviner qui sait quoi en parlant aux gens, pas le lire sur une étiquette. Le barman est la seule exception : son métier est son rôle, et il peut être nommé comme tel.",
+        "instruction": "QUATRE personnages, dans cet ordre exact.\n\nLE PREMIER est LE BARMAN (ou la barmaid) — la figure fixe du lieu, derrière le comptoir. C'est lui qui accueille le joueur et qui EXPOSE la situation : ce qui ne tourne plus rond dans la ville, pourquoi ça dure, et ce qu'il faudrait pour que ça cesse. Son `opening_line` est ce qu'il dit au joueur qui vient de s'asseoir, et cette réplique porte l'amorce de la quête.\nCe qu'il décrit de la ville est la transposition urbaine de la tension intime du joueur (section SIGNE) : la ville souffre à son échelle de ce que le joueur n'arrive pas à faire à la sienne. Ne nomme jamais cette tension, montre-la par la situation.\nLe barman ne détient JAMAIS l'objet-clé et n'est JAMAIS l'informateur : il pose le décor, il ne résout rien.\n\nLES TROIS SUIVANTS sont des habitués. Ils incarnent métaphoriquement les passions du joueur, jamais littéralement. Chacun porte un rapport DIFFÉRENT à la tension intime — l'un l'a résolue et en a payé le prix, l'un s'y est brisé, l'un la nie encore. Chacun connaît un fragment de la quête. C'est parmi eux que se trouvent l'informateur et le détenteur de l'objet.\n\nLes noms se composent selon la section SYLLABAIRE : jamais un prénom courant, jamais un alias arbitraire.\n\nLE CHAMP `archetype` EST AFFICHÉ AU JOUEUR, sous le nom du personnage. Il dit ce que celui-ci EST dans la ville : un métier, un passé, une posture, une image. 2 à 4 mots, en Majuscules de Titre. « Ancienne Régulatrice de Fret », « Voix du Quai Sept », « Dernier Client du Vendredi ».\nIL NE DIT JAMAIS SA FONCTION DANS LA MÉCANIQUE DU JEU. Les mots suivants y sont absolument interdits, comme toute périphrase équivalente : informateur, informatrice, détenteur, détentrice, porteur, gardien de l'objet, guide, indice, contact, PNJ, personnage-clé, témoin-clé. Le joueur doit deviner qui sait quoi en parlant aux gens, pas le lire sur une étiquette. Le barman est la seule exception : son métier est son rôle, et il peut être nommé comme tel.",
         "source": "passions"
       },
       "quest": {
@@ -560,6 +560,52 @@
       "scenes_total": 10,
       "free_scenes": 1,
       "turns_per_scene": 10
+    }
+  },
+  "onomastics": {
+    "note": "Syllabaire construit de la mégapole. Chaque syllabe porte un sens ; un nom est la composition de deux ou trois d'entre elles. Ce n'est pas du japonais : c'est le principe syllabique appliqué à l'argot des quais. Les collisions fortuites avec une langue réelle sont sans importance, le sens est celui de cette table.",
+    "instruction": "NOMS DES PERSONNAGES — aucun nom n'est inventé au hasard. Chacun se COMPOSE à partir de la table ci-dessous, et son sens doit décrire ce que le personnage représente pour le joueur.\nRègle de composition : une syllabe de MATIÈRE, puis une syllabe de POSTURE. Une troisième syllabe de matière peut s'intercaler si le personnage porte deux choses à la fois.\nÉcris le nom d'un seul tenant, première lettre en majuscule : Ka + ru donne « Karu ». Se + mi + to donne « Semito ».\nLe sens composé doit correspondre à CE QUE CE PERSONNAGE A À DIRE au joueur : celui qui détient l'objet porte une syllabe de garde, celui qui met sur la piste une syllabe de monstration, celui qui a fui la tension du signe une syllabe d'absence.\nN'EXPLIQUE JAMAIS le nom au joueur. Aucun personnage ne commente son propre nom, aucune narration ne le traduit. Le sens se sent, il ne se lit pas.\nLe champ `name` ne contient que ce nom composé, rien d'autre.",
+    "matiere": {
+      "ka": "la dette, ce qui est dû",
+      "ke": "la mémoire, ce qui reste après",
+      "ki": "le signal, ce qui traverse",
+      "ko": "le seuil, ce qui sépare",
+      "sa": "le sel, l'usure lente",
+      "se": "le secret, ce qu'on tait",
+      "shi": "la coupure, la rupture nette",
+      "so": "la pluie, ce qui tombe sans fin",
+      "ta": "la main, ce qui saisit",
+      "te": "le fer, ce qui tient",
+      "to": "la voix, ce qui appelle",
+      "na": "le nom, ce par quoi on existe",
+      "ne": "la racine, ce qui ancre",
+      "no": "le manque, ce qui a été enlevé",
+      "ha": "la lame, ce qui tranche",
+      "hi": "la braise, ce qui reste chaud sous la cendre",
+      "fu": "le souffle, ce qui passe et ne revient pas",
+      "ma": "l'intervalle, le temps d'attente",
+      "mi": "l'oeil, ce qui a vu",
+      "ya": "la nuit, ce qui couvre",
+      "ra": "le néon, la lumière qu'on fabrique",
+      "ri": "le fil, le lien qu'on tire",
+      "ru": "le flux, ce qui circule",
+      "wa": "le cercle, ce qui revient toujours",
+      "za": "le bruit, ce qui empêche d'entendre",
+      "zo": "la masse, la foule des autres"
+    },
+    "posture": {
+      "-ru": "qui garde, qui ne cède pas",
+      "-mi": "qui voit et se tait",
+      "-ka": "qui échange, qui monnaye",
+      "-no": "qui a perdu",
+      "-shi": "qui a rompu et n'est pas revenu",
+      "-to": "qui parle, qui met sur la piste",
+      "-na": "qui attend sans agir",
+      "-ra": "qui montre, qui éclaire",
+      "-zu": "qui nie, qui détourne le regard",
+      "-ki": "qui cherche encore",
+      "-me": "qui a payé le prix et tient debout",
+      "-va": "qui sert, qui reste derrière"
     }
   }
 }

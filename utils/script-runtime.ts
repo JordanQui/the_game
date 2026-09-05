@@ -176,6 +176,9 @@ ${s.art_direction.accent_note}
 ${slots}
 Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mots) décrivant la forme visible, sans mentionner de couleur.
 
+SYLLABAIRE
+${this.describeSyllabary()}
+
 PERSONNAGES
 ${s.npcs.instruction} Exactement ${s.npcs.count} personnages.
 
@@ -200,6 +203,21 @@ Le champ "interactables" doit lister exactement les objets nommés dans le texte
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
 ${JSON.stringify(s.generation.output_schema, null, 2)}`
+  }
+
+  /** La table de composition des noms. Jointe à la génération, jamais aux tours. */
+  private describeSyllabary(): string {
+    const o = this.script.onomastics
+    const list = (table: Record<string, string>) =>
+      Object.entries(table).map(([syl, sens]) => `  ${syl} = ${sens}`).join('\n')
+
+    return `${o.instruction}
+
+MATIÈRE — première syllabe
+${list(o.matiere)}
+
+POSTURE — syllabe finale
+${list(o.posture)}`
   }
 
   /** Les sections SIGNE et NOMBRES du prompt de génération. */

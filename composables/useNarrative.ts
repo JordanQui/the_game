@@ -44,18 +44,23 @@ export function useNarrative() {
     const text = normalize(input)
     const npcs = playerStore.npcs
 
-    const byName = npcs.find(npc =>
+    // UNIQUEMENT le nom. Reconnaître l'archétype — « je parle au barman » —
+    // rouvrirait une porte dérobée : on pourrait jouer sans jamais déchiffrer
+    // une identité, et l'oeil bionique ne servirait plus à rien.
+    return npcs.find(npc =>
       normalize(npc.name).split(' ').some(part => part.length > 2 && text.includes(part))
     )
-    if (byName) return byName
+  }
 
-    // Les mots courts de l'archétype ne discriminent rien : « de », « du »,
-    // « ancien » se retrouvent chez plusieurs personnages.
-    return npcs.find(npc =>
-      normalize(npc.archetype ?? '')
-        .split(/[^a-z0-9]+/)
-        .some(word => word.length > 4 && text.includes(word))
-    )
+  /** Verbes par lesquels on s'adresse à quelqu'un. */
+  const ADDRESS_VERBS = ['parle', 'parler', 'demande', 'demander', 'interroge', 'interroger',
+    'aborde', 'aborder', 'dis', 'dire', 'salue', 'saluer', 'questionne', 'questionner']
+
+  /** Le joueur s'adresse à quelqu'un sans le nommer : il lui manque l'outil. */
+  function addressesNobody(input: string): boolean {
+    const text = normalize(input)
+    if (findAddressedNpc(input)) return false
+    return ADDRESS_VERBS.some(v => text.includes(v))
   }
 
   async function streamTurn(input: string, npc?: SceneNPC, mode?: TurnMode): Promise<string> {
@@ -260,6 +265,17 @@ export function useNarrative() {
 
     const scene = playerStore.scene
     const state = { hasKeyItem: gameStore.hasKeyItem, talkedToNpcIds: gameStore.talkedToNpcIds }
+
+    // Il veut parler à quelqu'un mais n'a nommé personne : on le renvoie vers
+    // l'oeil plutôt que de dépenser un tour en narration d'ambiance.
+    if (scene && !mode && addressesNobody(input)) {
+      gameStore.addNarrativeEntry(
+        'system',
+        "Tu ne connais pas encore son nom. L'oeil, en haut à droite, lit les identités."
+      )
+      gameStore.setPlayingSubState('awaiting_input')
+      return
+    }
 
     if (scene && !mode) {
       const npc = findAddressedNpc(input)

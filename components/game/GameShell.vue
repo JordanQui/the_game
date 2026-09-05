@@ -149,6 +149,7 @@ function retryImage() {
       >
         {{ playerStore.npcs.length }} à qui parler {{ showNpcs ? '▴' : '▾' }}
       </button>
+
     </div>
 
     <!-- Liste des PNJ -->
@@ -238,6 +239,9 @@ function retryImage() {
         </button>
       </div>
     </Transition>
+
+    <!-- L'oeil de visée, sur les appareils sans souris -->
+    <HackEye />
 
     <!-- Saisie -->
     <div class="shrink-0 pb-[env(safe-area-inset-bottom)]">

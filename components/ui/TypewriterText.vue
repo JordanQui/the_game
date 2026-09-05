@@ -2,6 +2,8 @@
 const props = defineProps<{
   text: string
   speed?: number
+  /** Noms à chiffrer dans le texte tapé. */
+  names?: string[]
 }>()
 
 const emit = defineEmits<{ done: [] }>()
@@ -48,5 +50,9 @@ const typing = computed(() => displayed.value.length < props.text.length)
 </script>
 
 <template>
-  <span>{{ displayed }}<span v-if="typing" class="animate-pulse text-neon-400">▍</span></span>
+  <span><GlitchText
+    :text="text"
+    :names="names ?? []"
+    :visible="displayed.length"
+  /><span v-if="typing" class="animate-pulse text-neon-400">▍</span></span>
 </template>

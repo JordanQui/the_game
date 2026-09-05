@@ -24,6 +24,14 @@ export const useGameStore = defineStore('game', {
     informedAboutItem: false,
     /** L'objet est proposé : il reste au joueur à le récupérer. */
     pendingKeyItem: false,
+    /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
+    eyeActive: false,
+    /** Position de l'oeil, en fraction de l'écran. */
+    eyePos: { x: 0.5, y: 0.5 },
+    /** Le nom en cours de lecture. Le reste du texte s'efface pendant ce temps. */
+    revealing: null as string | null,
+    /** Lecture refusée : tout le texte se brouille un instant. */
+    readDenied: false,
     /** Objets ramassés dans la scène, par identifiant. */
     inventory: [] as Array<{ id: string; label: string }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
@@ -147,6 +155,32 @@ export const useGameStore = defineStore('game', {
     /** Le détenteur tend l'objet. Le joueur doit encore le prendre. */
     offerKeyItem() {
       this.pendingKeyItem = true
+    },
+
+    setEyeActive(active: boolean) {
+      this.eyeActive = active
+      if (!active) this.revealing = null
+    },
+
+    setEyePos(pos: { x: number; y: number }) {
+      this.eyePos = pos
+    },
+
+    /**
+     * Rien n'est mémorisé ici volontairement : le joueur doit retenir le nom.
+     * C'est le coeur de la mécanique, pas un oubli.
+     */
+    setRevealing(name: string | null) {
+      this.revealing = name
+    },
+
+    /**
+     * Le joueur tente de lire sans l'oeil. Rien ne se révèle : au contraire,
+     * tout le texte se brouille — c'est la réponse du système, pas un message.
+     */
+    denyRead() {
+      this.readDenied = true
+      setTimeout(() => { this.readDenied = false }, 700)
     },
 
     pickUp(id: string, label: string) {

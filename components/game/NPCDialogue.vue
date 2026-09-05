@@ -17,15 +17,30 @@ defineProps<{ npc: SceneNPC; talked?: boolean }>()
         :alt="npc.name"
         class="w-full h-full object-cover"
       />
-      <div v-else class="w-full h-full flex items-center justify-center text-neon-500/60 text-xl font-display">
-        {{ npc.name[0] }}
+      <div v-else class="w-full h-full flex items-center justify-center text-steel-400 text-xl font-mono">
+        ?
       </div>
     </div>
 
     <!-- Info -->
     <div class="flex-1 min-w-0">
-      <p class="flex items-center gap-1.5 text-neon-300 text-xs uppercase tracking-wider font-display mb-0.5">
-        {{ npc.name }}
+      <p class="flex items-center gap-1.5 text-xs uppercase tracking-wider font-display mb-0.5">
+        <!--
+          Le panneau est un carnet de rencontres, pas un annuaire. Tant qu'on
+          n'a pas parlé à quelqu'un, son nom n'y figure pas — même chiffré.
+          C'est dans le récit qu'on le découvre et qu'on le déchiffre.
+
+          Une fois la rencontre faite, le nom s'y inscrit EN CLAIR et n'en
+          bouge plus : c'est ce qu'on a gagné en allant parler. Le joueur doit
+          mémoriser pour aborder quelqu'un, pas pour le réaborder.
+        -->
+        <span v-if="talked" class="text-neon-300">{{ npc.name }}</span>
+        <span
+          v-else
+          class="font-mono text-[0.95em] text-steel-500 select-none"
+          title="Identité inconnue — parle-lui d'abord"
+        >— — — —</span>
+
         <!-- Puce pleine : tu lui as déjà parlé -->
         <span
           class="w-1.5 h-1.5 shrink-0"
