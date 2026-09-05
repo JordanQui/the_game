@@ -33,6 +33,8 @@ onMounted(async () => {
           label: o.label,
           decrypted: gameStore.decryptedObjectIds.includes(o.id),
           from: o.from,
+          kind: o.kind,
+          color: o.color,
         })),
       },
     })

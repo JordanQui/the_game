@@ -59,4 +59,12 @@ export interface CarriedItem {
   decrypted: boolean
   /** Le lieu où il a été ramassé, pour que le récit puisse y renvoyer. */
   from?: string
+  /**
+   * `key` : il ouvre quelque chose, ici ou plus loin. `lore` : il n'ouvre rien
+   * et éclaire la quête. Les deux voyagent, mais une scène ne s'en sert pas de
+   * la même façon — l'une se déverrouille, l'autre se comprend.
+   */
+  kind: 'key' | 'lore'
+  /** Sa couleur, pour une carte : c'est ce que le joueur retient et compare. */
+  color?: string
 }

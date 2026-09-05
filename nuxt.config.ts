@@ -21,6 +21,14 @@ const uiPalette = script.defaults.interface_palette.palette
  * côté serveur. C'est ce qui permet au raccourci de désigner une scène par son
  * numéro sans que le client connaisse l'histoire.
  */
+/**
+ * L'inventaire de développement, exposé HORS PRODUCTION uniquement.
+ *
+ * En production il vaut `null` : aucun joueur ne doit recevoir un jeu complet
+ * de cartes, et la liste n'a même pas à figurer dans le bundle.
+ */
+const devInventory = process.env.NODE_ENV === 'production' ? null : script.dev_inventory
+
 const sceneIndex = script.progression.order.map((id: string) => {
   const scene = script.scenes.find((s: { id: string }) => s.id === id)
   return { id, title: scene?.title ?? id, act: scene?.act ?? null, kind: scene?.kind ?? 'scene' }
@@ -63,6 +71,8 @@ export default defineNuxtConfig({
       uiPalette,
       /** Les dix scènes, dans l'ordre. Identifiants et titres seulement. */
       sceneIndex,
+      /** Inventaire complet de test. `null` en production. */
+      devInventory,
       facebookAppId: process.env.FACEBOOK_APP_ID,
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,

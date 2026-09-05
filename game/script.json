@@ -71,13 +71,13 @@
     },
     "narrative": {
       "style": "text_adventure_80s",
-      "instruction": "Écris à la manière d'un jeu d'aventure textuel des années 80. Présent, deuxième personne du singulier. Phrases courtes et factuelles. D'abord POURQUOI tu es sorti, puis où tu es, puis ce que tu vois, puis ce que tu peux faire. Nomme explicitement chaque objet et chaque sortie manipulable : le joueur ne peut interagir qu'avec ce qui est nommé. Aucune prose romanesque, aucune métaphore filée, aucune question au joueur.",
+      "instruction": "Écris à la manière d'un jeu d'aventure textuel des années 80. Présent, deuxième personne du singulier. Phrases courtes et factuelles. D'abord d'où tu arrives, puis où tu es, puis ce que tu vois, puis ce que tu peux faire. Nomme explicitement chaque objet et chaque sortie manipulable : le joueur ne peut interagir qu'avec ce qui est nommé. Aucune prose romanesque, aucune métaphore filée, aucune question au joueur.",
       "structure": [
-        "1 à 2 phrases d'ouverture : pourquoi tu es sorti, et le fait que tu pousses la porte de ce bar",
+        "1 phrase d'arrivée : ce qu'il vient de quitter, et ce qui change ici",
         "1 phrase de localisation",
         "3 à 5 phrases de description reprenant les slots de décor",
-        "2 à 4 phrases rapportant ce que LE BARMAN te dit en te servant : l'état de la ville ; puis qu'il te faut mettre la main, ici même, sur une augmentation qui rend lisibles les noms des choses ; et ce que tu pourras faire une fois que tu les liras — l'acte de `key_item.resolving_action`, dit avec ses mots. C'est par sa bouche que ça arrive, pas par une voix off. Aucun autre objet à récupérer dans ce bar",
-        "1 à 2 phrases nommant les habitués présents et ce que chacun semble savoir — dont celui qui a l'air d'en savoir plus que les autres. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche. On les découvre dans la salle, pas dans une liste",
+        "2 à 4 phrases sur ce qui ne va pas ICI, montré par la situation : ce qui bloque, ce qui manque, ce que les gens attendent. Pas de récapitulatif de la quête, pas de rappel de ce qui s'est passé avant — le joueur l'a vécu. Une de ces phrases doit rendre PERCEPTIBLE qu'il y a ici quelque chose à prendre — sans dire quoi ni où précisément : une chose posée là qui n'y a pas sa place, quelqu'un qui tient un objet sans le lâcher, un tiroir mal refermé",
+        "1 à 2 phrases nommant les personnes présentes et ce que chacune semble savoir. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche",
         "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
         "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action, dont parler à quelqu'un"
       ],
@@ -91,8 +91,9 @@
         "toute ligne-étiquette introduite par deux-points pour présenter les personnages"
       ],
       "vocabulary": "LEXIQUE IMPOSÉ — le monde est cyberpunk, pas médiéval.\nLa sortie est un SAS. N'écris jamais « porte », « battant », « seuil » ni « huis » : c'est un sas, et le mot doit apparaître tel quel dans la ligne « Sorties : » comme dans le verbe d'action.\nDe même : un bar ou un comptoir, jamais une auberge ni une taverne ; des néons, des écrans et des tubes, jamais des torches, des lanternes ni des bougies ; un barman, jamais un aubergiste ; des câbles et des structures, jamais des poutres.",
-      "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif doit s'accorder à la tension intime décrite dans la section SIGNE, sans jamais la nommer — ce qu'il fuit est exactement ce qu'il devra affronter dehors.\nENJEUX — le joueur doit comprendre ce qui se joue SANS avoir à ouvrir le journal de quête. Le texte de scène expose donc, en clair : ce qui ne tourne plus rond dans la ville (quest.restoration), ce que ça coûte si personne ne bouge (quest.stakes), et ce qu'il te manque pour y changer quoi que ce soit — de quoi lire les noms des choses, qu'un habitué a sur lui. Dis-le comme une rumeur de comptoir, pas comme une fiche de mission — mais dis-le vraiment : à la fin de l'intro, le joueur doit savoir ce qu'il y a à perdre.",
-      "naming_style": "NOMS PROPRES — ce qui compte porte un nom, et ce nom s'écrit comme un titre de morceau : chaque mot significatif prend une majuscule, les petits mots de liaison restent en minuscules.\nExemples : « Disrupteur de Sons », « Clé de Scellé », « Carnet du Quai Sept », « Le Néon des Marées ».\nS'écrivent ainsi : l'objet-clé, les objets manipulables, les éléments de décor nommés, l'artefact de la quête et le nom du lieu.\nNE s'écrivent PAS ainsi : ce qui est ordinaire et sans importance — un verre, une chaise, la pluie, le comptoir en tant que meuble. C'est ce contraste qui dit au joueur ce qui mérite son attention : si tout portait une majuscule, plus rien ne se distinguerait.\nUne fois un nom fixé, il s'écrit toujours de la même façon, à la lettre près."
+      "opening": "OUVERTURE — le joueur ARRIVE. Il vient du lieu précédent (voir CE QUI PRÉCÈDE), il n'ouvre pas les yeux quelque part.\nLa première phrase est un franchissement : ce qu'il quitte, ce qu'il traverse, ce qui change en arrivant — la lumière, le bruit, l'odeur, la température. Une seule phrase, concrète.\nIL A DÉJÀ SON AUGMENTATION et il porte ce qu'il a ramassé. Ne redécris jamais son acquisition, ne fais dire à personne qu'il lui faudrait de quoi lire : c'est acquis depuis l'auberge. Il n'y a PAS de bar ici, PAS de barman, PAS de comptoir — à moins que le décor de CETTE scène n'en comporte un.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucun « tu te demandes pourquoi ».",
+      "naming_style": "LA MAJUSCULE EST LE SIGNAL D'INTERACTION. C'est la règle la plus importante du texte.\nTout ce avec quoi le joueur peut interagir s'écrit en Majuscules de Titre — chaque mot significatif prend une majuscule, les petits mots de liaison restent en minuscules. Tout le reste s'écrit en minuscules. Le joueur ne dispose d'aucun autre indice : si un objet manipulable s'écrit en minuscules, il ne saura pas qu'il peut le toucher.\nMAUVAIS : « un tourniquet de contrôle attend que tu présentes une carte d'accès ».\nBON : « le Tourniquet de Contrôle attend que tu présentes une Carte d'Accès ».\nS'écrivent ainsi, sans exception : l'objet-clé, l'objet scellé, les objets manipulables, les éléments de décor qu'on peut examiner, les serrures et lecteurs, les sorties, et le nom du lieu.\nNE s'écrivent PAS ainsi : ce qui est ordinaire et sans importance — un verre, une chaise, la pluie, le sol. C'est ce contraste qui dit au joueur où porter son attention ; si tout portait une majuscule, plus rien ne se distinguerait.\nUn nom une fois fixé s'écrit toujours pareil, à la lettre près, dans le texte comme dans la liste `interactables`. Un objet nommé dans le texte et absent de la liste est un objet que le joueur essaiera de toucher pour rien.",
+      "stakes_rule": "LES ENJEUX NE SE RÉCITENT PAS.\nN'expose JAMAIS en clair ce qui ne tourne pas rond, ce que ça coûte, ni ce qu'il faudrait — ni par une voix off, ni dans la bouche d'un personnage. Une réplique qui résume la situation du monde est un briefing déguisé : c'est le pire de ce qu'on peut écrire ici.\nLe joueur comprend par ce qu'il VOIT : un compteur qui tourne sur un mur, une file qui n'avance pas, une chose réparée à la hâte, quelqu'un qui attend depuis trop longtemps. Il doit pouvoir repartir sans avoir compris tout de suite — c'est en agissant qu'il comprendra.\nINTERDIT : « la ville a perdu... », « tout est compté... », « tu auras besoin de... », « il te faut... », toute phrase qui explique le monde au lieu de le montrer."
     },
     "turn": {
       "max_tokens": 220,
@@ -185,7 +186,8 @@
           {
             "id": "string",
             "label": "string (en Majuscules de Titre s'il compte)",
-            "verb": "string"
+            "verb": "string",
+            "lock_color": "string (si cet élément est verrouillé, la couleur affichée par sa serrure ou son lecteur — le joueur saura quelle carte présenter. Vide sinon)"
           }
         ],
         "scene_text": "string (texte années 80, structure imposée, sauts de ligne inclus)",
@@ -199,7 +201,8 @@
           "informant_npc_id": "string (l'id d'un AUTRE npc, différent de npc_id)",
           "informant_hint": "string (2 phrases : ce que l'informateur sait de l'objet sans le nommer précisément)",
           "worn": "string (comment elle se porte : à l'oeil, sous la peau, au poignet — quelques mots)",
-          "resolving_action": "string (une phrase : L'ACTE PRÉCIS que le joueur pourra accomplir une fois les noms des choses lisibles, et qui règle ce qui doit l'être. Un geste concret et vérifiable — lire une inscription sur une porte scellée, reconnaître le bon boîtier dans un mur en panne, identifier la marchandise qui ne devrait pas être là. Découle de la MANIÈRE D'AGIR du joueur (NOMBRES) et de la tension de son SIGNE : celui qui absorbe ce que ressentent les autres démasque, celui qui fonce ouvre)"
+          "resolving_action": "string (une phrase : L'ACTE PRÉCIS que le joueur pourra accomplir une fois les noms des choses lisibles, et qui règle ce qui doit l'être. Un geste concret et vérifiable — lire une inscription sur une porte scellée, reconnaître le bon boîtier dans un mur en panne, identifier la marchandise qui ne devrait pas être là. Découle de la MANIÈRE D'AGIR du joueur (NOMBRES) et de la tension de son SIGNE : celui qui absorbe ce que ressentent les autres démasque, celui qui fonce ouvre)",
+          "color": "string (LA COULEUR de la carte, un seul mot en Majuscule : Ambre, Indigo, Vermeil, Cyan... Elle doit correspondre à l'accent de la palette. Vide si l'objet-clé n'est pas une carte)"
         },
         "sealed_object": {
           "id": "string (identifiant court, sans espace)",
@@ -276,8 +279,8 @@
       "instruction": "L'OBJET SCELLÉ — un second objet, distinct de l'objet-clé. Le joueur le ramasse ici : un personnage le lui donne au fil de la conversation, ou il le trouve dans le décor.\nSon nom N'EST PAS LISIBLE. C'est une chose du dehors, et le dehors ne se nomme pas de soi-même : il faut l'augmentation, puis passer l'épreuve de lecture, pour que son nom apparaisse.\n\n`observation` est ce que le joueur comprend une fois le nom lu, en 3 à 4 phrases. ELLE NE DIT JAMAIS À QUOI L'OBJET SERT. Pas de mode d'emploi, pas « il ouvre... », pas « il te faudra... », aucune scène future annoncée. Un objet dont on connaît déjà l'usage n'est plus une trouvaille, c'est une consigne.\nElle donne trois choses, dans cet ordre :\n  1. CE QUE L'OBJET EST, précisément : sa matière, son usure, une marque, un numéro, une trace de ce qui s'en est servi avant. Assez concret pour que le joueur le reconnaisse trois scènes plus tard sans qu'on le lui rappelle.\n  2. UN INDICE, jamais une réponse. Ce à quoi il fait écho — un autre objet que le joueur porte déjà (voir CE QUE LE JOUEUR PORTE), une chose vue dans une scène traversée, un détail du lieu. Le rapprochement doit être POSSIBLE, pas explicite : c'est au joueur de le faire.\n  3. Ce que ça révèle de la quête que personne n'a dit à voix haute — d'où vient le déséquilibre, qui en a profité, ce qu'on a tu.\nIl ne débloque PAS la sortie de cette scène : ça, c'est le travail de l'objet-clé.\nCe qu'il révèle s'accroche au profil : ça touche la tension de son SIGNE, vue de l'extérieur cette fois — non plus ce que le joueur ressent, mais ce que la ville en a fait.\nTrois à quatre phrases, dans le style du jeu textuel."
     },
     "inventory": {
-      "note": "Ce que le joueur transporte des scènes précédentes. Envoyé par le client à chaque génération : le serveur ne garde aucun état.",
-      "prompt": "CE QUE LE JOUEUR PORTE DÉJÀ\n{{items}}\n\nCes objets sont RÉELS et il les a sur lui. C'est la raison d'être de cet inventaire : un objet ramassé peut resservir plus tard, sinon il n'y aurait rien à transporter.\n1. SI L'UN DE CES OBJETS A DU SENS ICI — et seulement dans ce cas, ne force jamais le lien — il peut être ce qui débloque la situation. Alors rends-le PERCEPTIBLE sans le dicter : un personnage remarque ce que le joueur porte, une serrure a la forme de ce qu'il a en poche, une marque du décor répond à une marque de l'objet. Jamais « utilise X », jamais une consigne. Le joueur doit pouvoir faire le rapprochement, pas le recevoir.\n2. N'invente jamais un objet qu'il aurait déjà et qui ne figure pas dans cette liste, et ne fais pas réapparaître ici un objet qu'il a déjà ramassé ailleurs.\n3. Un objet dont le nom n'est pas encore déchiffré ne peut pas être nommé : le joueur ne le connaît pas. Parle-en par sa forme, et c'est encore mieux ainsi — il devra l'analyser pour comprendre ce qu'il tient.",
+      "note": "Ce que le joueur transporte des scènes précédentes. Deux natures : celles qui OUVRENT — cartes d'accès, codes, fréquences, dans l'esprit des clés colorées de DOOM — et celles qui ÉCLAIRENT, qui ne débloquent rien et rapprochent le joueur de ce qu'il doit comprendre. Envoyé par le client à chaque génération : le serveur ne garde aucun état.",
+      "prompt": "CE QUE LE JOUEUR PORTE DÉJÀ\n{{items}}\n\nCes objets sont RÉELS et il les a sur lui. C'est la raison d'être de cet inventaire : un objet ramassé peut resservir plus tard, sinon il n'y aurait rien à transporter.\nDEUX NATURES, et on ne s'en sert pas pareil :\n  [OUVRE] — une carte, un code, une fréquence. Il déverrouille quelque chose. SI l'un d'eux a du sens ici — et seulement dans ce cas, ne force jamais le lien — il peut être ce qui débloque la situation. Alors rends-le PERCEPTIBLE sans le dicter : un lecteur dont la fente a la couleur de ce qu'il a en poche, quelqu'un qui remarque ce qu'il porte, une serrure qui répond à une marque. Jamais « utilise X », jamais une consigne.\n  [ÉCLAIRE] — il n'ouvre RIEN, ne cherche pas à lui trouver un usage. Sa valeur est de sens : fais-le résonner avec ce que le joueur découvre ici — un motif qui revient, une même main reconnaissable, une date qui recoupe autre chose. Il rapproche le joueur de ce qu'il doit finir par comprendre, sans jamais le lui expliquer.\nN'invente jamais un objet qu'il aurait déjà et qui ne figure pas dans cette liste, et ne fais pas réapparaître ici un objet ramassé ailleurs.\nUn objet dont le nom n'est pas encore déchiffré ne peut pas être nommé : le joueur ne le connaît pas. Parle-en par sa forme — il devra l'analyser pour comprendre ce qu'il tient.",
       "empty": "Le joueur ne porte encore rien : le puzzle de cette scène doit se résoudre avec ce qu'il y trouve.",
       "unread": "(nom non déchiffré — le joueur ne sait pas encore ce que c'est)",
       "ending_prompt": "CE QU'IL A SUR LUI EN SORTANT\n{{items}}\n\nCe sont les objets qu'il rapporte de sa nuit. Nomme-les dans le texte de fin : ils comptent, il les a payés d'un détour. Un objet dont le nom n'a jamais été déchiffré ne peut PAS être nommé — dis qu'il l'a gardé sans jamais savoir ce que c'était, c'est une fin en soi.\nIls doivent aussi se retrouver dans l'image, au premier plan.",
@@ -285,7 +288,11 @@
     },
     "deep_theme": {
       "note": "Ce que le récit vise à restaurer, sous la quête apparente. Jamais nommé dans la fiction : c'est une grammaire du monde, pas un sujet de dialogue.",
-      "instruction": "CE QUE LA VILLE A PERDU — la grammaire de tout le récit.\nLe temps y a été découpé. Segmenté, compté, facturé, rendu interchangeable : des unités identiques qui se remplacent les unes les autres. Ce qui a disparu, c'est le temps VÉCU — celui qui dure, où rien ne revient à l'identique, où ce qu'on a traversé s'accumule au lieu de s'effacer.\nMONTRE-LE PAR LES CHOSES, jamais par un discours : des compteurs partout, des durées affichées au dixième, des gens qui parlent en unités plutôt qu'en souvenirs, des lieux qui se ressemblent parce qu'aucun n'a d'histoire, des machines qui se souviennent à la place des gens.\nCE QUI RÉSISTE, à l'inverse, est ce qui a duré : un objet usé par la main qui s'en est servie, quelqu'un qui raconte au lieu de rapporter, une habitude que personne n'a optimisée, une réparation qui a pris le temps qu'il fallait.\n`quest.restoration` en découle : ce qu'il faut rétablir est toujours, à l'échelle de la scène, un peu de temps rendu à sa continuité — et c'est la même chose que la tension intime du joueur, vue de l'extérieur.\nC'EST DÉJÀ LA RÈGLE DU JEU : rien ici ne mémorise à la place du joueur, ni les noms ni les lieux. Ce qu'il retient, il l'a vécu. Le monde doit dire la même chose que sa mécanique.\nINTERDIT : ne nomme jamais cette idée, ni aucun philosophe, ni « la durée », ni « le temps vécu ». Aucun personnage ne théorise. Ça se voit, ça ne se dit pas.\n\nÀ L'ÉCHELLE INTIME — c'est la MÊME chose, et c'est ce qui tient tout le récit ensemble.\nLa tension du joueur (section SIGNE) est cette perte-là à sa propre échelle : ce qu'il recommence sans que ça s'accumule, ce à quoi il ne laisse pas le temps de durer, ce qu'il interrompt avant que ça prenne, ce qu'il compte au lieu de le vivre. Ses NOMBRES disent COMMENT ça se manifeste chez lui — sa manière d'agir, ce que le monde lui renvoie, ce vers quoi il va.\nSa résolution n'est donc pas un trait de caractère à corriger : c'est du temps rendu à sa continuité, dans sa vie à lui. Ce qu'il rétablit dehors et ce qu'il rétablit en lui sont le MÊME geste, à deux échelles — c'est pour ça que la ville lui ressemble."
+      "instruction": "CE QUE LA VILLE A PERDU — la grammaire de tout le récit.\nLe temps y a été découpé. Segmenté, compté, facturé, rendu interchangeable : des unités identiques qui se remplacent les unes les autres. Ce qui a disparu, c'est le temps VÉCU — celui qui dure, où rien ne revient à l'identique, où ce qu'on a traversé s'accumule au lieu de s'effacer.\nMONTRE-LE PAR LES CHOSES, jamais par un discours — et JAMAIS dans la bouche d'un personnage. Aucun habitant de cette ville ne constate à voix haute que le temps y est découpé : ils vivent dedans, ça ne les étonne plus. Ce qui suit sont des choses à MONTRER, pas des phrases à dire : des compteurs partout, des durées affichées au dixième, des gens qui parlent en unités plutôt qu'en souvenirs, des lieux qui se ressemblent parce qu'aucun n'a d'histoire, des machines qui se souviennent à la place des gens.\nCE QUI RÉSISTE, à l'inverse, est ce qui a duré : un objet usé par la main qui s'en est servie, quelqu'un qui raconte au lieu de rapporter, une habitude que personne n'a optimisée, une réparation qui a pris le temps qu'il fallait.\n`quest.restoration` en découle : ce qu'il faut rétablir est toujours, à l'échelle de la scène, un peu de temps rendu à sa continuité — et c'est la même chose que la tension intime du joueur, vue de l'extérieur.\nC'EST DÉJÀ LA RÈGLE DU JEU : rien ici ne mémorise à la place du joueur, ni les noms ni les lieux. Ce qu'il retient, il l'a vécu. Le monde doit dire la même chose que sa mécanique.\nINTERDIT : ne nomme jamais cette idée, ni aucun philosophe, ni « la durée », ni « le temps vécu ». Aucun personnage ne théorise. Ça se voit, ça ne se dit pas.\n\nÀ L'ÉCHELLE INTIME — c'est la MÊME chose, et c'est ce qui tient tout le récit ensemble.\nLa tension du joueur (section SIGNE) est cette perte-là à sa propre échelle : ce qu'il recommence sans que ça s'accumule, ce à quoi il ne laisse pas le temps de durer, ce qu'il interrompt avant que ça prenne, ce qu'il compte au lieu de le vivre. Ses NOMBRES disent COMMENT ça se manifeste chez lui — sa manière d'agir, ce que le monde lui renvoie, ce vers quoi il va.\nSa résolution n'est donc pas un trait de caractère à corriger : c'est du temps rendu à sa continuité, dans sa vie à lui. Ce qu'il rétablit dehors et ce qu'il rétablit en lui sont le MÊME geste, à deux échelles — c'est pour ça que la ville lui ressemble."
+    },
+    "locks": {
+      "note": "Cartes et serrures. Chaque carte a une couleur, chaque serrure affiche la sienne : c'est ainsi que le joueur sait laquelle présenter, sans qu'on le lui dise. Inspiré des clés colorées de DOOM.",
+      "instruction": "SERRURES ET CARTES — LA COULEUR EST LA CLÉ.\nToute carte d'accès a UNE COULEUR, et c'est par elle qu'on la désigne — jamais par un numéro, jamais par un code. Elle se nomme en Majuscules de Titre, couleur comprise : « la Carte Ambre », « la Carte Indigo ».\nTOUTE SERRURE, TOUT LECTEUR, TOUT TERMINAL VERROUILLÉ AFFICHE UNE COULEUR. Dis-la dans la description : une fente cerclée d'ambre, un voyant indigo, une gâche peinte. Sans elle, le joueur ne peut pas savoir quelle carte présenter, et sa collection ne sert à rien.\nLa couleur de la carte de CETTE scène est celle de l'ACCENT de sa palette : l'image et le texte disent la même chose.\nL'INDICE se donne par la conversation ou par le décor, jamais par une consigne : quelqu'un mentionne la couleur qu'il a vue sur le lecteur, une trace de peinture est restée sur le chambranle, un ancien panneau garde la couleur d'un accès supprimé.\nSi le joueur porte déjà une carte de la bonne couleur (voir CE QU'IL PORTE), la serrure d'ici peut être de CETTE couleur-là — c'est ce qui donne son sens à l'inventaire. Ne le lui dis jamais : montre la couleur, il fera le rapprochement."
     }
   },
   "scenes": [
@@ -439,7 +446,21 @@
         "mode": "fixed",
         "why": "L'auberge a une illustration figée en magenta, et l'écran d'accueil est dans le même ton : c'est l'identité visuelle d'entrée du jeu. Les scènes suivantes, elles, sont générées et emportent l'habillage avec elles."
       },
-      "act": "ouverture"
+      "act": "ouverture",
+      "narrative": {
+        "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif s'accorde à la tension intime (section SIGNE) sans jamais la nommer — ce qu'il fuit est exactement ce qu'il devra affronter dehors.",
+        "structure": [
+          "1 à 2 phrases d'ouverture : pourquoi tu es sorti, et le fait que tu pousses la porte de ce bar",
+          "1 phrase de localisation",
+          "3 à 5 phrases de description reprenant les slots de décor",
+          "2 à 4 phrases de ce que LE BARMAN te dit en te servant. IL NE FAIT PAS LE POINT : il raconte UNE chose, une seule — quelqu'un qui est sorti sans de quoi lire les noms, et ce que ça lui a coûté. C'est cette histoire qui donne envie d'en trouver une, pas une explication. Il ne récite ni l'état de la ville, ni ce qu'il te faut, ni ce que tu pourras en faire. Il finit sur le fait que quelqu'un dans cette salle en porte une, sans dire qui",
+          "1 à 2 phrases nommant les habitués présents et ce que chacun semble savoir — dont celui qui a l'air d'en savoir plus que les autres. Intègre-les à la description : pas d'étiquette, pas de deux-points introductifs, pas d'énumération sèche. On les découvre dans la salle, pas dans une liste",
+          "1 ligne 'Sorties :' nommant la sortie avec le mot du lexique imposé",
+          "1 ligne 'Tu peux :' listant 3 à 5 verbes d'action, dont parler à quelqu'un"
+        ],
+        "stakes_rule": "LES ENJEUX NE SE RÉCITENT PAS.\nN'expose JAMAIS en clair ce qui ne tourne pas rond, ce que ça coûte, ni ce qu'il faudrait — ni par une voix off, ni dans la bouche d'un personnage. Une réplique qui résume la situation du monde est un briefing déguisé : c'est le pire de ce qu'on peut écrire ici.\nLe joueur comprend par ce qu'il VOIT : un compteur qui tourne sur un mur, une file qui n'avance pas, une chose réparée à la hâte, quelqu'un qui attend depuis trop longtemps. Il doit pouvoir repartir sans avoir compris tout de suite — c'est en agissant qu'il comprendra.\nINTERDIT : « la ville a perdu... », « tout est compté... », « tu auras besoin de... », « il te faut... », toute phrase qui explique le monde au lieu de le montrer.",
+        "instruction": "Écris à la manière d'un jeu d'aventure textuel des années 80. Présent, deuxième personne du singulier. Phrases courtes et factuelles. D'abord POURQUOI tu es sorti, puis où tu es, puis ce que tu vois, puis ce que tu peux faire. Nomme explicitement chaque objet et chaque sortie manipulable : le joueur ne peut interagir qu'avec ce qui est nommé. Aucune prose romanesque, aucune métaphore filée, aucune question au joueur."
+      }
     },
     {
       "id": "rue",
@@ -2054,5 +2075,99 @@
       "arc": "Le soleil se couche sur la ville. Le joueur relit sa propre nuit : les lieux traversés, ceux qui l'ont laissé passer, ce qu'il emporte, et l'acte qu'il a accompli.",
       "ends_on": "Rien. C'est la fin."
     }
-  ]
+  ],
+  "dev_inventory": {
+    "note": "L'inventaire complet du jeu, pour le DÉVELOPPEMENT seulement. Les noms sont écrits ici une fois pour toutes et ne sont jamais générés : c'est ce qui permet de tester une scène tardive sans rejouer les précédentes, et d'avoir toujours les mêmes noms d'une session à l'autre. Exposé au client uniquement hors production.",
+    "augmentation": true,
+    "items": [
+      {
+        "id": "dev_carte_ambre",
+        "label": "La Carte Ambre",
+        "kind": "key",
+        "color": "Ambre",
+        "from": "La Rue Noyée",
+        "decrypted": true
+      },
+      {
+        "id": "dev_carte_cyan",
+        "label": "La Carte Cyan",
+        "kind": "key",
+        "color": "Cyan",
+        "from": "Le Passage Sous Voie",
+        "decrypted": true
+      },
+      {
+        "id": "dev_carte_indigo",
+        "label": "La Carte Indigo",
+        "kind": "key",
+        "color": "Indigo",
+        "from": "La Crête d'Antennes",
+        "decrypted": true
+      },
+      {
+        "id": "dev_carte_vert",
+        "label": "La Carte Vert-de-Gris",
+        "kind": "key",
+        "color": "Vert-de-Gris",
+        "from": "La Station Relais",
+        "decrypted": true
+      },
+      {
+        "id": "dev_carte_vermeil",
+        "label": "La Carte Vermeil",
+        "kind": "key",
+        "color": "Vermeil",
+        "from": "Le Terminal d'Accès",
+        "decrypted": true
+      },
+      {
+        "id": "dev_carte_blanche",
+        "label": "La Carte Blanche",
+        "kind": "key",
+        "color": "Blanc Cassé",
+        "from": "Le Premier Étage",
+        "decrypted": true
+      },
+      {
+        "id": "dev_frequence",
+        "label": "La Fréquence Basse",
+        "kind": "key",
+        "color": "",
+        "from": "L'Oracle",
+        "decrypted": true
+      },
+      {
+        "id": "dev_code_etage",
+        "label": "Le Code d'Étage",
+        "kind": "key",
+        "color": "",
+        "from": "La Porte",
+        "decrypted": true
+      },
+      {
+        "id": "dev_jeton",
+        "label": "Le Jeton Brûlé",
+        "kind": "lore",
+        "color": "",
+        "from": "Le Comptoir",
+        "decrypted": true
+      },
+      {
+        "id": "dev_carnet",
+        "label": "Le Carnet du Quai Sept",
+        "kind": "lore",
+        "color": "",
+        "from": "Le Passage Sous Voie",
+        "decrypted": true
+      },
+      {
+        "id": "dev_bobine",
+        "label": "La Bobine Muette",
+        "kind": "lore",
+        "color": "",
+        "from": "La Station Relais",
+        "decrypted": false
+      }
+    ]
+  }
 }

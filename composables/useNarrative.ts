@@ -1,7 +1,7 @@
 import type { SceneNPC, TurnContext, TurnMode, TurnUsage } from '~/types/scene'
+import type { StoryletEffect } from '~/utils/storylets'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
-import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
 import { normalize } from '~/utils/text-match'
 
 /** Durée totale au-delà de laquelle on considère le tour perdu. */
@@ -10,8 +10,16 @@ const TURN_TIMEOUT_MS = 60_000
 const STALL_TIMEOUT_MS = 20_000
 
 /**
- * Un tour de jeu. Le prompt système est bâti côté serveur depuis script.json ;
- * on n'envoie ici que les faits de la scène courante.
+ * Un tour de jeu, et lui seul.
+ *
+ * Ce composable ne décide plus de CE QUI doit être joué — c'est le rôle du
+ * deck, dans `utils/storylets.ts`, tiré par `useStorylets`. Il reçoit un mode
+ * déjà choisi et se charge du reste : trouver l'interlocuteur, tenir les
+ * compteurs qui font avancer la chaîne de l'objet, streamer, appliquer les
+ * effets du moment.
+ *
+ * Le prompt système est bâti côté serveur depuis script.json ; on n'envoie ici
+ * que les faits de la scène courante.
  */
 export function useNarrative() {
   const gameStore = useGameStore()
@@ -175,37 +183,42 @@ export function useNarrative() {
   }
 
   /**
-   * Le détenteur remet-il l'objet à ce tour ?
+   * Applique ce que le moment tiré change dans l'état.
    *
-   * La remise est décidée ici, pas par le modèle : on compte les échanges avec
-   * le bon personnage. Sinon elle dépendrait du bon vouloir de la génération,
-   * et la sortie pourrait rester fermée indéfiniment.
+   * Toujours APRÈS le tour, jamais avant : un tour qui échoue ne doit pas
+   * laisser derrière lui un objet tendu que personne n'a jamais offert.
    */
-  function isHandoverTurn(npc?: SceneNPC): boolean {
-    const item = playerStore.scene?.key_item
-    if (!item || !npc || gameStore.hasKeyItem || gameStore.pendingKeyItem) return false
-    // Le détenteur ne cède rien tant qu'un autre habitué n'a pas mis sur la piste.
-    if (!gameStore.informedAboutItem) return false
-    if (npc.id !== item.npc_id) return false
-    return gameStore.keyItemExchanges + 1 >= item.exchanges_before_handover
+  function applyEffects(effects: StoryletEffect[]) {
+    for (const effect of effects) {
+      if (effect === 'mark_resolved') gameStore.markResolved()
+      if (effect === 'mark_informed') gameStore.markInformedAboutItem()
+      // L'objet est TENDU, pas donné : le joueur doit le prendre lui-même. Un
+      // objet qui apparaît tout seul dans l'inventaire ne se remarque pas.
+      if (effect === 'offer_key_item' && !gameStore.hasKeyItem) gameStore.offerKeyItem()
+    }
   }
 
-  /** Joue un tour à partir d'une commande déjà inscrite dans l'historique. */
-  async function runTurn(input: string, mode?: TurnMode) {
+  /**
+   * Joue un tour facturé.
+   *
+   * `mode` et `after` viennent du deck. Ce qui reste ici est la comptabilité
+   * du monde : elle s'applique à CHAQUE tour, quel que soit le moment tiré,
+   * et c'est elle qui fait mûrir les qualités que le deck relira au tour
+   * suivant.
+   */
+  async function runTurn(input: string, mode?: TurnMode, after: StoryletEffect[] = []) {
+    // Retenus pour la relance : un tour qui a échoué se rejoue à l'identique,
+    // effets compris — sinon une remise ratée laisserait la scène sans sortie.
+    gameStore.setLastCommand(input)
+    gameStore.setLastMode(mode ?? null)
+    gameStore.setLastEffects(after)
+
     // Une relance vers la sortie est narrée, jamais jouée par un PNJ.
     const narrated = mode === 'exit_nudge' || mode === 'blocked_exit'
     const npc = narrated ? undefined : findAddressedNpc(input)
     gameStore.setActiveNpc(npc?.id ?? null)
 
     const item = playerStore.scene?.key_item
-    const handover = !mode && isHandoverTurn(npc)
-
-    // Au seuil du script, la salle vient au joueur : les personnages disent ce
-    // qu'ils savent et posent l'objet devant lui. Ce n'est pas une fin de
-    // partie, c'est le moment où le monde arrête de résister.
-    const resolving = !mode && !handover && needsResolution()
-    const effectiveMode: TurnMode | undefined =
-      resolving ? 'resolution' : handover ? 'handover' : mode
 
     if (npc) gameStore.recordNpcTalk(npc.id)
 
@@ -233,32 +246,11 @@ export function useNarrative() {
     }
 
     gameStore.recordModelTurn()
-    const text = await streamTurn(input, npc, effectiveMode)
+    const text = await streamTurn(input, npc, mode)
     if (!text) return
 
     gameStore.incrementTurn(input, text)
-
-    // L'objet est TENDU, pas donné : le joueur doit le prendre lui-même. Un
-    // objet qui apparaît tout seul dans l'inventaire ne se remarque pas.
-    if (handover && item) {
-      gameStore.offerKeyItem()
-    }
-
-    if (resolving && item) {
-      gameStore.markResolved()
-      gameStore.markInformedAboutItem()
-      if (!gameStore.hasKeyItem) gameStore.offerKeyItem()
-    }
-
-  }
-
-  /** Le joueur a-t-il atteint le seuil où la scène se dénoue d'elle-même ? */
-  function needsResolution(): boolean {
-    const scene = playerStore.scene
-    const at = scene?.pacing?.resolution_after_turns
-    if (!scene?.key_item || !at || gameStore.resolved) return false
-    if (gameStore.hasKeyItem || gameStore.pendingKeyItem) return false
-    return gameStore.turnCount + 1 >= at
+    applyEffects(after)
   }
 
   /**
@@ -274,61 +266,12 @@ export function useNarrative() {
     gameStore.setPlayingSubState('awaiting_input')
   }
 
-  async function handlePlayerInput(input: string, mode?: TurnMode) {
-    gameStore.addNarrativeEntry('player_command', input)
-    gameStore.setLastCommand(input)
-    gameStore.setLastMode(mode ?? null)
-
-    const scene = playerStore.scene
-    const state = { hasKeyItem: gameStore.hasKeyItem, talkedToNpcIds: gameStore.talkedToNpcIds }
-
-    // Il veut parler à quelqu'un mais n'a nommé personne : on le renvoie vers
-    // l'oeil plutôt que de dépenser un tour en narration d'ambiance.
-    if (scene && !mode && addressesNobody(input)) {
-      gameStore.addNarrativeEntry(
-        'system',
-        "Tu ne connais pas encore son nom. L'oeil, en haut à droite, lit les identités."
-      )
-      gameStore.setPlayingSubState('awaiting_input')
-      return
-    }
-
-    if (scene && !mode) {
-      const npc = findAddressedNpc(input)
-      // La remise de l'objet est le dénouement : elle passe toujours par le
-      // modèle, quel qu'en soit le coût, sinon la scène n'a plus de sortie.
-      const isHandover = isHandoverTurn(npc)
-
-      if (!isHandover) {
-        const local = resolveLocally(input, scene, state)
-        if (local) {
-          answerLocally(input, local.text, local.npcName)
-                return
-        }
-
-        // Autonomie : au premier des deux plafonds atteint. Le compte de tours
-        // mord en pratique ; le budget en dollars n'est qu'un filet si les
-        // prompts venaient à grossir.
-        const pacing = scene.pacing
-        const capReached = pacing?.hard_turn_cap > 0 && gameStore.modelTurnsUsed >= pacing.hard_turn_cap
-        const budgetReached = pacing?.budget_usd > 0 && gameStore.spentUsd >= pacing.budget_usd
-        if (capReached || budgetReached) {
-          const notice = pacing.autonomous_notice
-          answerLocally(input, `${notice}\n\n${buildGuidance(scene, state)}`)
-                return
-        }
-      }
-    }
-
-    await runTurn(input, mode)
-  }
-
   /** Rejoue le dernier tour sans redemander la commande au joueur. */
   async function retryLastTurn() {
     const input = gameStore.lastCommand
     if (!input) return
-    await runTurn(input, gameStore.lastMode ?? undefined)
+    await runTurn(input, gameStore.lastMode ?? undefined, gameStore.lastEffects)
   }
 
-  return { handlePlayerInput, retryLastTurn, streamTurn, findAddressedNpc }
+  return { runTurn, retryLastTurn, answerLocally, streamTurn, findAddressedNpc, addressesNobody }
 }

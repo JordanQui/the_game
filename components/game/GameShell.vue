@@ -2,54 +2,23 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
-import { usePaywall } from '~/composables/usePaywall'
+import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
-import { useSceneCommands } from '~/composables/useSceneCommands'
 import { normalize } from '~/utils/text-match'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
-const { handlePlayerInput, retryLastTurn } = useNarrative()
-const { checkPaywallTrigger, blockedByKeyItem, openExit, mentionsExit } = usePaywall()
+const { retryLastTurn } = useNarrative()
 const { generateSceneImage } = useImageGen()
-const { isCommand, run: runSceneCommand } = useSceneCommands()
+// Une saisie n'entre plus par une cascade de `if` : elle tire un moment dans
+// le deck, dont l'ordre de priorité se lit d'un bloc dans `utils/storylets.ts`.
+const { play } = useStorylets()
 
 /**
  * Ouvert par défaut : le joueur doit voir tout de suite avec qui parler, c'est
  * par là que passe la progression. Il peut toujours replier pour lire.
  */
 const showNpcs = ref(true)
-
-async function onCommand(input: string) {
-  // Le canal '#' parle au scénario, pas au modèle : il passe avant tout le
-  // reste et rien ne part chez gpt-4o.
-  if (isCommand(input)) {
-    runSceneCommand(input)
-    return
-  }
-
-  // Il veut sortir mais l'objet lui manque : on le renvoie vers son détenteur.
-  if (blockedByKeyItem(input)) {
-    await handlePlayerInput(input, 'blocked_exit')
-    return
-  }
-
-  if (checkPaywallTrigger(input)) {
-    const gate = playerStore.scene?.paywall.gate_text
-    if (gate) gameStore.addNarrativeEntry('narration', gate)
-    setTimeout(openExit, 1400)
-    return
-  }
-
-  // Le joueur parle de sortir mais il est trop tôt : on ramène le regard
-  // vers la porte sans jamais lui dicter la commande.
-  if (mentionsExit(input)) {
-    await handlePlayerInput(input, 'exit_nudge')
-    return
-  }
-
-  await handlePlayerInput(input)
-}
 
 /** Verbes qui désignent une prise. Le reste — examiner, parler — n'en est pas une. */
 const TAKE_VERBS = ['prendre', 'ramasser', 'recuperer', 'récupérer', 'empocher', 'saisir', 'voler', 'emporter']
@@ -96,7 +65,7 @@ function closeTest() {
 }
 
 function pickUp(obj: { id: string; label: string }) {
-  gameStore.pickUp(obj.id, obj.label, playerStore.scene?.place?.name)
+  gameStore.pickUp(obj.id, obj.label, playerStore.scene?.place?.name, 'lore')
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
 }
 
@@ -128,7 +97,14 @@ function onSolved() {
 function collectItem() {
   const item = playerStore.scene?.key_item
   if (!item) return
-  gameStore.collectKeyItem(playerStore.scene?.grants_augmentation ?? false)
+  gameStore.collectKeyItem(playerStore.scene?.grants_augmentation ?? false, {
+    id: playerStore.scene?.key_item?.npc_id
+      ? `cle_${playerStore.scene.scene_id}`
+      : undefined,
+    name: playerStore.scene?.key_item?.name ?? '',
+    from: playerStore.scene?.place?.name,
+    color: playerStore.scene?.key_item?.color,
+  })
   gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
 }
 
@@ -184,6 +160,9 @@ function retryImage() {
 
     <!-- Outils de lecture -->
     <ToolRail />
+
+    <!-- Ce que le joueur porte : sans ça, les cartes colorées sont injouables -->
+    <InventoryRail />
 
     <!-- Réglages, en surimpression en haut à droite de l'écran -->
     <SettingsPanel />
@@ -292,7 +271,7 @@ function retryImage() {
     <div class="shrink-0 pb-[env(safe-area-inset-bottom)]">
       <CommandInput
         :disabled="gameStore.isInputDisabled"
-        @command="onCommand"
+        @command="play"
       />
     </div>
   </div>

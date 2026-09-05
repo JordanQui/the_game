@@ -145,6 +145,8 @@ export function useScene() {
       label: o.label,
       decrypted: gameStore.decryptedObjectIds.includes(o.id),
       from: o.from,
+      kind: o.kind,
+      color: o.color,
     }))
   }
 
@@ -178,11 +180,24 @@ export function useScene() {
     error.value = null
     quotaExhausted.value = false
 
+    // AVANT toute chose, et quel que soit le chemin pris ensuite. Ce n'était
+    // fait que si une scène était trouvée en session : après un rechargement où
+    // la scène se régénère, l'inventaire restait dans sessionStorage sans que
+    // personne aille le chercher, et le joueur perdait son augmentation et ses
+    // cartes sans comprendre pourquoi.
+    restoreCarry()
+
+    // En développement, on dispose de tout ce que le jeu prévoit : sans ça,
+    // tester une scène tardive demanderait de rejouer toutes les précédentes.
+    // `devInventory` vaut null en production, la ligne y est donc inerte.
+    if (import.meta.dev) {
+      gameStore.equipFromScript(useRuntimeConfig().public.devInventory as never)
+    }
+
     // Rechargement de page : la scène est déjà là, on la repose telle quelle.
     const stored = wantsFresh() ? null : readStoredScene()
     if (stored) {
       scene.value = stored
-      restoreCarry()
       // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
       // scène revenait à ses couleurs mais l'habillage restait magenta.
       interfacePalette.applyScene(stored)

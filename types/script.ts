@@ -52,6 +52,8 @@ export interface PaletteDerivation {
 }
 
 export interface NarrativeRules {
+  /** Les enjeux se montrent, jamais ne se récitent. */
+  stakes_rule?: string
   style: string
   instruction: string
   structure: string[]
@@ -171,6 +173,8 @@ export interface ScriptDefaults {
   continuity: Continuity
   /** Ce que le récit vise à restaurer, sous la quête apparente. */
   deep_theme: { note?: string; instruction: string }
+  /** Cartes et serrures : la couleur dit laquelle présenter. */
+  locks: { note?: string; instruction: string }
   /** Le schéma des champs de quête, commun à toutes les scènes. */
   quest: { note?: string; structure: Record<string, string> }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */

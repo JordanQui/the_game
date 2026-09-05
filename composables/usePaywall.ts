@@ -1,7 +1,6 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { usePaymentStore } from '~/stores/payment'
-import { matchesKeyword } from '~/utils/text-match'
 
 declare global {
   interface Window {
@@ -26,23 +25,15 @@ export function usePaywall() {
   let squareCard: Awaited<ReturnType<Awaited<ReturnType<typeof window.Square.payments>>['card']>> | null = null
 
   /**
-   * Les mots-clés et le nombre de tours minimum viennent du script, portés par
-   * la scène — plus aucune liste codée en dur côté client.
-   */
-  function checkPaywallTrigger(input: string): boolean {
-    const paywall = playerStore.scene?.paywall
-    if (!paywall) return false
-    if (gameStore.turnCount < paywall.min_turns_before_trigger) return false
-    // Sans l'objet-clé, sortir n'a pas de sens : le sas reste fermé.
-    if (playerStore.scene?.key_item && !gameStore.hasKeyItem) return false
-    return matchesKeyword(input, paywall.exit_keywords)
-  }
-
-  /**
    * Ouvre la sortie. Un joueur qui a déjà payé passe directement à la suite :
    * le droit d'accès dure un mois, on ne lui repropose pas le paiement.
    */
   function openExit() {
+    // Garde-fou : on ne quitte pas une scène dont l'objectif n'est pas rempli.
+    // Le deck écarte déjà la sortie tant que l'objet manque, mais rien
+    // n'empêchait un autre chemin — un raccourci, un bouton — d'avancer sans.
+    if (!objectiveMet()) return
+
     // Seule la scène-porte demande le paiement. Ailleurs, franchir la sortie
     // fait simplement passer à la suite — sans quoi chaque scène renverrait à
     // l'écran de succès puis à elle-même, en boucle.
@@ -56,17 +47,15 @@ export function usePaywall() {
     gameStore.triggerPaywall()
   }
 
-  /** Le joueur veut sortir mais il lui manque l'objet. */
-  function blockedByKeyItem(input: string): boolean {
-    if (!playerStore.scene?.key_item || gameStore.hasKeyItem) return false
-    return matchesKeyword(input, playerStore.scene.paywall.exit_keywords)
-  }
-
-  /** Le joueur parle de sortir, mais il est trop tôt : on le relance vers la porte. */
-  function mentionsExit(input: string): boolean {
-    const paywall = playerStore.scene?.paywall
-    if (!paywall) return false
-    return matchesKeyword(input, paywall.exit_keywords)
+  /**
+   * L'objectif de la scène est-il rempli ?
+   *
+   * Une scène se quitte quand on a ce qu'on était venu y chercher. Une scène
+   * sans objet-clé — s'il en existe — n'a rien à exiger.
+   */
+  function objectiveMet(): boolean {
+    if (!playerStore.scene?.key_item) return true
+    return gameStore.hasKeyItem
   }
 
   async function initSquarePayments(containerSelector: string) {
@@ -140,5 +129,8 @@ export function usePaywall() {
     }
   }
 
-  return { checkPaywallTrigger, blockedByKeyItem, openExit, mentionsExit, initSquarePayments, fetchPaymentIntent, submitPayment }
+  // Les prédicats de sortie — « il en parle », « il est trop tôt », « l'objet
+  // manque » — vivent désormais dans les qualités du deck : ils s'y lisent
+  // dans l'ordre où ils se jouent. Ne reste ici que l'ouverture elle-même.
+  return { objectiveMet, openExit, initSquarePayments, fetchPaymentIntent, submitPayment }
 }

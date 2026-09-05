@@ -55,6 +55,8 @@ export interface SceneKeyItem {
   description: string
   /** Ce qu'elle permet de percevoir dehors. */
   why: string
+  /** La couleur de la carte, si c'en est une. C'est par elle qu'on la reconnaît. */
+  color?: string
   /** Comment elle se porte : à l'oeil, sous la peau, au poignet. */
   worn?: string
   /** Ce que le détenteur attend du joueur avant de le céder. */

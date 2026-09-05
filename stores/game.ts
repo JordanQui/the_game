@@ -97,7 +97,22 @@ export const useGameStore = defineStore('game', {
      * l'auberge peut être ce qui débloque le troisième étage. C'est l'historique
      * du chat qui en tient lieu à l'écran, mais la liste, elle, est ici.
      */
-    inventory: [] as Array<{ id: string; label: string; from?: string }>,
+    inventory: [] as Array<{
+      id: string
+      label: string
+      from?: string
+      /**
+       * Ce que l'objet fait.
+       *
+       * `key` : il OUVRE — carte d'accès, code, fréquence. Il sert à franchir
+       * une porte ou à déverrouiller un terminal, ici ou plusieurs scènes plus
+       * loin. `lore` : il ÉCLAIRE — il ne débloque rien, il approfondit la
+       * quête et rapproche le joueur de ce qu'il doit finir par comprendre.
+       */
+      kind: 'key' | 'lore'
+      /** Sa couleur, pour une carte. C'est par elle que le joueur la reconnaît. */
+      color?: string
+    }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
     /**
@@ -114,6 +129,13 @@ export const useGameStore = defineStore('game', {
     /** Dernière commande jouée, pour pouvoir relancer un tour qui a échoué. */
     lastCommand: null as string | null,
     lastMode: null as import('~/types/scene').TurnMode | null,
+    /**
+     * Effets du moment tiré au dernier tour.
+     *
+     * Retenus pour la relance : sans eux, une remise dont le tour a échoué se
+     * rejouait sans jamais tendre l'objet, et la scène restait sans sortie.
+     */
+    lastEffects: [] as import('~/utils/storylets').StoryletEffect[],
     turnError: null as string | null,
   }),
 
@@ -140,6 +162,10 @@ export const useGameStore = defineStore('game', {
 
     setLastMode(mode: import('~/types/scene').TurnMode | null) {
       this.lastMode = mode
+    },
+
+    setLastEffects(effects: import('~/utils/storylets').StoryletEffect[]) {
+      this.lastEffects = effects
     },
 
     setTurnError(message: string) {
@@ -277,6 +303,33 @@ export const useGameStore = defineStore('game', {
       setTimeout(() => { this.readDenied = false }, 700)
     },
 
+    /**
+     * Charge l'inventaire complet déclaré par le script.
+     *
+     * Développement seulement. Les noms viennent du script et ne sont jamais
+     * générés : d'une session à l'autre ce sont les mêmes, et on peut tester
+     * une scène tardive sans rejouer les précédentes. `pickUp` dédoublonne par
+     * identifiant, donc l'appeler à chaque scène est sans effet de bord.
+     */
+    equipFromScript(kit: {
+      augmentation?: boolean
+      items?: Array<{
+        id: string; label: string; kind: 'key' | 'lore'
+        color?: string; from?: string; decrypted?: boolean
+      }>
+    } | null): number {
+      if (!kit?.items?.length) return 0
+      if (kit.augmentation) this.hasAugmentation = true
+      let added = 0
+      for (const o of kit.items) {
+        const before = this.inventory.length
+        this.pickUp(o.id, o.label, o.from, o.kind, o.color || undefined)
+        if (this.inventory.length > before) added++
+        if (o.decrypted) this.markDecrypted(o.id)
+      }
+      return added
+    },
+
     requestChallenge() {
       this.pendingChallenge = true
     },
@@ -289,20 +342,38 @@ export const useGameStore = defineStore('game', {
       if (!this.decryptedObjectIds.includes(id)) this.decryptedObjectIds.push(id)
     },
 
-    /** @param from le lieu du ramassage, pour qu'une scène suivante puisse y renvoyer. */
-    pickUp(id: string, label: string, from?: string) {
+    /**
+     * @param from le lieu du ramassage, pour qu'une scène suivante puisse y renvoyer.
+     * @param kind `key` s'il ouvre quelque chose, `lore` s'il éclaire la quête.
+     */
+    pickUp(
+      id: string, label: string, from?: string,
+      kind: 'key' | 'lore' = 'lore', color?: string,
+    ) {
       if (this.inventory.some(o => o.id === id)) return
-      this.inventory.push({ id, label, from })
+      this.inventory.push({ id, label, from, kind, color })
     },
 
     /**
      * @param grantsAugmentation vrai quand l'objet-clé de la scène EST
      * l'augmentation — c'est le cas de l'auberge, et d'elle seule.
      */
-    collectKeyItem(grantsAugmentation = false) {
+    /**
+     * @param item l'objet-clé ramassé. Il ENTRE DANS L'INVENTAIRE : une carte
+     * d'accès sert souvent plusieurs scènes plus loin, et elle disparaissait
+     * avec sa scène — seul un booléen survivait, sans nom ni trace.
+     */
+    collectKeyItem(
+      grantsAugmentation = false,
+      item?: { id?: string; name: string; from?: string; color?: string },
+    ) {
       this.hasKeyItem = true
       this.pendingKeyItem = false
       if (grantsAugmentation) this.hasAugmentation = true
+      if (item?.name) {
+        this.pickUp(
+          item.id || `cle_${this.inventory.length + 1}`, item.name, item.from, 'key', item.color)
+      }
     },
 
     recordNpcTalk(npcId: string) {
@@ -349,6 +420,7 @@ export const useGameStore = defineStore('game', {
       this.conversationHistory = []
       this.lastCommand = null
       this.lastMode = null
+      this.lastEffects = []
       this.turnError = null
       this.pendingChallenge = false
     },
@@ -382,6 +454,7 @@ export const useGameStore = defineStore('game', {
       this.conversationHistory = []
       this.lastCommand = null
       this.lastMode = null
+      this.lastEffects = []
       this.turnError = null
     },
   },

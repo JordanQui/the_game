@@ -43,15 +43,23 @@ export function splitByNames(text: string, terms: Array<string | Term>): TextSeg
 
   if (!usable.length) return [{ text, start: 0 }]
 
-  const byValue = new Map(usable.map(t => [t.value, t.kind]))
-  const pattern = new RegExp(`(${usable.map(t => escapeRegex(t.value)).join('|')})`, 'g')
+  // Insensible à la casse : le modèle écrit « la Carte Ambre » en début de
+  // phrase et « la carte ambre » plus loin. Une correspondance exacte laissait
+  // alors la moitié des occurrences en clair, sans qu'on comprenne pourquoi.
+  const byValue = new Map(usable.map(t => [t.value.toLowerCase(), t.kind]))
+  const pattern = new RegExp(`(${usable.map(t => escapeRegex(t.value)).join('|')})`, 'gi')
   const segments: TextSegment[] = []
   let cursor = 0
 
   for (const match of text.matchAll(pattern)) {
     const at = match.index ?? 0
     if (at > cursor) segments.push({ text: text.slice(cursor, at), start: cursor })
-    segments.push({ text: match[0], name: match[0], kind: byValue.get(match[0]) ?? 'name', start: at })
+    segments.push({
+      text: match[0],
+      name: match[0],
+      kind: byValue.get(match[0].toLowerCase()) ?? 'name',
+      start: at,
+    })
     cursor = at + match[0].length
   }
 

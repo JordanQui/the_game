@@ -9,20 +9,24 @@ const playerStore = usePlayerStore()
 const gameStore = useGameStore()
 
 /**
- * Uniquement les NOMS DE PERSONNAGES.
+ * Ce qui se brouille dans le texte : les identités et les choses.
  *
- * Le chiffrement porte sur l'identité des gens, pas sur les choses : un objet
- * qu'on ne peut pas lire n'ajoute aucun enjeu, il empêche juste de jouer.
+ * Les gens et les objets ne se brouillent pas pareil — des caractères qui
+ * défilent pour une identité, des blocs géométriques pour une chose — et ne se
+ * lisent pas pareil : l'oeil révèle un nom, la loupe ouvre une épreuve.
+ *
+ * L'OBJET-CLÉ en fait partie. Il en était absent, si bien que la carte d'accès
+ * d'une scène s'affichait en clair : elle n'était plus une chose à déchiffrer,
+ * juste un mot dans une phrase.
  */
 const names = computed(() => {
   const scene = playerStore.scene
   if (!scene) return []
   const people = scene.npcs.map(n => ({ value: n.name, kind: 'name' as const })).filter(t => t.value)
-  // L'objet scellé se brouille autrement : c'est une chose, pas une identité.
-  const sealed = scene.sealed_object?.name
-    ? [{ value: scene.sealed_object.name, kind: 'object' as const }]
-    : []
-  return [...people, ...sealed]
+  const things = [scene.key_item?.name, scene.sealed_object?.name]
+    .filter((v): v is string => Boolean(v))
+    .map(value => ({ value, kind: 'object' as const }))
+  return [...people, ...things]
 })
 
 defineEmits<{ challenge: [] }>()

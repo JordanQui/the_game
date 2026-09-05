@@ -71,6 +71,20 @@ export function useSceneCommands() {
       run() { jumpToScene('scene') },
     },
     {
+      name: 'equipe',
+      help: "recharge l'inventaire complet déclaré par le script (développement)",
+      run() {
+        const kit = useRuntimeConfig().public.devInventory as
+          { items?: unknown[] } | null
+        if (!kit) {
+          say("L'inventaire de test n'existe qu'en développement.")
+          return
+        }
+        gameStore.equipFromScript(kit as never)
+        say(`Augmentation acquise. ${gameStore.inventory.length} objets sur toi.`)
+      },
+    },
+    {
       name: 'suivant',
       help: 'passe à la scène suivante, comme le ferait une sortie réussie',
       run() {

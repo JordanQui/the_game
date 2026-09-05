@@ -380,6 +380,8 @@ ${questFields}
 OBJET-CLÉ
 ${s.key_item.instruction}
 
+${this.script.defaults.locks.instruction}
+
 ${s.sealed_object
   ? `OBJET SCELLÉ\n${interpolate(s.sealed_object.instruction, { quest_title: 'la quête' })}\n`
   : ''}
@@ -389,6 +391,7 @@ ${s.narrative.vocabulary}
 ${s.narrative.naming_style}
 La sortie de ce lieu se nomme exactement : ${s.exits[0]?.label ?? 'le sas'}.
 ${s.narrative.opening}
+${s.narrative.stakes_rule ?? ''}
 Structure imposée :
 ${s.narrative.structure.map((x, i) => `  ${i + 1}. ${x}`).join('\n')}
 Maximum ${s.narrative.max_words} mots. Interdit : ${s.narrative.forbidden.join(', ')}.
@@ -439,8 +442,12 @@ ${list(o.posture)}`
     const inv = this.script.defaults.inventory
     if (!carried.length) return ending ? inv.ending_empty : inv.empty
 
+    // La nature de l'objet est dite au modèle : une carte se présente, un
+    // souvenir se comprend. Sans elle, il traitait les deux pareil.
+    const label = (o: CarriedItem) => o.decrypted ? o.label : `un objet ${inv.unread}`
     const items = carried
-      .map(o => `  - ${o.decrypted ? o.label : `un objet ${inv.unread}`}`
+      .map(o => `  - [${o.kind === 'key' ? 'OUVRE' : 'ÉCLAIRE'}] ${label(o)}`
+        + (o.color ? ` — couleur : ${o.color}` : '')
         + (o.from ? ` — récupéré : ${o.from}` : ''))
       .join('\n')
 
