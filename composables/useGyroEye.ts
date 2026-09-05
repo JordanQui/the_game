@@ -70,23 +70,28 @@ export function useGyroEye() {
 
   let raf: number | null = null
   let target = { x: 0.5, y: NEUTRAL_Y }
-  let neutralBeta: number | null = null
+  /** L'inclinaison de départ, sur les DEUX axes : c'est elle qui fait le zéro. */
+  let neutral: { beta: number; gamma: number } | null = null
   let settleAt = 0
 
   function onOrientation(event: DeviceOrientationEvent) {
     const { beta, gamma } = event
     if (beta === null || gamma === null) return
 
-    // On laisse l'appareil se stabiliser avant de figer l'origine du tangage :
-    // les toutes premières mesures arrivent pendant que la main bouge encore.
-    if (neutralBeta === null) {
+    // On laisse l'appareil se stabiliser avant de figer l'origine : les toutes
+    // premières mesures arrivent pendant que la main bouge encore, et c'est
+    // ÇA qui envoyait l'oeil dans un coin — pas le principe du calibrage.
+    // Passer le roulis en absolu réglait le symptôme au prix du reste :
+    // personne ne tient un téléphone parfaitement droit, si bien que l'oeil
+    // restait décentré en permanence.
+    if (neutral === null) {
       if (Date.now() < settleAt) return
-      neutralBeta = beta
+      neutral = { beta, gamma }
     }
 
-    const dx = gamma / ROLL_RANGE_DEG
-    const offset = POSTURE_OFFSET_DEG[gameStore.posture] ?? 0
-    const dy = (beta - neutralBeta - offset) / PITCH_RANGE_DEG
+    const range = RANGE_DEG * (POSTURE_RANGE_SCALE[gameStore.posture] ?? 1)
+    const dx = (gamma - neutral.gamma) / range
+    const dy = (beta - neutral.beta) / range
     target = {
       x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
       y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
@@ -121,6 +126,17 @@ export function useGyroEye() {
     raf = requestAnimationFrame(loop)
   }
 
+  /**
+   * Reprend l'inclinaison courante comme origine.
+   *
+   * Appelé à l'activation, et à chaque changement de posture : c'est le seul
+   * moment où l'on sait que le joueur vient de se réinstaller.
+   */
+  function recalibrate() {
+    neutral = null
+    settleAt = Date.now() + 400
+  }
+
   async function enable(): Promise<boolean> {
     // Ce clic est le geste dont le contexte audio a besoin : on le saisit ici
     // plutôt que d'espérer qu'un survol suffise plus tard.
@@ -141,8 +157,7 @@ export function useGyroEye() {
       }
     }
 
-    neutralBeta = null
-    settleAt = Date.now() + 400
+    recalibrate()
     window.addEventListener('deviceorientation', onOrientation, true)
     enabled.value = true
     gameStore.setEyeActive(true)
@@ -157,6 +172,9 @@ export function useGyroEye() {
     gameStore.setEyeActive(false)
     gameStore.setRevealing(null)
   }
+
+  // Passer d'assis à allongé, c'est bouger : l'origine d'avant ne vaut plus.
+  watch(() => gameStore.posture, () => { if (enabled.value) recalibrate() })
 
   onUnmounted(disable)
 
