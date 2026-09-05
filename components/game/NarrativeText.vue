@@ -8,15 +8,13 @@ const props = defineProps<{ entries: NarrativeEntry[] }>()
 const playerStore = usePlayerStore()
 const gameStore = useGameStore()
 
-/** Les identités chiffrées : les gens, et ce qui compte autour d'eux. */
-const names = computed(() => {
-  const scene = playerStore.scene
-  if (!scene) return []
-  return [
-    ...scene.npcs.map(n => n.name),
-    ...(scene.key_item ? [scene.key_item.name] : []),
-  ].filter(Boolean)
-})
+/**
+ * Uniquement les NOMS DE PERSONNAGES.
+ *
+ * Le chiffrement porte sur l'identité des gens, pas sur les choses : un objet
+ * qu'on ne peut pas lire n'ajoute aucun enjeu, il empêche juste de jouer.
+ */
+const names = computed(() => playerStore.scene?.npcs.map(n => n.name).filter(Boolean) ?? [])
 
 const scrollContainer = ref<HTMLElement | null>(null)
 
@@ -73,9 +71,23 @@ watch(
  * Pendant la lecture d'un nom, tout le reste s'efface. On ne lit qu'une chose
  * à la fois : c'est ce qui oblige à mémoriser au lieu de recopier.
  */
-.is-hacking :deep(*:not(.glitch-name)) {
+.is-hacking :deep(*) {
   color: transparent !important;
   text-shadow: none !important;
+}
+
+/*
+ * Le nom déchiffré et SES DEUX COUCHES internes doivent survivre à l'effacement.
+ * La règle précédente n'épargnait que l'élément portant la classe, pas ses
+ * enfants — et comme le texte visible est justement dans un enfant, le nom
+ * disparaissait avec le reste.
+ */
+.is-hacking :deep(.glitch-name),
+.is-hacking :deep(.glitch-name *) {
+  color: #ffd9ec !important;
+  text-shadow:
+    0 0 4px rgba(255, 46, 136, 0.95),
+    0 0 14px rgba(255, 46, 136, 0.7) !important;
 }
 
 /*

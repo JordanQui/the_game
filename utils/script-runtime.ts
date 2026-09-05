@@ -160,6 +160,7 @@ export class SceneRuntime {
 
     const theme = resolveTheme(user, this.script)
     const themeBlock = theme ? this.describeTheme(theme) : ''
+    const tension = theme?.sign?.tension ?? ''
 
     return `PROFIL DU JOUEUR
 ${describeUser(user)}
@@ -177,7 +178,7 @@ ${slots}
 Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mots) décrivant la forme visible, sans mentionner de couleur.
 
 SYLLABAIRE
-${this.describeSyllabary()}
+${this.describeSyllabary(tension)}
 
 PERSONNAGES
 ${s.npcs.instruction} Exactement ${s.npcs.count} personnages.
@@ -206,12 +207,17 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
   }
 
   /** La table de composition des noms. Jointe à la génération, jamais aux tours. */
-  private describeSyllabary(): string {
+  private describeSyllabary(tension: string): string {
     const o = this.script.onomastics
     const list = (table: Record<string, string>) =>
       Object.entries(table).map(([syl, sens]) => `  ${syl} = ${sens}`).join('\n')
 
+    // La tension est rappelée ici, à l'endroit exact où le modèle compose :
+    // renvoyer à une section plus haut suffit rarement.
+    const anchor = tension ? `\nTension à encoder dans les noms : ${tension}\n` : ''
+
     return `${o.instruction}
+${anchor}
 
 MATIÈRE — première syllabe
 ${list(o.matiere)}

@@ -8,7 +8,7 @@ const props = defineProps<{ name: string }>()
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
-const { play } = useNameChime()
+const { start: startChime, stop: stopChime } = useNameChime()
 
 /**
  * Le brouillage change à intervalle régulier : c'est ce mouvement qui dit au
@@ -29,11 +29,19 @@ const archetype = computed(() =>
 const revealed = computed(() => gameStore.revealing === props.name)
 const shown = computed(() => (revealed.value ? props.name : scramble(props.name, seed.value)))
 
-// La mélodie accompagne la bascule d'état, quelle qu'en soit la cause : souris
-// sur desktop, oeil gyroscopique sur mobile. Un seul endroit à maintenir.
-watch(revealed, (isRevealed) => {
-  if (isRevealed) void play(props.name, archetype.value)
+/**
+ * L'arpège suit la révélation, jamais le montage du composant.
+ *
+ * Une note au chargement de la page venait d'un déclenchement lié au cycle de
+ * vie ; ici, seule une bascule effective de l'état lance le son, et toute
+ * bascule inverse l'arrête.
+ */
+watch(revealed, (isRevealed, wasRevealed) => {
+  if (isRevealed && !wasRevealed) void startChime(props.name, archetype.value)
+  if (!isRevealed && wasRevealed) stopChime()
 })
+
+onUnmounted(() => { if (revealed.value) stopChime() })
 
 /** Sur desktop, la souris EST l'instrument : aucun mode à activer. */
 function onEnter() {
