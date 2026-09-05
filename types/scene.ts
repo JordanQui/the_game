@@ -171,6 +171,8 @@ export interface SceneTextResponse extends GeneratedScene {
    * de la scène sans rien conférer de durable.
    */
   grants_augmentation: boolean
+  /** Cette scène est la porte payante. Les autres s'enchaînent librement. */
+  is_paywall_gate: boolean
   /**
    * Qui teint l'habillage : la palette de la scène, ou le magenta d'origine.
    * `palette`, héritée de `GeneratedScene`, porte les couleurs elles-mêmes.

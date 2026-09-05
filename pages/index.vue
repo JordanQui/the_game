@@ -2,9 +2,23 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { usePaymentStore } from '~/stores/payment'
+import { useProgression } from '~/composables/useProgression'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
+
+const progression = useProgression()
+
+/**
+ * Après paiement, on ENTRE dans la scène suivante.
+ *
+ * Le bouton se contentait de réafficher l'écran de jeu, qui gardait la scène
+ * courante : on repayait pour revenir au même comptoir, devant le même sas
+ * fermé. Le droit d'accès était accordé, mais rien ne l'utilisait.
+ */
+function continueAfterPayment() {
+  if (!progression.advance()) gameStore.setScreen('playing')
+}
 const paymentStore = usePaymentStore()
 
 // Un joueur qui a déjà payé reprend sans repasser par le paywall. L'appel ne
@@ -46,7 +60,7 @@ watch(() => playerStore.profile, (profile) => {
           <p class="text-ink-200/80 text-sm leading-relaxed">
             {{ playerStore.quest?.title }} ne fait que commencer.
           </p>
-          <GlowButton @click="gameStore.setScreen('playing')">Continuer l'aventure</GlowButton>
+          <GlowButton @click="continueAfterPayment">Continuer l'aventure</GlowButton>
         </div>
       </div>
       <LoadingScreen v-else key="init" />

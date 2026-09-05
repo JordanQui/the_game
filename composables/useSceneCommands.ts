@@ -1,7 +1,7 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { usePaywall } from '~/composables/usePaywall'
-import { forgetStoredScene } from '~/composables/useScene'
+import { useProgression } from '~/composables/useProgression'
 
 /**
  * Canal direct vers le scénario.
@@ -28,6 +28,7 @@ export function useSceneCommands() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
   const { openExit } = usePaywall()
+  const progression = useProgression()
 
   function say(text: string) {
     gameStore.addNarrativeEntry('system', text)
@@ -70,6 +71,18 @@ export function useSceneCommands() {
       run() { jumpToScene('scene') },
     },
     {
+      name: 'suivant',
+      help: 'passe à la scène suivante, comme le ferait une sortie réussie',
+      run() {
+        const target = progression.next()
+        if (!target) {
+          say('Plus rien après celle-ci.')
+          return
+        }
+        progression.goTo(target)
+      },
+    },
+    {
       name: 'aide',
       help: 'liste les commandes disponibles',
       run() {
@@ -82,10 +95,7 @@ export function useSceneCommands() {
   ]
 
   /** Les dix scènes, dans l'ordre, telles que le build les a inscrites. */
-  function sceneIndex(): Array<{ id: string; title: string; act: string | null; kind: string }> {
-    return (useRuntimeConfig().public.sceneIndex ?? []) as
-      Array<{ id: string; title: string; act: string | null; kind: string }>
-  }
+  const sceneIndex = progression.scenes
 
   /**
    * Saut direct à une scène : `#scene2`, `#scene7`...
@@ -114,18 +124,9 @@ export function useSceneCommands() {
       return true
     }
 
-    playerStore.closeScene()
-    gameStore.startNewScene(target.id)
-    forgetStoredScene()
-    // L'épilogue ne passe pas par l'écran de construction : il a le sien, qui
-    // demande son texte et son image lui-même.
-    if (target.kind === 'ending') {
-      gameStore.setScreen('ending')
-      return true
-    }
-    // La scène gardée en session est celle qu'on quitte : sans ça, l'écran de
-    // construction la reposerait telle quelle au lieu d'en demander une neuve.
-    gameStore.setScreen('scene_build_loading')
+    // Même chemin que la sortie jouée et que l'après-paiement : les trois
+    // doivent laisser exactement le même état derrière eux.
+    progression.goTo(target)
     return true
   }
 

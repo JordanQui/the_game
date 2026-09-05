@@ -20,6 +20,7 @@ export function usePaywall() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
   const paymentStore = usePaymentStore()
+  const progression = useProgression()
   const config = useRuntimeConfig()
 
   let squareCard: Awaited<ReturnType<Awaited<ReturnType<typeof window.Square.payments>>['card']>> | null = null
@@ -42,7 +43,13 @@ export function usePaywall() {
    * le droit d'accès dure un mois, on ne lui repropose pas le paiement.
    */
   function openExit() {
-    if (paymentStore.hasAccess) {
+    // Seule la scène-porte demande le paiement. Ailleurs, franchir la sortie
+    // fait simplement passer à la suite — sans quoi chaque scène renverrait à
+    // l'écran de succès puis à elle-même, en boucle.
+    const isGate = playerStore.scene?.is_paywall_gate === true
+    if (!isGate || paymentStore.hasAccess) {
+      if (progression.advance()) return
+      // Plus rien après : on laisse l'écran de succès, qui conclut.
       gameStore.setScreen('payment_success')
       return
     }
