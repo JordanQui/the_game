@@ -147,7 +147,12 @@ export class SceneRuntime {
       steer_after_turns: this.scene.turn.steer_after_turns,
       // Échanges avec un personnage avant qu'il livre ce qu'il sait.
       exchanges_before_steer: this.scene.turn.exchanges_before_steer ?? 2,
-      resolution_after_turns: this.scene.turn.resolution_after_turns,
+      // Le tour où la nuit se referme. Une seule source : le bloc `limits.lock`,
+      // celui-là même que le serveur applique. Deux chiffres se seraient
+      // désynchronisés, et le client aurait annoncé une fermeture que le
+      // serveur n'aurait pas prononcée.
+      failure_after_turns: this.script.limits.lock.turns_per_scene,
+      lock_hours: this.script.limits.lock.hours,
       hard_turn_cap: this.scene.turn.hard_turn_cap,
       autonomous_notice: this.scene.turn.autonomous_notice,
       budget_usd: this.script.pricing.scene_budget_usd,
@@ -211,6 +216,9 @@ ${s.palette_derivation.instruction}
 ÉLÉMENTS DE L'IMAGE À REMPLIR
 ${slots}
 Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mots) décrivant la forme visible, sans mentionner de couleur et sans aucun texte lisible.
+
+L'ADIEU — le champ "farewell"
+C'est le dernier mot du jeu, et le seul texte qui restera quand tout sera fermé. Ce monde a été bâti pour CE joueur et il ne se rejoue pas : dis-le en reprenant une image de SA nuit, jamais une formule générale. Deux à trois phrases, 400 caractères au maximum — au-delà il sera tronqué.
 
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
@@ -397,6 +405,8 @@ Structure imposée :
 ${s.narrative.structure.map((x, i) => `  ${i + 1}. ${x}`).join('\n')}
 Maximum ${s.narrative.max_words} mots. Interdit : ${s.narrative.forbidden.join(', ')}.
 Le champ "interactables" doit lister exactement les objets nommés dans le texte, et inclure impérativement la sortie.
+
+${this.script.defaults.game_over.instruction}
 
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
@@ -867,19 +877,6 @@ ${lines}`)
         player_input: input,
         item_name: ctx.key_item.name,
         item_description: ctx.key_item.description,
-        item_why: ctx.key_item.why,
-        item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
-        exit_label: this.scene.exits[0]?.label ?? 'la sortie',
-      })
-    }
-
-    if (mode === 'resolution' && ctx.key_item) {
-      return interpolate(t.resolution_prompt, {
-        player_input: input,
-        quest_title: ctx.quest.title,
-        informant_name: ctx.npcs.find(n => n.id === ctx.key_item?.informant_npc_id)?.name ?? 'un habitué',
-        holder_name: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un autre',
-        item_name: ctx.key_item.name,
         item_why: ctx.key_item.why,
         item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
         exit_label: this.scene.exits[0]?.label ?? 'la sortie',

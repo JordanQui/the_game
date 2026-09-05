@@ -61,10 +61,15 @@ export interface Qualities {
   /** Échanges qu'il exige avant de céder. */
   exchangesBeforeHandover: number
 
-  /** La salle est déjà venue au joueur : le dénouement a eu lieu. */
-  resolved: boolean
-  /** Tour où elle vient. 0 quand la scène n'en prévoit pas. */
-  resolutionAtTurn: number
+  /**
+   * Tour où la nuit se referme si le joueur n'a toujours pas l'objet.
+   *
+   * La scène venait autrefois à son secours à ce moment-là : les personnages
+   * s'approchaient et lui tendaient ce qu'il cherchait. Elle se referme
+   * désormais, et la ville reste fermée un cycle entier — le temps et les
+   * tokens qu'une scène coûte ne sont pas illimités sur la fenêtre payante.
+   */
+  failureAtTurn: number
 
   /** Une réponse déjà écrite dans la scène couvre la saisie. */
   localAnswer: LocalAnswer | null
@@ -79,12 +84,17 @@ export type StoryletPlay =
   /** La porte s'ouvre : le texte de sortie, puis l'écran. */
   | { kind: 'exit' }
   /** Une réponse déjà écrite quelque part. Aucun appel, aucun token. */
-  | { kind: 'local'; say: 'oracle' | 'nobody' | 'exhausted' }
+  | { kind: 'local'; say: 'oracle' | 'nobody' | 'exhausted' | 'game_over' }
   /** Un tour facturé. `mode` cadre le prompt côté serveur. */
   | { kind: 'model'; mode?: TurnMode }
 
-/** Ce qu'un moment change dans l'état, une fois joué. */
-export type StoryletEffect = 'offer_key_item' | 'mark_resolved' | 'mark_informed'
+/**
+ * Ce qu'un moment change dans l'état, une fois joué.
+ *
+ * Il y en avait trois : le dénouement automatique en posait deux de plus. Il a
+ * disparu avec le tour 10, qui ne sauve plus le joueur mais referme la nuit.
+ */
+export type StoryletEffect = 'offer_key_item'
 
 export interface Storylet {
   id: string
@@ -103,12 +113,44 @@ export interface Storylet {
  * refactor ne devait rien changer à ce que joue une partie. Les endroits où il
  * se discute sont signalés — c'est tout l'intérêt de l'avoir mis à plat.
  */
+/**
+ * Le détenteur cède-t-il MAINTENANT ?
+ *
+ * Nommé parce que deux moments s'en servent : celui qui remet l'objet, et la
+ * fermeture, qui doit s'effacer devant lui. Un joueur qui obtient enfin ce
+ * qu'il cherchait au dernier tour ne se fait pas fermer la porte au nez.
+ */
+function remiseImminente(q: Qualities): boolean {
+  return q.addressesHolder
+    && q.sceneHasKeyItem
+    && q.informed
+    && !q.hasKeyItem
+    && !q.pendingKeyItem
+    && q.holderExchanges >= q.exchangesBeforeHandover
+}
+
 export const DECK: Storylet[] = [
   {
     id: 'commande',
     note: "le canal '#' court-circuite tout, y compris la porte",
     when: q => q.isCommand,
     play: { kind: 'command' },
+  },
+  {
+    id: 'fermeture',
+    note: 'la nuit se referme : toute la scène passée sans obtenir ce qu\'il fallait',
+    // Juste après le canal '#', et avant tout le reste : au tour de la
+    // fermeture, plus rien d'autre ne peut arriver — ni relance vers la porte,
+    // ni réponse d'oracle. La seule exception est la remise, qui la précède
+    // dans la logique sinon dans l'ordre : voir `remiseImminente`.
+    when: q => q.sceneHasKeyItem
+      && !q.hasKeyItem
+      && !q.pendingKeyItem
+      && q.failureAtTurn > 0
+      // +1 : le tour qu'on s'apprête à jouer est celui de trop.
+      && q.turn + 1 >= q.failureAtTurn
+      && !remiseImminente(q),
+    play: { kind: 'local', say: 'game_over' },
   },
   {
     id: 'sortie_bloquee',
@@ -142,12 +184,7 @@ export const DECK: Storylet[] = [
     // Passe AVANT l'oracle : la remise est le dénouement de la scène, elle
     // doit être narrée même quand la saisie ressemble à une question dont la
     // réponse est déjà écrite.
-    when: q => q.addressesHolder
-      && q.sceneHasKeyItem
-      && q.informed
-      && !q.hasKeyItem
-      && !q.pendingKeyItem
-      && q.holderExchanges >= q.exchangesBeforeHandover,
+    when: remiseImminente,
     play: { kind: 'model', mode: 'handover' },
     after: ['offer_key_item'],
   },
@@ -162,22 +199,6 @@ export const DECK: Storylet[] = [
     note: 'plafond de tours ou budget atteint : la scène finit sans le modèle',
     when: q => !q.canCallModel,
     play: { kind: 'local', say: 'exhausted' },
-  },
-  {
-    id: 'denouement',
-    note: 'au seuil du script, la salle vient au joueur et pose l\'objet devant lui',
-    // Discutable : il passe après l'oracle et après l'autonomie, donc une
-    // question du type « je fais quoi ? » pile au tour du dénouement le
-    // repousse d'un tour. C'était déjà le cas avant le deck.
-    when: q => q.sceneHasKeyItem
-      && q.resolutionAtTurn > 0
-      && !q.resolved
-      && !q.hasKeyItem
-      && !q.pendingKeyItem
-      // +1 : le tour qu'on s'apprête à jouer est celui du dénouement.
-      && q.turn + 1 >= q.resolutionAtTurn,
-    play: { kind: 'model', mode: 'resolution' },
-    after: ['mark_resolved', 'mark_informed', 'offer_key_item'],
   },
   {
     id: 'tour',

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 
 /**
@@ -13,6 +14,22 @@ const script = JSON.parse(readFileSync(
   new URL('./game/script.json', import.meta.url), 'utf-8',
 ))
 const uiPalette = script.defaults.interface_palette.palette
+
+/**
+ * L'empreinte du script, telle que le client peut la comparer.
+ *
+ * Le serveur en tamponnait déjà chaque scène (`script_fingerprint`) en
+ * annonçant qu'elle servirait « à jeter une scène gardée en session dès que le
+ * script a changé ». Personne ne la lisait : le client ne comparait que le
+ * `build_id`, qui ne bouge pas d'un rechargement à l'autre. Résultat, modifier
+ * un prompt ne changeait rien pour qui avait déjà une scène dans son onglet —
+ * on croyait livrer sans effet.
+ *
+ * Même calcul que `server/utils/script-fingerprint.ts`, sur le même objet
+ * reparsé : les deux empreintes coïncident.
+ */
+const scriptFingerprint = createHash('sha256')
+  .update(JSON.stringify(script)).digest('hex').slice(0, 12)
 
 /**
  * L'ordre des scènes, pour que `#scene<n>` sache où aller.
@@ -73,12 +90,24 @@ export default defineNuxtConfig({
       sceneIndex,
       /** Inventaire complet de test. `null` en production. */
       devInventory,
+      /** Empreinte du script : une scène née d'une autre version est jetée. */
+      scriptFingerprint,
       facebookAppId: process.env.FACEBOOK_APP_ID,
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,
       squareEnvironment: process.env.SQUARE_ENVIRONMENT || 'sandbox',
     },
   },
+
+  /**
+   * Le script fait partie de la configuration.
+   *
+   * Il est lu ici, au chargement de nuxt.config, pour en tirer la palette, la
+   * liste des scènes et l'empreinte. Sans ce watch, le modifier en dev laissait
+   * ces trois valeurs périmées jusqu'au prochain redémarrage — et l'empreinte
+   * périmée aurait fait jeter la scène de session à CHAQUE rechargement.
+   */
+  watch: ['game/script.json'],
 
   nitro: {
     preset: process.env.VERCEL ? 'vercel' : undefined,

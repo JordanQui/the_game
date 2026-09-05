@@ -83,10 +83,6 @@ export interface TurnRules {
   steer_instruction_missing_item: string
   /** Variante employée tant que le joueur ignore qui détient l'objet. */
   steer_instruction_missing_informant: string
-  /** Tour où les personnages viennent au joueur et dénouent la scène. */
-  resolution_after_turns: number
-  /** Narration de ce dénouement. */
-  resolution_prompt: string
   /** Plafond dur de tours facturés, si le comptage de tokens venait à manquer. */
   hard_turn_cap: number
   /** Ce que dit la scène quand elle passe en autonomie. */
@@ -173,6 +169,8 @@ export interface ScriptDefaults {
   continuity: Continuity
   /** Ce que le récit vise à restaurer, sous la quête apparente. */
   deep_theme: { note?: string; instruction: string }
+  /** Ce que le modèle écrit pour la nuit qui se referme sans objet. */
+  game_over: { note?: string; instruction: string }
   /** Cartes et serrures : la couleur dit laquelle présenter. */
   locks: { note?: string; instruction: string }
   /** Le schéma des champs de quête, commun à toutes les scènes. */
@@ -356,9 +354,30 @@ export interface PricingConfig {
   scene_budget_usd: number
 }
 
+/**
+ * La fermeture de la ville.
+ *
+ * À ne pas confondre avec le quota : celui-ci borne la DÉPENSE sur la fenêtre,
+ * celle-là borne le TEMPS. Elle s'applique toujours — quotas éteints et
+ * développement compris —, parce que c'est une règle de jeu et non une borne
+ * comptable.
+ */
+export interface LockConfig {
+  note?: string
+  /** Tours dans une même scène au-delà desquels la nuit se referme. */
+  turns_per_scene: number
+  /** Durée de la fermeture après une scène qui n'a mené nulle part. */
+  hours: number
+  /** Durée de la fermeture après l'épilogue. L'histoire ne se rejoue pas. */
+  completed_days: number
+  message: string
+  completed_message: string
+}
+
 /** Quota par session, contre l'abus par rechargement. */
 export interface LimitsConfig {
   note?: string
+  lock: LockConfig
   /** Interrupteur global. À false, aucune requête n'est décomptée ni refusée. */
   enabled: boolean
   window_hours: number

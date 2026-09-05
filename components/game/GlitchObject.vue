@@ -34,12 +34,32 @@ onUnmounted(() => { if (ticker) clearInterval(ticker) })
 
 const decrypted = computed(() => gameStore.decryptedObjectIds.includes(props.id))
 
-/** Une trame de blocs, de la longueur du vrai nom. */
+/**
+ * Densité du bruit : UN BLOC POUR DEUX CARACTÈRES.
+ *
+ * Les blocs géométriques font environ un cadratin chacun, une lettre de texte
+ * courant à peu près la moitié. Un bloc par caractère donnait donc un
+ * brouillage deux fois plus large que le nom qu'il recouvre : la couche
+ * flottante en rognait la moitié, et l'objet apparaissait comme une bande de
+ * blocs coupée aux deux bouts. Les noms de personnages échappent au problème
+ * parce qu'ils sont rendus en monospace, où bruit et nom ont la même chasse.
+ */
+const CHARS_PER_BLOCK = 2
+
+/** Une trame de blocs, de la largeur du vrai nom. */
 const shown = computed(() => {
   if (decrypted.value) return props.label
-  return Array.from(props.label, (ch, i) =>
-    ch === ' ' ? ' ' : GLYPHS[(seed.value * 5 + i * 7 + ch.charCodeAt(0)) % GLYPHS.length]
-  ).join('')
+
+  // Mot par mot : le brouillage garde le RYTHME du nom. Le joueur voit qu'il en
+  // compte deux ou trois, et lequel est le plus long, sans pouvoir les lire —
+  // c'est ce qui distingue un objet scellé d'une tache dans la phrase.
+  return props.label.split(' ').map((word, w) => {
+    if (!word) return ''
+    const blocks = Math.max(1, Math.round(word.length / CHARS_PER_BLOCK))
+    return Array.from({ length: blocks }, (_, i) =>
+      GLYPHS[(seed.value * 5 + (w * 31 + i) * 7 + word.charCodeAt(0)) % GLYPHS.length]
+    ).join('')
+  }).join(' ')
 })
 
 /**
@@ -112,8 +132,18 @@ function onActivate() {
   position: relative;
   display: inline-block;
   white-space: nowrap;
-  overflow: hidden;
   vertical-align: baseline;
+  /*
+   * PAS d'`overflow` ici, et c'est structurel.
+   *
+   * Sur un `inline-block`, dès que `overflow` vaut autre chose que `visible`,
+   * la ligne de base de l'élément n'est plus celle de son texte mais son BORD
+   * INFÉRIEUR. Le mot chiffré descendait donc sous la ligne du paragraphe, et
+   * plus il y en avait dans une phrase, plus le texte paraissait décousu.
+   *
+   * Le rognage du bruit est reporté sur `.overlay`, qui est en position
+   * absolue : son débordement ne concerne plus personne.
+   */
   outline: none;
   font-size: 0.95em;
   letter-spacing: 0.05em;
@@ -121,7 +151,7 @@ function onActivate() {
 }
 
 .sizer { visibility: hidden; }
-.overlay { position: absolute; inset: 0; text-align: center; }
+.overlay { position: absolute; inset: 0; overflow: hidden; text-align: center; }
 
 /* Scellé : froid, minéral — ce n'est pas une personne. */
 .is-sealed { color: rgb(var(--steel-400)); }

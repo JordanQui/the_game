@@ -3,7 +3,7 @@ import type { TurnRequest } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { buildConversationHistory } from '~/utils/prompt-builder'
 import { requireSecret } from '~/server/utils/runtime-secrets'
-import { consumeQuota } from '~/server/utils/session-quota'
+import { assertNotLocked, consumeQuota } from '~/server/utils/session-quota'
 
 /**
  * Un tour de jeu, en streaming SSE.
@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
   const runtime = await ScriptRuntime.load()
   // Quota de session : arrête l'abus par rechargement avant tout appel payant.
   const limits = runtime.script.limits
+  assertNotLocked(event)
   consumeQuota(event, 'turns', limits)
 
   const scene = runtime.scene(body.sceneId)

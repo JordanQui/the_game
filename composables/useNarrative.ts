@@ -190,8 +190,6 @@ export function useNarrative() {
    */
   function applyEffects(effects: StoryletEffect[]) {
     for (const effect of effects) {
-      if (effect === 'mark_resolved') gameStore.markResolved()
-      if (effect === 'mark_informed') gameStore.markInformedAboutItem()
       // L'objet est TENDU, pas donné : le joueur doit le prendre lui-même. Un
       // objet qui apparaît tout seul dans l'inventaire ne se remarque pas.
       if (effect === 'offer_key_item' && !gameStore.hasKeyItem) gameStore.offerKeyItem()

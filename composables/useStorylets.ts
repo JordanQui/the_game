@@ -70,8 +70,7 @@ export function useStorylets() {
       holderExchanges: gameStore.keyItemExchanges + 1,
       exchangesBeforeHandover: item?.exchanges_before_handover ?? 0,
 
-      resolved: gameStore.resolved,
-      resolutionAtTurn: pacing?.resolution_after_turns ?? 0,
+      failureAtTurn: pacing?.failure_after_turns ?? 0,
 
       localAnswer: scene ? resolveLocally(input, scene, oracleState()) : null,
       canCallModel: !capReached && !budgetReached,
@@ -87,6 +86,28 @@ export function useStorylets() {
     }
     const notice = scene?.pacing?.autonomous_notice ?? ''
     return scene ? `${notice}\n\n${buildGuidance(scene, oracleState())}` : notice
+  }
+
+  /**
+   * Ferme la ville pour un cycle.
+   *
+   * Le cookie signé est posé par le SERVEUR : lui seul peut refuser les requêtes
+   * suivantes, et le client ne peut ni le lire ni l'écrire. Si l'appel échoue on
+   * ferme quand même l'écran — le serveur compte les tours de son côté et
+   * refusera le prochain de toute façon.
+   */
+  async function closeCity(): Promise<void> {
+    const scene = playerStore.scene
+    const hours = scene?.pacing?.lock_hours ?? 24
+    let until = Date.now() + hours * 3600_000
+    try {
+      const lock = await $fetch<{ until: number }>('/api/lockout', { method: 'POST' })
+      until = lock.until
+    } catch {
+      // Sans réponse, on garde l'échéance estimée : l'écran ne doit jamais
+      // rester ouvert sur une saisie qui ne partira plus.
+    }
+    gameStore.closeCity({ until, reason: 'stalled', text: scene?.game_over })
   }
 
   /**
@@ -117,6 +138,13 @@ export function useStorylets() {
     }
 
     if (moment.play.kind === 'local') {
+      // La nuit se referme. Le texte a été écrit à la génération de la scène :
+      // on ne fait pas patienter vingt secondes quelqu'un à qui on ferme la
+      // porte, et la fermeture ne coûte pas un tour de plus.
+      if (moment.play.say === 'game_over') {
+        await closeCity()
+        return
+      }
       // Une réponse anonyme ne consomme pas de tour : le joueur n'a rien joué,
       // il lui manque un outil.
       if (moment.play.say === 'nobody') {

@@ -4,7 +4,7 @@ import type { UserProfile } from '~/types/user'
 import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
-import { consumeQuota } from '~/server/utils/session-quota'
+import { assertNotLocked, consumeQuota, lockOut } from '~/server/utils/session-quota'
 import { mockKey, readMock, writeMock, wantsFresh, scriptFingerprint } from '~/server/utils/dev-mocks'
 
 /**
@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
   const runtime = await ScriptRuntime.load()
   // Quota de session : arrête l'abus par rechargement avant tout appel payant.
   const limits = runtime.script.limits
+  assertNotLocked(event)
   consumeQuota(event, 'scenes', limits)
 
   const scene = runtime.scene(body.sceneId)
@@ -109,12 +110,19 @@ export default defineEventHandler(async (event) => {
   if (isEnding) {
     try {
       const journal = body.journal ?? []
+      const ending = generated as unknown as GeneratedEnding
       const assembled = {
-        ...scene.assembleEnding(
-          generated as unknown as GeneratedEnding,
-          journal[journal.length - 1]?.place_name ?? ''),
+        ...scene.assembleEnding(ending, journal[journal.length - 1]?.place_name ?? ''),
         script_fingerprint: scriptFingerprint(runtime.script),
       }
+
+      // L'histoire est traversée : la ville se ferme, et pour de bon. Ce monde
+      // a été bâti pour ce joueur-là et il ne se rejoue pas — c'est ce que
+      // promet le paywall, et c'est aussi ce qui rend la fenêtre payante
+      // tenable. L'adieu part dans le cookie : il doit survivre au
+      // rechargement, l'épilogue ne s'affiche qu'une fois.
+      lockOut(event, limits.lock.completed_days * 24, 'completed', ending.farewell)
+
       await writeMock('scene', key, assembled)
       return assembled
     } catch (err) {

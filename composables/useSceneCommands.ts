@@ -85,6 +85,26 @@ export function useSceneCommands() {
       },
     },
     {
+      name: 'ferme',
+      help: 'ferme la ville comme si la nuit avait patiné : écran d\'adieu et verrou',
+      run() {
+        const scene = playerStore.scene
+        void $fetch<{ until: number }>('/api/lockout', { method: 'POST' })
+          .then(lock => gameStore.closeCity({
+            until: lock.until, reason: 'stalled', text: scene?.game_over,
+          }))
+      },
+    },
+    {
+      name: 'ouvre',
+      help: 'lève le verrou (développement) — sans ça une séance de test condamne la journée',
+      run() {
+        void $fetch('/api/lockout', { method: 'POST', body: { open: true } })
+          .then(() => say('Verrou levé. La ville rouvre.'))
+          .catch(() => say('Le verrou ne se lève qu\'en développement.'))
+      },
+    },
+    {
       name: 'suivant',
       help: 'passe à la scène suivante, comme le ferait une sortie réussie',
       run() {

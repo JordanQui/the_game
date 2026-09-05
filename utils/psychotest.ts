@@ -12,15 +12,70 @@
  */
 
 /**
- * Alphabet de glyphes.
+ * La roue.
+ *
+ * Huit signes, une seule idée : LA ZONE PLEINE TOURNE, d'un cran à la fois. Le
+ * haut, puis le coin haut-droite, puis la droite, et ainsi de suite. Rien à
+ * mémoriser, rien à croiser : on regarde où est la partie pleine, on voit dans
+ * quel sens elle se déplace, on continue. Il ne reste au joueur qu'une chose à
+ * trancher — le sens.
+ *
+ * C'est la troisième version de cet alphabet, et la première qui veuille dire
+ * quelque chose. La première rangeait les glyphes dans l'ordre de la table
+ * Unicode : « avancer de trois » faisait passer d'un quart de carré à une
+ * moitié puis à une diagonale, il fallait connaître la liste par coeur. La
+ * deuxième croisait trois familles de formes et quatre orientations : c'était
+ * lisible, mais il fallait suivre deux choses à la fois. Ici il n'y en a plus
+ * qu'une, et c'est un mouvement.
+ */
+const WHEEL = [
+  '⬒', // haut
+  '⬔', // haut-droite
+  '◨', // droite
+  '◪', // bas-droite
+  '⬓', // bas
+  '⬕', // bas-gauche
+  '◧', // gauche
+  '◩', // haut-gauche
+]
+
+/** Crans de la roue. Un tour complet. */
+const STEPS = WHEEL.length
+
+/**
+ * Les quarts de carré. Ils ne servent PAS aux énigmes — ils n'appartiennent à
+ * aucune rotation lisible —, seulement à brouiller le nom des objets scellés.
+ */
+const QUARTERS = ['◰', '◳', '◲', '◱']
+
+/**
+ * Alphabet de brouillage.
  *
  * Volontairement autre que le bruit des noms de personnages : un objet ne se
  * lit pas comme une identité, et le joueur doit distinguer les deux d'un coup
  * d'oeil. Ici des formes géométriques, là-bas des caractères.
  */
-export const GLYPHS = ['◧', '◨', '◩', '◪', '⬒', '⬓', '⬔', '⬕', '◰', '◱', '◲', '◳']
+export const GLYPHS = [...WHEEL, ...QUARTERS]
 
-export type RuleKind = 'rotation' | 'progression' | 'alternance' | 'miroir'
+/** Le signe à un cran donné, la roue rebouclant dans les deux sens. */
+function at(step: number): string {
+  return WHEEL[((step % STEPS) + STEPS) % STEPS]!
+}
+
+/**
+ * Le sens dans lequel la roue tourne. C'est la SEULE chose à trancher.
+ *
+ * Un cran à la fois, jamais deux. Une rotation d'un quart avait été essayée :
+ * elle reste entre diagonales, ou entre moitiés, si bien que la bonne réponse
+ * était la seule de son espèce parmi les quatre propositions — on la trouvait
+ * en éliminant les intrus, sans jamais regarder dans quel sens ça tournait.
+ */
+export type RuleKind = 'horaire' | 'antihoraire'
+
+const RULES: Array<{ kind: RuleKind; turn: number }> = [
+  { kind: 'horaire', turn: 1 },
+  { kind: 'antihoraire', turn: -1 },
+]
 
 export interface Puzzle {
   /** Les trois symboles montrés. */
@@ -53,69 +108,45 @@ export function seedFrom(text: string): number {
   return sum >>> 0
 }
 
-const RULES: RuleKind[] = ['rotation', 'progression', 'alternance', 'miroir']
-
-/** Applique la règle pour obtenir l'indice du terme suivant. */
-function nextIndex(rule: RuleKind, start: number, step: number, position: number): number {
-  const n = GLYPHS.length
-  switch (rule) {
-    // Rotation : on avance d'un pas constant dans l'alphabet.
-    case 'rotation':
-      return (start + step * position) % n
-    // Progression : le pas grandit à chaque terme.
-    case 'progression':
-      return (start + step * (position * (position + 1)) / 2) % n
-    // Alternance : un pas en avant, un plus court en arrière.
-    case 'alternance':
-      return (start + (position % 2 === 0 ? step * position : step * position - 1) + n) % n
-    // Miroir : on repart de la fin de l'alphabet.
-    case 'miroir':
-      return (n - 1 - ((start + step * position) % n) + n) % n
+/**
+ * Les trois leurres : la roue arrêtée un cran trop loin, deux crans trop loin,
+ * trois crans trop loin — les crans en deçà sont déjà dans la suite.
+ *
+ * Tous sont sur la MÊME roue que la réponse — c'est ce qui interdit de répondre
+ * en éliminant les intrus. Aucun n'est défendable : la suite fixe la vitesse et
+ * le sens, donc un seul cran convient.
+ */
+function pickDecoys(sequence: string[], target: number): string[] {
+  const decoys: string[] = []
+  for (const off of [1, -1, 2, -2, 3, -3, 4]) {
+    if (decoys.length === 3) break
+    const candidate = at(target + off)
+    // Un signe déjà montré dans la suite n'est pas un leurre : c'est un indice.
+    if (decoys.includes(candidate) || sequence.includes(candidate)) continue
+    decoys.push(candidate)
   }
+  return decoys
 }
 
-/**
- * Construit une énigme à partir d'une graine.
- *
- * Les leurres sont voisins de la bonne réponse : assez proches pour qu'on ne
- * puisse pas répondre au hasard, assez distincts pour qu'il n'y ait jamais
- * deux réponses défendables.
- */
+/** Construit une énigme à partir d'une graine. */
 export function buildPuzzle(seed: number): Puzzle {
   const rand = seeded(seed)
-  const n = GLYPHS.length
 
-  const rule = RULES[Math.floor(rand() * RULES.length) % RULES.length]
-  const start = Math.floor(rand() * n)
-  const step = 1 + Math.floor(rand() * 3)
+  const rule = RULES[Math.floor(rand() * RULES.length) % RULES.length]!
+  const start = Math.floor(rand() * STEPS)
 
-  const sequence = [0, 1, 2].map(i => GLYPHS[nextIndex(rule, start, step, i)])
-  const correct = GLYPHS[nextIndex(rule, start, step, 3)]
+  const sequence = [0, 1, 2].map(p => at(start + rule.turn * p))
+  const target = start + rule.turn * 3
+  const correct = at(target)
 
-  // Trois leurres distincts, pris autour de la bonne réponse.
-  const decoys: string[] = []
-  const offsets = [1, -1, 2, -2, 3, -3]
-  for (const offset of offsets) {
-    if (decoys.length === 3) break
-    const candidate = GLYPHS[(GLYPHS.indexOf(correct) + offset + n) % n]
-    if (candidate !== correct && !decoys.includes(candidate) && !sequence.includes(candidate)) {
-      decoys.push(candidate)
-    }
-  }
-  // Alphabet trop petit pour éviter la séquence : on relâche la contrainte.
-  for (let offset = 1; decoys.length < 3; offset++) {
-    const candidate = GLYPHS[(GLYPHS.indexOf(correct) + offset) % n]
-    if (candidate !== correct && !decoys.includes(candidate)) decoys.push(candidate)
-  }
-
-  const choices = [correct, ...decoys]
+  const choices = [correct, ...pickDecoys(sequence, target)]
   // Mélange déterministe, pour que la bonne réponse ne soit pas toujours première.
   for (let i = choices.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1))
-    ;[choices[i], choices[j]] = [choices[j], choices[i]]
+    ;[choices[i], choices[j]] = [choices[j]!, choices[i]!]
   }
 
-  return { sequence, choices, answer: choices.indexOf(correct), rule }
+  return { sequence, choices, answer: choices.indexOf(correct), rule: rule.kind }
 }
 
 /** L'énigme d'un objet donné, pour un joueur donné. */

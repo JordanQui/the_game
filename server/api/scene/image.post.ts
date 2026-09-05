@@ -3,7 +3,7 @@ import type { SceneImageRequest, SceneImageResponse } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { generateImage } from '~/server/utils/image-gen'
 import { requireSecret } from '~/server/utils/runtime-secrets'
-import { consumeQuota } from '~/server/utils/session-quota'
+import { assertNotLocked, consumeQuota } from '~/server/utils/session-quota'
 import { mockKey, readMock, writeMock, wantsFresh, scriptFingerprint } from '~/server/utils/dev-mocks'
 
 /**
@@ -49,6 +49,7 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
   }
 
   // Quota de session : seule une génération réelle est décomptée.
+  assertNotLocked(event)
   consumeQuota(event, 'images', runtime.script.limits)
 
   const prompt = scene.buildImagePrompt({

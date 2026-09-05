@@ -39,6 +39,16 @@ function currentBuild(): string {
   return useRuntimeConfig().app.buildId
 }
 
+/**
+ * Empreinte du script servi par ce serveur.
+ *
+ * Calculée dans `nuxt.config.ts`, qui lit déjà `game/script.json` pour en tirer
+ * la palette d'accueil et la liste des scènes.
+ */
+function currentFingerprint(): string {
+  return useRuntimeConfig().public.scriptFingerprint as string
+}
+
 function readStoredScene(): SceneTextResponse | null {
   if (!import.meta.client) return null
   try {
@@ -50,6 +60,17 @@ function readStoredScene(): SceneTextResponse | null {
     // contrôle, un déploiement restait invisible pour tout joueur ayant déjà
     // une scène en session — on croyait livrer sans effet.
     if (stored.build_id !== currentBuild()) {
+      forgetStoredScene()
+      return null
+    }
+
+    // Le SCRIPT a changé : consignes, seuils, schéma de génération. Le build,
+    // lui, peut être resté le même — en développement il ne bouge pas d'un
+    // rechargement à l'autre. Sans cette seconde comparaison, corriger un
+    // prompt n'avait aucun effet visible tant que l'onglet gardait sa scène :
+    // on rechargeait, on retrouvait exactement la même, et on croyait que la
+    // correction n'avait pas pris.
+    if (stored.script_fingerprint !== currentFingerprint()) {
       forgetStoredScene()
       return null
     }

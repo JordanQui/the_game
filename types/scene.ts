@@ -139,6 +139,12 @@ export interface GeneratedScene {
   quest: SceneQuest
   interactables: Interactable[]
   scene_text: string
+  /**
+   * Ce que voit le joueur quand la nuit se referme sans qu'il ait obtenu
+   * l'objet-clé. Écrit ici, donc gratuit à l'afficher : on ne fait pas attendre
+   * une génération à quelqu'un à qui on ferme la porte.
+   */
+  game_over: string
   /** Choisi par le modèle : qui détient l'objet, et lequel. */
   key_item: Omit<SceneKeyItem, 'exchanges_before_handover'>
   /** L'objet à analyser pour approfondir la quête. */
@@ -227,8 +233,10 @@ export interface ScenePacing {
   exchanges_before_steer?: number
   /** Tour à partir duquel le narrateur oriente vers la sortie. */
   steer_after_turns: number
-  /** Tour où les personnages viennent dénouer la scène. */
-  resolution_after_turns: number
+  /** Tour où la nuit se referme si le joueur n'a toujours pas ce qu'il faut. */
+  failure_after_turns: number
+  /** Durée de la fermeture qui s'ensuit, en heures. */
+  lock_hours: number
   /** Plafond dur de tours facturés, filet de sécurité du budget. */
   hard_turn_cap: number
   autonomous_notice: string
@@ -282,7 +290,7 @@ export interface TurnContext {
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */
-export type TurnMode = 'ambient' | 'npc' | 'exit_nudge' | 'handover' | 'blocked_exit' | 'resolution'
+export type TurnMode = 'ambient' | 'npc' | 'exit_nudge' | 'handover' | 'blocked_exit'
 
 export interface TurnRequest {
   sceneId?: string
@@ -302,6 +310,14 @@ export interface TurnRequest {
 export interface GeneratedEnding {
   ending_html: string
   title: string
+  /**
+   * L'adieu, deux ou trois phrases.
+   *
+   * Le dernier texte du jeu, et le seul qui survive à la fermeture : il part
+   * dans le cookie signé, pas dans la réponse, pour être encore là au prochain
+   * chargement — l'épilogue, lui, ne s'affiche qu'une fois.
+   */
+  farewell: string
   palette: ScenePalette
   decor: DecorElement[]
 }

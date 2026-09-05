@@ -102,8 +102,18 @@ function onTouch() {
   position: relative;
   display: inline-block;
   white-space: nowrap;
-  overflow: hidden;
   vertical-align: baseline;
+  /*
+   * PAS d'`overflow` ici, et c'est structurel.
+   *
+   * Sur un `inline-block`, dès que `overflow` vaut autre chose que `visible`,
+   * la ligne de base de l'élément n'est plus celle de son texte mais son BORD
+   * INFÉRIEUR. Le mot chiffré descendait donc sous la ligne du paragraphe, et
+   * plus il y en avait dans une phrase, plus le texte paraissait décousu.
+   *
+   * Le rognage du bruit est reporté sur `.overlay`, qui est en position
+   * absolue : son débordement ne concerne plus personne.
+   */
   outline: none;
   color: rgb(var(--neon-400));
   text-shadow: 0 0 6px rgb(var(--neon-500) / 0.45);
@@ -121,10 +131,14 @@ function onTouch() {
 /* Réserve exactement la largeur du vrai nom, sans jamais le montrer. */
 .sizer { visibility: hidden; }
 
-/* Le brouillage flotte au-dessus : il ne participe pas à la mise en page. */
+/*
+ * Le brouillage flotte au-dessus : il ne participe pas à la mise en page, et
+ * c'est ici qu'on le rogne s'il dépasse la largeur du vrai nom.
+ */
 .overlay {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   text-align: center;
 }
 

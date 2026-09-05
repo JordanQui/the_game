@@ -58,6 +58,17 @@ export const useGameStore = defineStore('game', {
      * positions — l'oeil bute en haut ou en bas de l'écran.
      */
     posture: 'assis' as 'assis' | 'allonge',
+    /**
+     * La ville est fermée.
+     *
+     * `stalled` : la nuit a patiné, elle rouvre après un cycle. `completed` :
+     * l'histoire est allée jusqu'au bout et ne se rejoue pas.
+     *
+     * `text` est écrit par le modèle — la nuit qui se referme vient de la scène,
+     * l'adieu vient de l'épilogue et voyage dans le cookie signé pour survivre
+     * au rechargement.
+     */
+    lock: null as { until: number; reason: 'stalled' | 'completed'; text?: string } | null,
     /** Le panneau de réglages est ouvert. */
     settingsOpen: false,
     /**
@@ -387,6 +398,18 @@ export const useGameStore = defineStore('game', {
 
     markResolved() {
       this.resolved = true
+    },
+
+    /**
+     * Ferme la ville et bascule sur l'écran d'adieu.
+     *
+     * Le serveur tient la vérité — un cookie signé qu'aucune requête ne
+     * franchit. Ceci n'est que l'affichage : sans lui, le joueur resterait
+     * devant sa saisie et découvrirait la fermeture par une erreur 423.
+     */
+    closeCity(lock: { until: number; reason: 'stalled' | 'completed'; text?: string }) {
+      this.lock = lock
+      this.currentScreen = 'locked'
     },
 
     triggerPaywall() {
