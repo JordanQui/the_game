@@ -1,4 +1,27 @@
 /**
+ * Chaque posture du syllabaire mène à un mode.
+ *
+ * C'est le SEUL appariement, et il est volontairement universel : une liste de
+ * métiers — barman, receleuse, cartographe — n'aurait valu que pour la première
+ * scène. Les postures, elles, décrivent une position face à la tension du
+ * joueur, et cette position existera dans toutes les scènes à venir.
+ */
+const BY_POSTURE: Record<string, keyof typeof MODES> = {
+  ru: 'dorien',      // qui garde, qui ne cède pas
+  me: 'dorien',      // qui a payé le prix et tient debout
+  mi: 'lydien',      // qui voit et se tait
+  ki: 'lydien',      // qui cherche encore
+  no: 'eolien',      // qui a perdu
+  na: 'eolien',      // qui attend sans agir
+  shi: 'locrien',    // qui a rompu et n'est pas revenu
+  to: 'mixolydien',  // qui parle, qui met sur la piste
+  ra: 'mixolydien',  // qui montre, qui éclaire
+  ka: 'phrygien',    // qui échange, qui monnaye
+  zu: 'phrygien',    // qui nie, qui détourne le regard
+  va: 'ionien',      // qui sert, qui reste derrière
+}
+
+/**
  * Modes grecs et leurs connotations symboliques.
  *
  * Chaque personnage sonne selon ce qu'il est. Le rapprochement mode/affect est
@@ -8,20 +31,35 @@
 
 export interface Mode {
   name: string
-  /** Intervalles en demi-tons depuis la tonique. */
+  /** Les degrés de l'accord, en demi-tons depuis la tonique. */
   steps: number[]
+  /**
+   * La gamme complète, sept degrés.
+   *
+   * Indispensable aux sujets de fugue : un sujet se déplace par degrés
+   * conjoints, il lui faut une échelle, pas seulement un accord.
+   */
+  scale: number[]
+  /**
+   * Décalage de registre, en demi-tons.
+   *
+   * La hauteur caractérise autant que la couleur : celui qui rêve flotte
+   * au-dessus, celui qui a rompu s'enfonce. Borné à une quinte de part et
+   * d'autre pour que les familles de voix restent distinguables entre elles.
+   */
+  register: number
   /** Ce que le mode évoque, et donc quel personnage il désigne. */
   connotation: string
 }
 
 export const MODES: Record<string, Mode> = {
-  ionien: { name: 'ionien', steps: [0, 4, 7, 11], connotation: 'clarté, franchise, ce qui est à sa place' },
-  dorien: { name: 'dorien', steps: [0, 3, 7, 9], connotation: 'noblesse mélancolique, dignité dans la peine' },
-  phrygien: { name: 'phrygien', steps: [0, 1, 7, 8], connotation: 'tension, menace sourde, étrangeté' },
-  lydien: { name: 'lydien', steps: [0, 4, 6, 11], connotation: 'rêve, élévation, ce qui flotte hors du réel' },
-  mixolydien: { name: 'mixolydien', steps: [0, 4, 7, 10], connotation: 'chaleur, mouvement, la rue qui parle' },
-  eolien: { name: 'eolien', steps: [0, 3, 7, 8], connotation: 'deuil, perte, résignation' },
-  locrien: { name: 'locrien', steps: [0, 3, 6, 10], connotation: 'instabilité, vertige, ce qui a rompu' },
+  ionien: { name: 'ionien', steps: [0, 4, 7, 11], scale: [0, 2, 4, 5, 7, 9, 11], register: 3, connotation: 'clarté, franchise, ce qui est à sa place' },
+  dorien: { name: 'dorien', steps: [0, 3, 7, 9], scale: [0, 2, 3, 5, 7, 9, 10], register: -2, connotation: 'noblesse mélancolique, dignité dans la peine' },
+  phrygien: { name: 'phrygien', steps: [0, 1, 7, 8], scale: [0, 1, 3, 5, 7, 8, 10], register: -4, connotation: 'tension, menace sourde, étrangeté' },
+  lydien: { name: 'lydien', steps: [0, 4, 6, 11], scale: [0, 2, 4, 6, 7, 9, 11], register: 7, connotation: 'rêve, élévation, ce qui flotte hors du réel' },
+  mixolydien: { name: 'mixolydien', steps: [0, 4, 7, 10], scale: [0, 2, 4, 5, 7, 9, 10], register: 0, connotation: 'chaleur, mouvement, la rue qui parle' },
+  eolien: { name: 'eolien', steps: [0, 3, 7, 8], scale: [0, 2, 3, 5, 7, 8, 10], register: -5, connotation: 'deuil, perte, résignation' },
+  locrien: { name: 'locrien', steps: [0, 3, 6, 10], scale: [0, 1, 3, 5, 6, 8, 10], register: -7, connotation: 'instabilité, vertige, ce qui a rompu' },
 }
 
 /**
@@ -53,42 +91,36 @@ function normalize(text: string): string {
  * Toujours le même pour un même personnage : la reconnaissance passe par la
  * répétition, un mode tiré au hasard à chaque écoute ne dirait rien.
  */
-export function modeFor(archetype: string, name: string): Mode {
-  const role = normalize(archetype)
+export function modeFor(posture: string | undefined, name: string): Mode {
+  // 1. La posture déclarée par la génération : la seule source fiable.
+  const declared = BY_POSTURE[normalize(posture ?? '').replace(/^-/, '')]
+  if (declared) return MODES[declared]
+
+  // 2. À défaut, la syllabe finale du nom porte la même information.
   const id = normalize(name)
-
-  // La syllabe finale du nom porte la posture du personnage : c'est le signal
-  // le plus fiable, on le regarde en premier. Elle n'est cherchée qu'EN FIN de
-  // nom — « mi » ou « no » se retrouvent sinon au milieu de n'importe quel mot.
-  for (const { mode, suffix } of KEYWORDS) {
-    if (id.endsWith(suffix)) return MODES[mode]
+  for (const [syllable, mode] of Object.entries(BY_POSTURE)) {
+    if (id.endsWith(syllable)) return MODES[mode]
   }
 
-  for (const { mode, words } of KEYWORDS) {
-    if (words.some(w => role.includes(normalize(w)))) return MODES[mode]
-  }
-
-  // Ni suffixe ni mot-clé : empreinte du nom, stable et arbitraire.
+  // 3. Sinon, empreinte du nom : arbitraire mais stable.
   const keys = Object.keys(MODES)
   let sum = 0
   for (const ch of name) sum += ch.charCodeAt(0)
   return MODES[keys[sum % keys.length]]
 }
 
-/** Les fréquences de l'arpège, en partant d'une tonique dérivée du nom. */
-export function chimeNotes(mode: Mode, name: string): string[] {
-  const ROOTS = ['C4', 'D4', 'Eb4', 'F4', 'G4', 'Ab4', 'Bb4']
-  const SEMITONES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-
+/** La tonique du personnage, en numéro MIDI. Stable pour un même nom. */
+export function rootMidiFor(name: string): number {
+  // Do2 à Si2 : registre grave, les voix remontent ensuite selon leur octave.
+  const ROOTS = [36, 38, 39, 41, 43, 44, 46]
   let sum = 0
   for (const ch of name) sum += ch.charCodeAt(0)
-  const root = ROOTS[sum % ROOTS.length]
+  return ROOTS[sum % ROOTS.length]
+}
 
-  const rootIndex = SEMITONES.indexOf(root.replace(/\d|b/g, '').toUpperCase())
-  const octave = Number(root.slice(-1))
-
-  return mode.steps.map((step) => {
-    const total = (rootIndex < 0 ? 0 : rootIndex) + step
-    return `${SEMITONES[total % 12]}${octave + Math.floor(total / 12)}`
-  })
+/** Nom de note à partir d'un numéro MIDI. */
+export function midiToNote(midi: number): string {
+  const SEMITONES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+  const safe = Math.max(12, Math.min(108, Math.round(midi)))
+  return `${SEMITONES[safe % 12]}${Math.floor(safe / 12) - 1}`
 }

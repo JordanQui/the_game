@@ -1,4 +1,4 @@
-import { chimeNotes, type Mode } from '~/utils/modes'
+import type { Mode } from '~/utils/modes'
 import { buildPattern, type Voice } from '~/utils/voices'
 
 /**
@@ -202,7 +202,7 @@ export function useNameChime() {
     current = rack
 
     const recipe = RECIPES[voice.key]
-    const pattern = buildPattern(chimeNotes(mode, name), voice)
+    const pattern = buildPattern(name, mode, voice)
     let step = 0
 
     sequence = new tone.Sequence((time, note) => {

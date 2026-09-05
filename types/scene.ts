@@ -34,6 +34,11 @@ export interface SceneNPC {
   opening_line: string
   /** Data URI, ajoutée après coup par /api/image/generate. */
   portraitUrl?: string
+  /**
+   * Syllabe de posture, sans tiret. Jamais affichée : elle dit la position du
+   * personnage face à la tension du joueur, et détermine sa voix.
+   */
+  posture?: string
 }
 
 /** L'objet remis par un PNJ, sans lequel la sortie est fermée. */
