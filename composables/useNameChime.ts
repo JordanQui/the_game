@@ -1,5 +1,5 @@
-import { modeFor, chimeNotes } from '~/utils/modes'
-import { voiceFor, buildPattern, type Voice } from '~/utils/voices'
+import { chimeNotes, type Mode } from '~/utils/modes'
+import { buildPattern, type Voice } from '~/utils/voices'
 
 /**
  * La voix d'un personnage, jouée tant qu'on lit son nom.
@@ -184,7 +184,7 @@ export function useNameChime() {
     current = null
   }
 
-  async function start(name: string, archetype: string) {
+  async function start(name: string, mode: Mode, voice: Voice) {
     // Déjà en train de jouer ce nom : ne pas relancer le motif au milieu.
     if (playing === name) return
     stop()
@@ -193,9 +193,6 @@ export function useNameChime() {
     if (!(await ensureAudio()) || !tone) return
     // Le survol a pu changer pendant le chargement de la bibliothèque.
     if (playing !== name) return
-
-    const mode = modeFor(archetype, name)
-    const voice = voiceFor(mode)
 
     let rack = racks.get(voice.key)
     if (!rack) {

@@ -1,4 +1,4 @@
-import type { Mode } from '~/utils/modes'
+import { MODES, modeFor, type Mode } from '~/utils/modes'
 
 /**
  * La voix d'un personnage : sa famille de synthèse.
@@ -92,4 +92,45 @@ export function buildPattern(notes: string[], voice: Voice): string[] {
   const contour = [...base, ...high, ...[...high].reverse().slice(1), ...[...base].reverse().slice(1, -1)]
 
   return contour.flatMap(note => Array.from({ length: voice.density }, () => note))
+}
+
+/**
+ * Attribue une voix DISTINCTE à chaque personnage d'une scène.
+ *
+ * L'appariement par mots-clés laisse forcément des personnages sans
+ * correspondance, et le repli par empreinte les fait alors collisionner : sur
+ * une scène de quatre habitués, trois pouvaient se retrouver avec le même
+ * drone. Or c'est justement la différence entre les voix qui rend chacun
+ * reconnaissable — sans elle, la mécanique ne dit plus rien.
+ *
+ * On garde donc le choix sémantique quand il existe, et on décale seulement
+ * ceux qui entrent en conflit. Cinq voix pour au plus cinq personnages : la
+ * distinction est toujours atteignable.
+ */
+export function assignVoices(
+  npcs: Array<{ name: string; archetype?: string }>
+): Map<string, { mode: Mode; voice: Voice }> {
+  const order = Object.keys(MODES)
+  const taken = new Set<VoiceKey>()
+  const result = new Map<string, { mode: Mode; voice: Voice }>()
+
+  for (const npc of npcs) {
+    const preferred = modeFor(npc.archetype ?? '', npc.name)
+
+    // On part du mode voulu et on avance dans la table jusqu'à trouver une
+    // voix libre. L'ordre est fixe, donc le résultat reste reproductible.
+    let mode = preferred
+    let steps = 0
+    while (taken.has(voiceFor(mode).key) && steps < order.length) {
+      steps++
+      const next = order[(order.indexOf(preferred.name) + steps) % order.length]
+      mode = MODES[next]
+    }
+
+    const voice = voiceFor(mode)
+    taken.add(voice.key)
+    result.set(npc.name, { mode, voice })
+  }
+
+  return result
 }

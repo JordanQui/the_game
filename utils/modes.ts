@@ -31,13 +31,16 @@ export const MODES: Record<string, Mode> = {
  * encode déjà la posture du personnage dans sa dernière syllabe, on s'en sert.
  */
 const KEYWORDS: Array<{ mode: keyof typeof MODES; words: string[]; suffix: string }> = [
-  { mode: 'dorien', suffix: 'ru', words: ['garde', 'gardien', 'tient', 'fer', 'regulateur', 'régulateur', 'ancien', 'ancienne'] },
-  { mode: 'lydien', suffix: 'mi', words: ['voit', 'oeil', 'œil', 'vision', 'reveur', 'rêveur', 'cartographe'] },
-  { mode: 'eolien', suffix: 'no', words: ['perdu', 'perdue', 'manque', 'dechu', 'déchu', 'dernier', 'derniere', 'dernière'] },
-  { mode: 'locrien', suffix: 'shi', words: ['rompu', 'brise', 'brisé', 'coupure', 'fuite', 'exile', 'exilé'] },
-  { mode: 'mixolydien', suffix: 'to', words: ['voix', 'parle', 'chanteuse', 'chanteur', 'crieur', 'colporteur'] },
-  { mode: 'phrygien', suffix: 'zu', words: ['nie', 'cache', 'receleur', 'receleuse', 'ombre', 'contrebande'] },
-  { mode: 'ionien', suffix: 'va', words: ['barman', 'barmaid', 'comptoir', 'sert', 'patron', 'patronne'] },
+  // Radicaux plutôt que mots entiers : « Gardienne », « Régulatrice » et
+  // « Gardien » doivent tomber ensemble, or une liste de formes exactes en
+  // rate toujours une — et le personnage bascule alors sur le hasard.
+  { mode: 'dorien', suffix: 'ru', words: ['gard', 'tien', 'regul', 'ferr', 'ancien', 'veille', 'sentin', 'compt', 'dett'] },
+  { mode: 'lydien', suffix: 'mi', words: ['voi', 'oeil', 'œil', 'vision', 'rev', 'cartograph', 'lect', 'guett', 'observ'] },
+  { mode: 'eolien', suffix: 'no', words: ['perd', 'manqu', 'dechu', 'dernier', 'dernier', 'veuv', 'orphel', 'cendre', 'restant'] },
+  { mode: 'locrien', suffix: 'shi', words: ['romp', 'bris', 'coupur', 'fuit', 'exil', 'fugi', 'desert', 'transfug'] },
+  { mode: 'mixolydien', suffix: 'to', words: ['voix', 'parl', 'chant', 'crieur', 'colport', 'rumeur', 'passeu', 'messag', 'file'] },
+  { mode: 'phrygien', suffix: 'zu', words: ['nie', 'cach', 'recel', 'ombre', 'contreband', 'faussaire', 'masqu', 'silenc'] },
+  { mode: 'ionien', suffix: 'va', words: ['barman', 'barmaid', 'comptoir', 'sert', 'patron', 'tenanci', 'hote', 'verse'] },
 ]
 
 function normalize(text: string): string {

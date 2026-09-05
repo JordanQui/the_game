@@ -2,6 +2,7 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useNameChime } from '~/composables/useNameChime'
+import { assignVoices } from '~/utils/voices'
 import { scramble } from '~/utils/glitch'
 
 const props = defineProps<{ name: string }>()
@@ -22,9 +23,11 @@ onMounted(() => {
 })
 onUnmounted(() => { if (ticker) clearInterval(ticker) })
 
-/** Le rôle du personnage décide de la gamme entendue. */
-const archetype = computed(() =>
-  playerStore.npcs.find(n => n.name === props.name)?.archetype ?? '')
+/**
+ * L'attribution est faite pour la scène ENTIÈRE, pas nom par nom : c'est la
+ * seule façon de garantir que deux personnages ne partagent pas une voix.
+ */
+const assigned = computed(() => assignVoices(playerStore.npcs).get(props.name) ?? null)
 
 const revealed = computed(() => gameStore.revealing === props.name)
 const shown = computed(() => (revealed.value ? props.name : scramble(props.name, seed.value)))
@@ -37,7 +40,9 @@ const shown = computed(() => (revealed.value ? props.name : scramble(props.name,
  * bascule inverse l'arrête.
  */
 watch(revealed, (isRevealed, wasRevealed) => {
-  if (isRevealed && !wasRevealed) void startChime(props.name, archetype.value)
+  if (isRevealed && !wasRevealed && assigned.value) {
+    void startChime(props.name, assigned.value.mode, assigned.value.voice)
+  }
   if (!isRevealed && wasRevealed) stopChime()
 })
 
@@ -74,7 +79,7 @@ function onTouch() {
     class="glitch-name cursor-eye"
     :class="revealed && 'is-revealed'"
     :data-glitch-name="name"
-    :data-archetype="archetype"
+    :data-archetype="assigned?.voice.key ?? ''"
     tabindex="0"
     role="button"
     :aria-label="revealed ? name : 'Identité chiffrée'"
