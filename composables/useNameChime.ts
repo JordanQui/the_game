@@ -28,6 +28,8 @@ interface Rack {
    * on croyait entendre plusieurs synthés à la fois. Ce gain les coupe net.
    */
   out: InstanceType<ToneModule['Gain']>
+  /** Durée d'extinction propre à cette voix, tirée de sa réverbération. */
+  tail: number
   synth: { triggerAttackRelease: (...args: never[]) => unknown; releaseAll?: () => void; dispose: () => void }
   crusher: InstanceType<ToneModule['BitCrusher']>
   shaper: InstanceType<ToneModule['Chebyshev']>
@@ -63,6 +65,30 @@ let token = 0
  * cherche l'ampleur d'un CS-80 dans une grande réverbération, pas la panique.
  */
 const BPM = 64
+
+/**
+ * Extinction d'un rack : la queue, et ce qui la rend tenable.
+ *
+ * Les réverbérations durent de 7 à 12 secondes et c'est tout l'intérêt — c'est
+ * elles qui donnent l'air autour du son. Les couper en 80 ms, comme je l'avais
+ * fait pour régler les synthés qui se superposaient, supprimait le problème et
+ * la qualité avec.
+ *
+ * On garde donc la queue, mais on la RANGE : le rack qu'on quitte descend
+ * d'abord vite à un niveau d'arrière-plan, ce qui laisse toute la place au
+ * nouveau, puis s'éteint lentement. On entend deux choses à la fois — l'une
+ * devant, l'autre qui s'éloigne — au lieu de deux synthés qui se battent.
+ */
+const DUCK_LEVEL = 0.3
+const DUCK_S = 0.25
+/** Bornes de la queue. En deçà on entend une coupure, au-delà ça traîne. */
+const TAIL_MIN_S = 1.9
+const TAIL_MAX_S = 3.6
+
+/** La queue d'une voix suit sa propre réverbération : le drone respire plus long. */
+function tailFor(decayReverb: number): number {
+  return Math.min(TAIL_MAX_S, Math.max(TAIL_MIN_S, decayReverb * 0.3))
+}
 
 /** Réglages de synthèse propres à chaque famille de voix. */
 const RECIPES = {
@@ -142,6 +168,7 @@ function buildRack(voice: Voice): Rack {
 
   return {
     out,
+    tail: tailFor(r.decayReverb),
     synth: synth as unknown as Rack['synth'],
     crusher,
     shaper,
@@ -228,17 +255,29 @@ export function useNameChime() {
     current = null
   }
 
-  /** Coupe le rack en cours, queue de réverbération comprise. */
-  function silence() {
+  /**
+   * Laisse le rack en cours s'éteindre, queue comprise.
+   *
+   * @param makeRoom vrai quand un autre nom prend la main : le rack sortant
+   * s'efface d'abord d'un coup au second plan. Sur un arrêt franc — le pointeur
+   * quitte le texte — rien ne lui succède, la queue peut donc se déployer
+   * entièrement.
+   */
+  function silence(makeRoom = false) {
     if (!current || !tone) return
+    // Les voix relâchent : plus aucune note nouvelle, mais leur propre release
+    // (jusqu'à 5,5 s sur le drone) continue de nourrir la réverbération.
     current.synth.releaseAll?.()
 
     // On annule ce qui était programmé avant de descendre : deux rampes
     // concurrentes sur le même paramètre laissaient le gain dans un état
     // imprévisible, parfois bloqué à zéro.
+    const gain = current.out.gain
     const at = tone.now()
-    current.out.gain.cancelScheduledValues(at)
-    current.out.gain.rampTo(0, 0.08)
+    gain.cancelScheduledValues(at)
+    gain.setValueAtTime(gain.value, at)
+    if (makeRoom) gain.linearRampToValueAtTime(DUCK_LEVEL, at + DUCK_S)
+    gain.linearRampToValueAtTime(0, at + current.tail)
   }
 
   /** Arrêt inconditionnel, pour un démarrage qui prend la main. */
@@ -248,7 +287,8 @@ export function useNameChime() {
     sequence?.dispose()
     sequence = null
     if (tone) tone.getTransport().stop()
-    silence()
+    // Un autre nom arrive : le sortant recule au lieu de disparaître.
+    silence(true)
     return token
   }
 
