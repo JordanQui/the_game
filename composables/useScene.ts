@@ -15,6 +15,42 @@ const SCENE_TEXT_TIMEOUT_MS = 90_000
  * deux appels ne doivent jamais être fusionnés : ensemble ils dépassent
  * n'importe quel timeout serverless.
  */
+/**
+ * La scène de l'onglet en cours.
+ *
+ * Recharger la page relançait une génération — donc consommait le quota, donc
+ * envoyait le joueur au paywall dès son deuxième chargement. Or son monde
+ * existe déjà : on le remet en place au lieu de le repayer.
+ *
+ * `sessionStorage` plutôt que `localStorage` : la scène appartient à cette
+ * visite-là, pas à ce navigateur pour toujours.
+ */
+const SCENE_KEY = 'tg_scene'
+
+function readStoredScene(): SceneTextResponse | null {
+  if (!import.meta.client) return null
+  try {
+    const raw = sessionStorage.getItem(SCENE_KEY)
+    return raw ? (JSON.parse(raw) as SceneTextResponse) : null
+  } catch {
+    return null
+  }
+}
+
+function storeScene(scene: SceneTextResponse): void {
+  if (!import.meta.client) return
+  try {
+    sessionStorage.setItem(SCENE_KEY, JSON.stringify(scene))
+  } catch {
+    // Stockage plein ou refusé : on régénérera, c'est tout.
+  }
+}
+
+export function forgetStoredScene(): void {
+  if (!import.meta.client) return
+  try { sessionStorage.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
+}
+
 /** Relaie `?fresh=1` de l'URL vers l'API : en dev, force une vraie génération. */
 function freshQuery(): Record<string, string> {
   if (!import.meta.dev) return {}
@@ -38,6 +74,18 @@ export function useScene() {
     isLoadingText.value = true
     error.value = null
     quotaExhausted.value = false
+
+    // Rechargement de page : la scène est déjà là, on la repose telle quelle.
+    const stored = !freshQuery().fresh ? readStoredScene() : null
+    if (stored) {
+      scene.value = stored
+      playerStore.setScene(stored)
+      gameStore.addNarrativeEntry('narration', stored.scene_text)
+      gameStore.setPlayingSubState('awaiting_input')
+      isLoadingText.value = false
+      return stored
+    }
+
     try {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
@@ -46,6 +94,7 @@ export function useScene() {
         signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })
       scene.value = res
+      storeScene(res)
       playerStore.setScene(res)
       gameStore.addNarrativeEntry('narration', res.scene_text)
       gameStore.setPlayingSubState('awaiting_input')
