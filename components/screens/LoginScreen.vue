@@ -119,8 +119,8 @@ async function acceptAndLogin() {
       </div>
 
       <p class="text-ink-200/75 text-sm leading-relaxed max-w-xs">
-        Une aventure forgée à partir de votre histoire.<br>
-        Votre vie réelle, sublimée en légende.
+        Une aventure forgée à partir de votre histoire,<br>
+        motivée par elle, et dont votre vie a besoin.
       </p>
 
       <div class="w-full space-y-4 flex flex-col items-center">
