@@ -59,6 +59,8 @@ export interface NarrativeRules {
   forbidden: string[]
   /** Lexique imposé du monde. Appliqué à la génération comme aux tours. */
   vocabulary: string
+  /** Les noms qui comptent s'écrivent en Majuscules de Titre. */
+  naming_style: string
   /** Pourquoi le joueur est sorti ce soir. N'existe que pour le texte initial. */
   opening: string
 }

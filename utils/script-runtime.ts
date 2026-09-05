@@ -189,6 +189,7 @@ ${s.key_item.instruction}
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
 ${s.narrative.vocabulary}
+${s.narrative.naming_style}
 La sortie de ce lieu se nomme exactement : ${s.exits[0]?.label ?? 'le sas'}.
 ${s.narrative.opening}
 Structure imposée :
@@ -422,7 +423,7 @@ ${lines}`)
       quest_stakes: ctx.quest.stakes,
       quest_artifact: ctx.quest.artifact,
       npc_list: npcList,
-      narrative_instruction: `${this.scene.narrative.instruction}\n${this.scene.narrative.vocabulary}`,
+      narrative_instruction: `${this.scene.narrative.instruction}\n${this.scene.narrative.vocabulary}\n${this.scene.narrative.naming_style}`,
       max_words: String(t.max_words),
       exit_label: this.scene.exits[0]?.label ?? 'la sortie',
     })

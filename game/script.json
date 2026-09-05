@@ -79,7 +79,8 @@
         "bris du quatrième mur"
       ],
       "vocabulary": "LEXIQUE IMPOSÉ — le monde est cyberpunk, pas médiéval.\nLa sortie est un SAS. N'écris jamais « porte », « battant », « seuil » ni « huis » : c'est un sas, et le mot doit apparaître tel quel dans la ligne « Sorties : » comme dans le verbe d'action.\nDe même : un bar ou un comptoir, jamais une auberge ni une taverne ; des néons, des écrans et des tubes, jamais des torches, des lanternes ni des bougies ; un barman, jamais un aubergiste ; des câbles et des structures, jamais des poutres.",
-      "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti ce soir : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif doit s'accorder à la tension intime décrite dans la section SIGNE, sans jamais la nommer — c'est ce qu'il fuit ce soir qui sera exactement ce qu'il devra affronter dehors.\nENJEUX — le joueur doit comprendre ce qui se joue SANS avoir à ouvrir le journal de quête. Le texte de scène expose donc, en clair : ce qui ne tourne plus rond dans la ville (quest.restoration), ce que ça coûte si personne ne bouge (quest.stakes), et ce qu'il faudrait récupérer (quest.artifact). Dis-le comme une rumeur de comptoir, pas comme une fiche de mission — mais dis-le vraiment : à la fin de l'intro, le joueur doit savoir ce qu'il y a à perdre."
+      "opening": "OUVERTURE — la scène ne commence JAMAIS par une arrivée inexpliquée.\nLes deux premières phrases disent pourquoi le joueur est sorti ce soir : se distraire, boire un verre, ne pas rester seul chez lui, tuer le temps. C'est un choix qu'il a fait, pas un endroit où il se réveille sans comprendre.\nReste dans le style : présent, phrases courtes, factuelles. Aucune introspection, aucune mélancolie appuyée, aucun « tu te demandes pourquoi ». Le motif doit s'accorder à la tension intime décrite dans la section SIGNE, sans jamais la nommer — c'est ce qu'il fuit ce soir qui sera exactement ce qu'il devra affronter dehors.\nENJEUX — le joueur doit comprendre ce qui se joue SANS avoir à ouvrir le journal de quête. Le texte de scène expose donc, en clair : ce qui ne tourne plus rond dans la ville (quest.restoration), ce que ça coûte si personne ne bouge (quest.stakes), et ce qu'il faudrait récupérer (quest.artifact). Dis-le comme une rumeur de comptoir, pas comme une fiche de mission — mais dis-le vraiment : à la fin de l'intro, le joueur doit savoir ce qu'il y a à perdre.",
+      "naming_style": "NOMS PROPRES — ce qui compte porte un nom, et ce nom s'écrit comme un titre de morceau : chaque mot significatif prend une majuscule, les petits mots de liaison restent en minuscules.\nExemples : « Disrupteur de Sons », « Clé de Scellé », « Carnet du Quai Sept », « Le Néon des Marées ».\nS'écrivent ainsi : l'objet-clé, les objets manipulables, les éléments de décor nommés, l'artefact de la quête et le nom du lieu.\nNE s'écrivent PAS ainsi : ce qui est ordinaire et sans importance — un verre, une chaise, la pluie, le comptoir en tant que meuble. C'est ce contraste qui dit au joueur ce qui mérite son attention : si tout portait une majuscule, plus rien ne se distinguerait.\nUne fois un nom fixé, il s'écrit toujours de la même façon, à la lettre près."
     },
     "turn": {
       "max_tokens": 220,
@@ -137,7 +138,7 @@
         "decor": [
           {
             "slot_id": "string",
-            "name": "string",
+            "name": "string (en Majuscules de Titre s'il compte, minuscules sinon)",
             "description": "string",
             "visual": "string (anglais, court, pour le prompt image, sans couleur)"
           }
@@ -158,7 +159,7 @@
           "hook": "string",
           "objective": "string",
           "stakes": "string",
-          "artifact": "string",
+          "artifact": "string (en Majuscules de Titre)",
           "antagonist_hint": "string",
           "why_leave": "string",
           "restoration": "string"
@@ -166,14 +167,14 @@
         "interactables": [
           {
             "id": "string",
-            "label": "string",
+            "label": "string (en Majuscules de Titre s'il compte)",
             "verb": "string"
           }
         ],
         "scene_text": "string (texte années 80, structure imposée, sauts de ligne inclus)",
         "key_item": {
           "npc_id": "string (l'id d'un des npcs ci-dessus)",
-          "name": "string (nom de l'objet, court)",
+          "name": "string (nom de l'objet, court, en Majuscules de Titre)",
           "description": "string (à quoi il ressemble, une phrase)",
           "why": "string (ce qu'il permet de rétablir dans la ville, une phrase)",
           "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)",
