@@ -1722,7 +1722,11 @@
           "visual_weight": "secondary",
           "required": false
         }
-      ]
+      ],
+      "theme_frame": {
+        "note": "Le cadrage du thème pour l'épilogue. Les blocs SIGNE et NOMBRES ordinaires parlent de la quête à bâtir et des personnages à distribuer : ici il n'y a plus ni l'une ni les autres. Ce qui reste, c'est le point d'arrivée.",
+        "instruction": "CE QUE TOUTE LA PARTIE VISAIT\nD'où il est parti : {{tension}}\nOù il devait arriver : {{resolution}}\n\nCETTE PHRASE EST LA FIN. Le dernier mouvement du texte doit montrer que le joueur a fait ÇA — pas quelque chose d'approchant, pas une leçon générale sur la ville. Dehors, en actes, ce qu'il n'arrivait pas à faire chez lui.\nNe le résous pas proprement : montre-le DÉPLACÉ. Il n'est pas guéri, il a agi une fois, et cette fois-là compte. Une seule scène concrète vaut mieux que trois phrases de bilan.\nINTERDIT ABSOLU, comme partout ailleurs : ne nomme jamais le signe, le zodiaque, un élément, un nombre, la numérologie. Rien de tout cela n'existe dans la fiction. Aucune phrase du type « tu as appris à... » : on ne commente pas, on montre.\n\nLES TROIS ACTES QU'IL VIENT DE TRAVERSER, et ce que chacun mettait à l'épreuve :\n{{acts}}\nLe texte referme les trois, dans cet ordre, sans les annoncer : sa manière d'agir, la façon dont le monde l'a reçu, et ce vers quoi il allait."
+      }
     }
   ],
   "paywall": {

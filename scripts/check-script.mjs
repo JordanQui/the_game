@@ -53,6 +53,13 @@ for (const s of script.scenes) {
     if (!s.generation?.instruction?.includes('<h2>')) {
       errors.push(`"${s.id}" (épilogue) : l'instruction ne fixe pas les balises autorisées`)
     }
+    // La fin doit viser la résolution déclarée, sinon elle n'est plus la fin
+    // de CETTE histoire mais une conclusion interchangeable.
+    for (const token of ['{{tension}}', '{{resolution}}', '{{acts}}']) {
+      if (!s.theme_frame?.instruction?.includes(token)) {
+        errors.push(`"${s.id}" (épilogue) : theme_frame n'interpole pas ${token}`)
+      }
+    }
     continue
   }
 

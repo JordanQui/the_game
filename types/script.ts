@@ -256,6 +256,8 @@ export interface SceneScript {
   act?: string
   /** `ending` : l'épilogue, qui ne suit pas le schéma des autres scènes. */
   kind?: 'scene' | 'ending'
+  /** Cadrage du thème propre à l'épilogue : le point d'arrivée, pas la construction. */
+  theme_frame?: { note?: string; instruction: string }
   is_final?: boolean
   /**
    * Ce qui gouverne la scène côté joueur.

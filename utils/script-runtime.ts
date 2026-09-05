@@ -189,7 +189,7 @@ export class SceneRuntime {
 
     return `PROFIL DU JOUEUR
 ${describeUser(user)}
-${theme ? this.describeTheme(theme) : ''}
+${this.describeResolution(theme)}
 
 TOUTE SA NUIT, DANS L'ORDRE
 ${journal.length ? renderJournal(journal, journal.length) : "Il n'a traversé aucune scène : reste sur ce que dit son profil."}
@@ -210,6 +210,46 @@ Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mot
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
 ${JSON.stringify(s.generation.output_schema, null, 2)}`
+  }
+
+  /**
+   * Le thème, cadré pour une fin.
+   *
+   * Les blocs SIGNE et NOMBRES ordinaires disent comment BÂTIR une scène — la
+   * quête à écrire, les personnages à distribuer. Ici il n'y a plus rien à
+   * bâtir : ce qui reste, c'est le point d'arrivée. On rappelle donc d'où le
+   * joueur est parti, où toute la partie le menait, et quelle facette chaque
+   * acte mettait à l'épreuve.
+   */
+  private describeResolution(theme: PlayerTheme | null): string {
+    const frame = this.scene.theme_frame
+    if (!frame || !theme?.sign) return theme ? this.describeTheme(theme) : ''
+
+    const labels: Record<string, string> = {
+      drive: "sa manière d'agir",
+      destiny: "la forme de son objectif",
+      reception: "la façon dont le monde le reçoit",
+    }
+    const numbers = theme.numbers as Record<string, string | null>
+
+    const acts = this.script.acts
+      .filter(a => a.id !== this.scene.act)
+      .map((a) => {
+        // La facette d'un acte est celle de ses scènes : on la lit sur la
+        // première d'entre elles plutôt que de la redéclarer ailleurs.
+        const first = this.script.scenes.find(sc => sc.id === a.scenes[0])
+        const facet = first?.theme_focus?.facet
+        const value = facet ? numbers[facet] : null
+        return `  - ${a.title} — ${facet ? labels[facet] : 'son parcours'}`
+          + (value ? ` : ${value}` : '')
+      })
+      .join('\n')
+
+    return interpolate(frame.instruction, {
+      tension: theme.sign.tension,
+      resolution: theme.sign.resolution,
+      acts,
+    })
   }
 
   /**
