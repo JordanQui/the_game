@@ -14,6 +14,16 @@ import { unlockAudio } from '~/composables/useNameChime'
 
 /** Degrés d'inclinaison pour balayer la moitié de l'écran. */
 const RANGE_DEG = 22
+
+/**
+ * Hauteur de l'oeil au repos, en fraction d'écran.
+ *
+ * Volontairement en haut, pas au centre. On lit un téléphone à plat ou
+ * légèrement incliné, presque allongé : c'est cette posture-là qui doit
+ * correspondre au repos. L'oeil descend ensuite dans le texte quand on relève
+ * l'appareil vers soi — le geste naturel pour parcourir une page.
+ */
+const NEUTRAL_Y = 0.18
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
 
@@ -35,7 +45,7 @@ export function useGyroEye() {
   const denied = ref(false)
 
   let raf: number | null = null
-  let target = { x: 0.5, y: 0.5 }
+  let target = { x: 0.5, y: NEUTRAL_Y }
   let neutral: { beta: number; gamma: number } | null = null
 
   function onOrientation(event: DeviceOrientationEvent) {
@@ -50,7 +60,7 @@ export function useGyroEye() {
     const dy = (beta - neutral.beta) / RANGE_DEG
     target = {
       x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
-      y: Math.min(1, Math.max(0, 0.5 + dy / 2)),
+      y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
     }
   }
 

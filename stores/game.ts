@@ -26,8 +26,8 @@ export const useGameStore = defineStore('game', {
     pendingKeyItem: false,
     /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
     eyeActive: false,
-    /** Position de l'oeil, en fraction de l'écran. */
-    eyePos: { x: 0.5, y: 0.5 },
+    /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
+    eyePos: { x: 0.5, y: 0.18 },
     /** Le nom en cours de lecture. Le reste du texte s'efface pendant ce temps. */
     revealing: null as string | null,
     /** Lecture refusée : tout le texte se brouille un instant. */
