@@ -82,9 +82,9 @@ export function useSceneCommands() {
   ]
 
   /** Les dix scènes, dans l'ordre, telles que le build les a inscrites. */
-  function sceneIndex(): Array<{ id: string; title: string; act: string | null }> {
+  function sceneIndex(): Array<{ id: string; title: string; act: string | null; kind: string }> {
     return (useRuntimeConfig().public.sceneIndex ?? []) as
-      Array<{ id: string; title: string; act: string | null }>
+      Array<{ id: string; title: string; act: string | null; kind: string }>
   }
 
   /**
@@ -116,9 +116,15 @@ export function useSceneCommands() {
 
     playerStore.closeScene()
     gameStore.startNewScene(target.id)
+    forgetStoredScene()
+    // L'épilogue ne passe pas par l'écran de construction : il a le sien, qui
+    // demande son texte et son image lui-même.
+    if (target.kind === 'ending') {
+      gameStore.setScreen('ending')
+      return true
+    }
     // La scène gardée en session est celle qu'on quitte : sans ça, l'écran de
     // construction la reposerait telle quelle au lieu d'en demander une neuve.
-    forgetStoredScene()
     gameStore.setScreen('scene_build_loading')
     return true
   }

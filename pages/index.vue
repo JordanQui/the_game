@@ -35,6 +35,7 @@ watch(() => playerStore.profile, (profile) => {
       <SceneBuildScreen v-else-if="gameStore.currentScreen === 'scene_build_loading'" key="scene-build" />
       <GameShell v-else-if="gameStore.currentScreen === 'playing'" key="game" />
       <PaywallScreen v-else-if="gameStore.currentScreen === 'paywall'" key="paywall" />
+      <EndingScreen v-else-if="gameStore.currentScreen === 'ending'" key="ending" />
       <LoadingScreen v-else-if="gameStore.currentScreen === 'payment_processing'" key="pay" message="Traitement du paiement..." />
       <div v-else-if="gameStore.currentScreen === 'payment_success'" key="success" class="min-h-[100dvh] flex items-center justify-center text-center px-6">
         <div class="space-y-6 max-w-sm">

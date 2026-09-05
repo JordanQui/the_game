@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import type { GeneratedScene, SceneTextResponse } from '~/types/scene'
+import type { GeneratedScene, SceneTextResponse, GeneratedEnding } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
 import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
@@ -47,6 +47,11 @@ export default defineEventHandler(async (event) => {
   const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
   const gen = scene.generation
 
+  // L'épilogue ne suit pas le schéma des autres scènes : ni personnages, ni
+  // quête, ni objet-clé. Il rend un texte, une palette de couchant et de quoi
+  // peupler l'image de ce que ce joueur-là a traversé.
+  const isEnding = scene.kind === 'ending'
+
   let completion
   try {
     completion = await openai.chat.completions.create({
@@ -56,7 +61,12 @@ export default defineEventHandler(async (event) => {
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: gen.system_prompt },
-        { role: 'user', content: scene.buildGenerationPrompt(user, body.journal ?? [], body.carried ?? []) },
+        {
+          role: 'user',
+          content: isEnding
+            ? scene.buildEndingPrompt(user, body.journal ?? [], body.carried ?? [])
+            : scene.buildGenerationPrompt(user, body.journal ?? [], body.carried ?? []),
+        },
       ],
     })
   } catch (err) {
@@ -94,6 +104,26 @@ export default defineEventHandler(async (event) => {
     // peut pas distinguer une coupure d'un modèle qui bavarde hors JSON.
     console.error('[scene/text] JSON invalide, fin de la réponse :', raw.slice(-300))
     throw createError({ statusCode: 502, statusMessage: `${gen.model} a renvoyé un JSON invalide` })
+  }
+
+  if (isEnding) {
+    try {
+      const journal = body.journal ?? []
+      const assembled = {
+        ...scene.assembleEnding(
+          generated as unknown as GeneratedEnding,
+          journal[journal.length - 1]?.place_name ?? ''),
+        script_fingerprint: scriptFingerprint(runtime.script),
+      }
+      await writeMock('scene', key, assembled)
+      return assembled
+    } catch (err) {
+      console.error('[scene/text] épilogue invalide :', err instanceof Error ? err.message : err)
+      throw createError({
+        statusCode: 502,
+        statusMessage: err instanceof Error ? err.message : 'Fin invalide',
+      })
+    }
   }
 
   try {

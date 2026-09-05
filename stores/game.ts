@@ -60,12 +60,28 @@ export const useGameStore = defineStore('game', {
     posture: 'assis' as 'assis' | 'allonge',
     /** Le panneau de réglages est ouvert. */
     settingsOpen: false,
+    /**
+     * Le joueur est en train de taper.
+     *
+     * Sur mobile, l'oeil suit le téléphone en permanence : pendant qu'on écrit,
+     * la main bouge, l'oeil balaie le texte et déclenche des noms — donc du son
+     * — sans qu'on l'ait voulu. On le met en veille le temps de la saisie.
+     */
+    typing: false,
     /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
     eyeActive: false,
     /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
     eyePos: { x: 0.5, y: 0.25 },
     /** Le nom en cours de lecture. Le reste du texte s'efface pendant ce temps. */
     revealing: null as string | null,
+    /**
+     * Une épreuve d'analyse est demandée.
+     *
+     * Posée ici plutôt que remontée par événement : la demande vient soit de la
+     * souris, soit de l'oeil gyroscopique, et ces deux chemins n'ont aucun
+     * composant en commun.
+     */
+    pendingChallenge: false,
     /** Lecture refusée : tout le texte se brouille un instant. */
     readDenied: false,
     /**
@@ -220,6 +236,13 @@ export const useGameStore = defineStore('game', {
       this.revealing = null
     },
 
+    setTyping(typing: boolean) {
+      this.typing = typing
+      // Ce qui était en cours de lecture s'arrête net : sans ça, la note du
+      // dernier nom survolé continuerait pendant toute la saisie.
+      if (typing) this.revealing = null
+    },
+
     setEyeActive(active: boolean) {
       this.eyeActive = active
       if (!active) this.revealing = null
@@ -244,6 +267,14 @@ export const useGameStore = defineStore('game', {
     denyRead() {
       this.readDenied = true
       setTimeout(() => { this.readDenied = false }, 700)
+    },
+
+    requestChallenge() {
+      this.pendingChallenge = true
+    },
+
+    clearChallenge() {
+      this.pendingChallenge = false
     },
 
     markDecrypted(id: string) {
@@ -309,6 +340,7 @@ export const useGameStore = defineStore('game', {
       this.lastCommand = null
       this.lastMode = null
       this.turnError = null
+      this.pendingChallenge = false
     },
 
     resetGame() {

@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { useGameStore } from '~/stores/game'
 const props = defineProps<{ disabled?: boolean }>()
 const emit = defineEmits<{ command: [value: string] }>()
+
+const gameStore = useGameStore()
 
 const input = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -28,6 +31,8 @@ onMounted(() => {
     <input
       ref="inputRef"
       v-model="input"
+      @focus="gameStore.setTyping(true)"
+      @blur="gameStore.setTyping(false)"
       type="text"
       :disabled="disabled"
       class="command-prompt flex-1 text-base sm:text-sm placeholder-ink-500 disabled:opacity-40"

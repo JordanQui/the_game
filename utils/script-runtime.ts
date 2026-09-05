@@ -20,6 +20,7 @@ import type { UserProfile } from '~/types/user'
 import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
+import { sanitizeHtml } from '~/utils/sanitize-html'
 import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import { zodiacKey } from '~/utils/zodiac'
 import { numerologyOf } from '~/utils/numerology'
@@ -137,6 +138,8 @@ export class SceneRuntime {
   get fallbacks() { return this.scene.error_fallbacks }
   /** Illustration figée de la scène, ou null si elle doit être générée. */
   get staticImage() { return this.scene.static_image ?? null }
+  /** `ending` : cette scène clôt la partie et ne suit pas le schéma des autres. */
+  get kind() { return this.scene.kind ?? 'scene' }
   /** Seuils de relance et de blocage, envoyés au client avec la scène. */
   get pacing() {
     return {
@@ -163,6 +166,89 @@ export class SceneRuntime {
     if (this.scene.sealed_object) return schema
     const { sealed_object: _omit, ...rest } = schema
     return rest
+  }
+
+  /**
+   * Le prompt de l'épilogue.
+   *
+   * Il ne demande ni personnages, ni quête, ni objet-clé : la partie est finie.
+   * Il demande un texte, la palette d'un couchant, et de quoi peupler l'image
+   * de ce que CE joueur a traversé. Le journal y passe en ENTIER — c'est le
+   * seul moment où toute la nuit compte, on ne le tronque donc pas.
+   */
+  buildEndingPrompt(
+    user: UserProfile,
+    journal: JournalEntry[] = [],
+    carried: CarriedItem[] = [],
+  ): string {
+    const s = this.scene
+    const theme = resolveTheme(user, this.script)
+    const slots = s.decor_slots
+      .map(slot => `  - ${slot.id} (poids visuel : ${slot.visual_weight}) : ${slot.role}`)
+      .join('\n')
+
+    return `PROFIL DU JOUEUR
+${describeUser(user)}
+${theme ? this.describeTheme(theme) : ''}
+
+TOUTE SA NUIT, DANS L'ORDRE
+${journal.length ? renderJournal(journal, journal.length) : "Il n'a traversé aucune scène : reste sur ce que dit son profil."}
+
+${this.describeCarried(carried, true)}
+
+${s.generation.instruction}
+
+DIRECTION ARTISTIQUE
+${s.art_direction.render}
+${s.art_direction.accent_note}
+${s.palette_derivation.instruction}
+
+ÉLÉMENTS DE L'IMAGE À REMPLIR
+${slots}
+Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mots) décrivant la forme visible, sans mentionner de couleur et sans aucun texte lisible.
+
+SORTIE ATTENDUE
+Un unique objet JSON respectant ce schéma, sans markdown :
+${JSON.stringify(s.generation.output_schema, null, 2)}`
+  }
+
+  /**
+   * Valide et assemble l'épilogue.
+   *
+   * Le HTML vient du modèle et sera affiché tel quel : il est réduit ici, côté
+   * serveur, aux quatre balises autorisées. Le filtrer côté client laisserait
+   * passer la fenêtre où il n'a pas encore été filtré.
+   */
+  assembleEnding(generated: GeneratedEnding, placeName: string) {
+    if (!generated.ending_html) throw new Error('Fin invalide : ending_html manquant')
+    for (const key of ['dominant', 'secondary', 'accent'] as const) {
+      const color = generated.palette?.[key]
+      if (!color?.hex || !HEX_RE.test(color.hex)) {
+        throw new Error(`Fin invalide : palette.${key}.hex absent ou mal formé`)
+      }
+    }
+
+    const audit = enforceAccentVisibility(generated.palette)
+    const palette = audit.palette
+    const html = sanitizeHtml(generated.ending_html)
+    if (!html) throw new Error('Fin invalide : le HTML ne contient aucune balise autorisée')
+
+    return {
+      kind: 'ending' as const,
+      scene_id: this.scene.id,
+      scene_title: generated.title || this.scene.title,
+      ending_html: html,
+      palette,
+      decor: generated.decor ?? [],
+      interface_palette: 'from_scene' as const,
+      image_prompt: this.buildImagePrompt({
+        place_name: placeName || this.scene.title,
+        palette,
+        decor: generated.decor ?? [],
+      }),
+      static_image: null,
+      script_version: this.script.version,
+    }
   }
 
   buildGenerationPrompt(
@@ -278,16 +364,16 @@ ${list(o.posture)}`
    * ignorait l'existence. Un objet dont le nom n'a pas encore été déchiffré
    * est décrit par sa forme, jamais nommé — le joueur ne le connaît pas.
    */
-  private describeCarried(carried: CarriedItem[]): string {
+  private describeCarried(carried: CarriedItem[], ending = false): string {
     const inv = this.script.defaults.inventory
-    if (!carried.length) return inv.empty
+    if (!carried.length) return ending ? inv.ending_empty : inv.empty
 
     const items = carried
       .map(o => `  - ${o.decrypted ? o.label : `un objet ${inv.unread}`}`
         + (o.from ? ` — récupéré : ${o.from}` : ''))
       .join('\n')
 
-    return interpolate(inv.prompt, { items })
+    return interpolate(ending ? inv.ending_prompt : inv.prompt, { items })
   }
 
   private describeObjective(theme: PlayerTheme | null): string {

@@ -279,3 +279,35 @@ export interface TurnRequest {
   npcId?: string
   history?: Array<{ role: 'user' | 'assistant'; content: string }>
 }
+
+// --- Épilogue ---------------------------------------------------------------
+
+/** Ce que le modèle renvoie pour la fin : un texte, une palette, une image. */
+export interface GeneratedEnding {
+  ending_html: string
+  title: string
+  palette: ScenePalette
+  decor: DecorElement[]
+}
+
+/**
+ * L'épilogue, tel qu'il arrive au client.
+ *
+ * `ending_html` a déjà été réduit aux quatre balises autorisées côté serveur :
+ * il peut être rendu tel quel. Il se superpose à l'image du couchant — c'est
+ * ce montage qui permet d'avoir du vrai texte français lisible, qu'aucun
+ * modèle d'image ne sait produire.
+ */
+export interface EndingResponse {
+  kind: 'ending'
+  scene_id: string
+  scene_title: string
+  ending_html: string
+  palette: ScenePalette
+  decor: DecorElement[]
+  interface_palette: 'from_scene'
+  image_prompt: string
+  static_image: null
+  script_version: string
+  build_id?: string
+}

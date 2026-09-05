@@ -40,6 +40,22 @@ for (const s of script.scenes) {
 // --- chaque scène -----------------------------------------------------------
 const ACQUISITIONS = ['informant_then_holder', 'holder', 'found']
 for (const s of script.scenes) {
+  // L'épilogue ne suit pas le schéma des autres : ni personnages, ni quête, ni
+  // objet-clé. Il rend un texte et une image, et rien d'autre.
+  if (s.kind === 'ending') {
+    for (const k of ['image_setting', 'focal_element', 'decor_slots', 'generation']) {
+      if (!s[k]) errors.push(`"${s.id}" (épilogue) : bloc "${k}" manquant`)
+    }
+    const out = s.generation?.output_schema ?? {}
+    for (const k of ['ending_html', 'palette', 'decor']) {
+      if (!out[k]) errors.push(`"${s.id}" (épilogue) : le schéma de sortie ne demande pas "${k}"`)
+    }
+    if (!s.generation?.instruction?.includes('<h2>')) {
+      errors.push(`"${s.id}" (épilogue) : l'instruction ne fixe pas les balises autorisées`)
+    }
+    continue
+  }
+
   const need = ['title', 'image_setting', 'focal_element', 'naming', 'decor_slots',
                 'npcs', 'quest', 'interactables', 'exits', 'key_item', 'objective']
   for (const k of need) if (!s[k]) errors.push(`"${s.id}" : bloc "${k}" manquant`)
@@ -71,7 +87,7 @@ for (const s of script.scenes) {
 const POSTURES = Object.keys(script.onomastics.posture)
 for (const s of script.scenes) {
   const stances = s.cast_stances
-  if (!stances) continue
+  if (!stances || s.kind === 'ending') continue
 
   if (stances.length !== s.npcs.count) {
     errors.push(`"${s.id}" : ${stances.length} positions pour ${s.npcs.count} personnages`)

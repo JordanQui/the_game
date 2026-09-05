@@ -20,7 +20,8 @@
       "terminal",
       "porte",
       "etage",
-      "sommet"
+      "sommet",
+      "fin"
     ]
   },
   "defaults": {
@@ -200,7 +201,7 @@
           "id": "string (identifiant court, sans espace)",
           "name": "string (nom de l'objet, en Majuscules de Titre)",
           "given_by": "string (l'id du PNJ qui le donne, ou \"trouve\" si le joueur le ramasse seul)",
-          "observation": "string (3 à 4 phrases révélées après analyse, approfondissant la quête)"
+          "observation": "string (3 à 4 phrases révélées après analyse : ce que l'objet EST précisément, puis un INDICE de ce à quoi il fait écho — jamais son usage —, puis ce qu'il révèle de la quête)"
         }
       }
     },
@@ -268,13 +269,15 @@
     },
     "sealed_object": {
       "note": "Le second objet d'une scène : ramassé sans qu'on sache ce que c'est, illisible tant qu'on ne l'a pas analysé. Présent dans TOUTES les scènes, pas seulement à l'auberge.",
-      "instruction": "L'OBJET SCELLÉ — un second objet, distinct de l'objet-clé. Le joueur le ramasse ici : un personnage le lui donne au fil de la conversation, ou il le trouve dans le décor.\nSon nom N'EST PAS LISIBLE. C'est une chose du dehors, et le dehors ne se nomme pas de soi-même : il faut l'augmentation, puis passer l'épreuve de lecture, pour que son nom apparaisse.\n`observation` est ce que le joueur comprend une fois le nom lu, en 3 à 4 phrases. Elle dit DEUX choses, dans cet ordre :\n  1. À QUOI SERT CET OBJET. Concrètement, pas poétiquement. Le joueur doit pouvoir décider s'il le garde et quand il s'en servira.\n  2. Ce qu'il révèle de la quête que personne n'a dit à voix haute — d'où vient le déséquilibre, qui en a profité, ce qu'on a tu.\nIl ne débloque PAS la sortie de cette scène : ça, c'est le travail de l'objet-clé. Sa valeur est ailleurs, et souvent plus loin."
+      "instruction": "L'OBJET SCELLÉ — un second objet, distinct de l'objet-clé. Le joueur le ramasse ici : un personnage le lui donne au fil de la conversation, ou il le trouve dans le décor.\nSon nom N'EST PAS LISIBLE. C'est une chose du dehors, et le dehors ne se nomme pas de soi-même : il faut l'augmentation, puis passer l'épreuve de lecture, pour que son nom apparaisse.\n\n`observation` est ce que le joueur comprend une fois le nom lu, en 3 à 4 phrases. ELLE NE DIT JAMAIS À QUOI L'OBJET SERT. Pas de mode d'emploi, pas « il ouvre... », pas « il te faudra... », aucune scène future annoncée. Un objet dont on connaît déjà l'usage n'est plus une trouvaille, c'est une consigne.\nElle donne trois choses, dans cet ordre :\n  1. CE QUE L'OBJET EST, précisément : sa matière, son usure, une marque, un numéro, une trace de ce qui s'en est servi avant. Assez concret pour que le joueur le reconnaisse trois scènes plus tard sans qu'on le lui rappelle.\n  2. UN INDICE, jamais une réponse. Ce à quoi il fait écho — un autre objet que le joueur porte déjà (voir CE QUE LE JOUEUR PORTE), une chose vue dans une scène traversée, un détail du lieu. Le rapprochement doit être POSSIBLE, pas explicite : c'est au joueur de le faire.\n  3. Ce que ça révèle de la quête que personne n'a dit à voix haute — d'où vient le déséquilibre, qui en a profité, ce qu'on a tu.\nIl ne débloque PAS la sortie de cette scène : ça, c'est le travail de l'objet-clé.\nCe qu'il révèle s'accroche au profil : ça touche la tension de son SIGNE, vue de l'extérieur cette fois — non plus ce que le joueur ressent, mais ce que la ville en a fait.\nTrois à quatre phrases, dans le style du jeu textuel."
     },
     "inventory": {
       "note": "Ce que le joueur transporte des scènes précédentes. Envoyé par le client à chaque génération : le serveur ne garde aucun état.",
-      "prompt": "CE QUE LE JOUEUR PORTE DÉJÀ\n{{items}}\n\nCes objets sont RÉELS et il les a sur lui. Deux conséquences, toutes deux obligatoires :\n1. Le puzzle de cette scène doit pouvoir se résoudre AVEC CE QU'IL A. Si l'un de ces objets est ce qui débloque la situation ici, dis-le par la bouche d'un personnage ou par le décor — en le NOMMANT tel qu'il figure ci-dessus, pas par allusion. Un joueur ne devine pas qu'il faut ressortir une chose ramassée deux scènes plus tôt.\n2. N'invente jamais un objet qu'il aurait déjà et qui ne figure pas dans cette liste, et ne fais pas réapparaître ici un objet qu'il a déjà ramassé ailleurs.\nUn objet dont le nom n'est pas encore déchiffré ne peut pas être nommé : le joueur ne le connaît pas. Parle-en par sa forme.",
+      "prompt": "CE QUE LE JOUEUR PORTE DÉJÀ\n{{items}}\n\nCes objets sont RÉELS et il les a sur lui. C'est la raison d'être de cet inventaire : un objet ramassé peut resservir plus tard, sinon il n'y aurait rien à transporter.\n1. SI L'UN DE CES OBJETS A DU SENS ICI — et seulement dans ce cas, ne force jamais le lien — il peut être ce qui débloque la situation. Alors rends-le PERCEPTIBLE sans le dicter : un personnage remarque ce que le joueur porte, une serrure a la forme de ce qu'il a en poche, une marque du décor répond à une marque de l'objet. Jamais « utilise X », jamais une consigne. Le joueur doit pouvoir faire le rapprochement, pas le recevoir.\n2. N'invente jamais un objet qu'il aurait déjà et qui ne figure pas dans cette liste, et ne fais pas réapparaître ici un objet qu'il a déjà ramassé ailleurs.\n3. Un objet dont le nom n'est pas encore déchiffré ne peut pas être nommé : le joueur ne le connaît pas. Parle-en par sa forme, et c'est encore mieux ainsi — il devra l'analyser pour comprendre ce qu'il tient.",
       "empty": "Le joueur ne porte encore rien : le puzzle de cette scène doit se résoudre avec ce qu'il y trouve.",
-      "unread": "(nom non déchiffré — le joueur ne sait pas encore ce que c'est)"
+      "unread": "(nom non déchiffré — le joueur ne sait pas encore ce que c'est)",
+      "ending_prompt": "CE QU'IL A SUR LUI EN SORTANT\n{{items}}\n\nCe sont les objets qu'il rapporte de sa nuit. Nomme-les dans le texte de fin : ils comptent, il les a payés d'un détour. Un objet dont le nom n'a jamais été déchiffré ne peut PAS être nommé — dis qu'il l'a gardé sans jamais savoir ce que c'était, c'est une fin en soi.\nIls doivent aussi se retrouver dans l'image, au premier plan.",
+      "ending_empty": "Il ressort les mains vides. Ce n'est pas rien à dire : il n'a rien ramassé de toute la nuit."
     }
   },
   "scenes": [
@@ -423,9 +426,6 @@
         "note": "Ce qu'il faut accomplir pour passer à la scène suivante. Chaque scène en aura un.",
         "kind": "acquire_augmentation",
         "statement": "Obtenir l'augmentation qui rend le dehors lisible, puis franchir le sas."
-      },
-      "sealed_object": {
-        "instruction": "L'OBJET SCELLÉ — un second objet, distinct de l'augmentation. Un personnage le donne au joueur au fil de la conversation, ou celui-ci le trouve sur lui. Il le ramasse, il le garde, et il ne peut RIEN en faire tant qu'il ne l'a pas analysé.\nSon nom n'est pas lisible : c'est une chose du dehors, et le dehors ne se nomme pas de soi-même. Il faudra l'augmentation pour le déchiffrer.\n\n`observation` est ce que le joueur découvre une fois l'objet analysé. Ce texte ne fait pas avancer la quête et ne débloque aucune porte : il l'APPROFONDIT. Il révèle un pan de {{quest_title}} que personne n'a dit à voix haute — d'où vient le déséquilibre, qui en a profité, ce qu'on a tu. Trois à quatre phrases, dans le style du jeu textuel.\nIl doit s'accrocher au profil du joueur : ce que l'objet révèle touche la tension de son SIGNE, vue de l'extérieur cette fois — non plus ce qu'il ressent, mais ce que la ville en a fait."
       },
       "interface_palette": {
         "mode": "fixed",
@@ -1552,8 +1552,8 @@
           "required": false
         },
         {
-          "id": "aube",
-          "role": "La première lueur à l'horizon, qui n'est pas encore le jour",
+          "id": "couchant",
+          "role": "Le soleil bas sur l'horizon, posé entre deux tours, qui coupe la ville en bandes",
           "source": "passions",
           "visual_weight": "secondary",
           "required": false
@@ -1635,6 +1635,92 @@
         {
           "posture": "-me",
           "means": "qui a payé le prix et tient debout"
+        }
+      ],
+      "is_final": true
+    },
+    {
+      "id": "fin",
+      "title": "La Nuit du Bout du Monde",
+      "order": 11,
+      "act": "epilogue",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "kind": "ending",
+      "note": "Onzième étape. Elle génère du TEXTE et une IMAGE, mais pas comme les autres : pas de personnages, pas d'objet-clé, pas de quête. L'image est un soleil couchant sur la ville, peuplé de ce que le joueur a traversé ; le texte de fin se superpose en HTML PAR-DESSUS l'image — c'est ce qui permet d'avoir du vrai texte français lisible, qu'aucun modèle d'image ne sait produire.",
+      "generation": {
+        "model": "gpt-4o",
+        "temperature": 0.9,
+        "max_tokens": 1500,
+        "system_prompt": "Tu écris la fin d'un jeu d'aventure textuel cyberpunk en français, et tu décris l'image qui l'accompagne. Tu réponds uniquement par un objet JSON, sans markdown.",
+        "instruction": "LA FIN DE L'HISTOIRE.\nLe joueur vient d'accomplir l'acte final. Le soleil est bas sur l'horizon, posé entre deux tours, et il coupe la ville en bandes. C'est l'image qui portera ce texte.\n\n=== LE TEXTE (`ending_html`) — trois mouvements ===\n1. CE QUI VIENT DE SE PASSER : l'acte accompli, et ce que la ville en fait dans les minutes qui suivent. Concret, à hauteur de rue — une lumière qui revient, un bruit qui cesse, une porte qui s'ouvre ailleurs.\n2. LA NUIT RELUE : reprends ce qu'il a traversé — les lieux, ceux qui l'ont laissé passer, ce qu'il porte encore. Sers-toi du résumé et de l'inventaire, et NOMME-LES : ce sont ses souvenirs, pas des exemples. Un objet dont le nom n'a jamais été déchiffré reste sans nom — dis seulement qu'il l'a gardé sans jamais savoir ce que c'était.\n3. CE QU'IL EMPORTE : la tension de son SIGNE trouve ici sa résolution. Pas résolue proprement — déplacée : il a fait dehors ce qu'il n'arrivait pas à faire chez lui. Ne nomme jamais le signe, le nombre ni la tension. Montre-la une dernière fois, en situation.\nTON : deuxième personne, présent, phrases courtes. C'est un épilogue, tu peux respirer plus qu'ailleurs — mais pas de lyrisme, pas de morale, aucune question au joueur, aucune suite annoncée. 160 à 220 mots.\nFORMAT : du HTML, et SEULEMENT ces balises — <h2>, <p>, <em>, <strong>. Un <h2> de titre (3 à 6 mots, tirés de SA nuit, jamais générique). Trois <p>, un par mouvement. <em> pour les lieux et les personnes, <strong> pour l'acte accompli. Aucun attribut : tout le reste sera retiré.\n\n=== L'IMAGE ===\n`palette` est celle du couchant : la dominante reste la nuit qui n'a pas fini de partir, l'accent est le soleil. Même règle 70/20/10 que partout ailleurs.\n`decor` peuple l'image de SA nuit à lui : dans la silhouette de la ville on doit reconnaître les lieux qu'il a traversés (voir le résumé), et au premier plan ce qu'il a rapporté (voir l'inventaire). Ce ne sont pas des décors génériques — chaque fragment `visual` renvoie à quelque chose de précis de sa partie.\nAUCUN TEXTE DANS L'IMAGE : pas d'enseigne lisible, pas de lettres, pas de chiffres. Le texte se superpose ensuite en HTML, c'est lui qui porte les mots.",
+        "output_schema": {
+          "ending_html": "string (HTML, balises <h2> <p> <em> <strong> uniquement, sans attribut)",
+          "title": "string (le titre du <h2>, en clair)",
+          "palette": {
+            "dominant": {
+              "hex": "#RRGGBB",
+              "name": "string",
+              "coverage_pct": 70,
+              "rationale": "string"
+            },
+            "secondary": {
+              "hex": "#RRGGBB",
+              "name": "string",
+              "coverage_pct": 20,
+              "rationale": "string"
+            },
+            "accent": {
+              "hex": "#RRGGBB",
+              "name": "string",
+              "coverage_pct": 10,
+              "rationale": "string"
+            }
+          },
+          "decor": [
+            {
+              "slot_id": "string",
+              "name": "string (en Majuscules de Titre s'il compte, minuscules sinon)",
+              "description": "string",
+              "visual": "string (anglais, court, pour le prompt image, sans couleur)"
+            }
+          ]
+        }
+      },
+      "image_setting": "Le soleil bas sur l'horizon d'une mégapole, posé entre deux tours, vu depuis le dernier niveau d'un building",
+      "focal_element": "Le disque solaire, coupé en bandes horizontales par la brume de la ville",
+      "naming": {
+        "instruction": "Le lieu est déjà nommé : c'est là où le joueur vient d'agir. Reprends son nom tel quel.",
+        "sources": []
+      },
+      "decor_slots": [
+        {
+          "id": "soleil",
+          "role": "Le disque solaire bas, coupé en bandes horizontales",
+          "source": "—",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "skyline",
+          "role": "La silhouette de la ville en contre-jour, où l'on reconnaît les lieux traversés",
+          "source": "journal",
+          "visual_weight": "dominant",
+          "required": true
+        },
+        {
+          "id": "traces",
+          "role": "Ce que le joueur a rapporté, posé au premier plan sur l'appui de la baie",
+          "source": "inventory",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "vide",
+          "role": "Le niveau désert derrière lui, ce qu'il quitte",
+          "source": "journal",
+          "visual_weight": "secondary",
+          "required": false
         }
       ]
     }
@@ -1934,6 +2020,15 @@
       ],
       "arc": "Entrer, monter, et accomplir l'opération qui remet la ville d'aplomb. Chaque étage tient sur ce que le joueur a compris avant, pas sur ce qu'il a ramassé.",
       "ends_on": "Le retour à la normale, ou ce qu'il en reste."
+    },
+    {
+      "id": "epilogue",
+      "title": "L'Épilogue",
+      "scenes": [
+        "fin"
+      ],
+      "arc": "Le soleil se couche sur la ville. Le joueur relit sa propre nuit : les lieux traversés, ceux qui l'ont laissé passer, ce qu'il emporte, et l'acte qu'il a accompli.",
+      "ends_on": "Rien. C'est la fin."
     }
   ]
 }

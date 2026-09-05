@@ -23,7 +23,7 @@ const uiPalette = script.defaults.interface_palette.palette
  */
 const sceneIndex = script.progression.order.map((id: string) => {
   const scene = script.scenes.find((s: { id: string }) => s.id === id)
-  return { id, title: scene?.title ?? id, act: scene?.act ?? null }
+  return { id, title: scene?.title ?? id, act: scene?.act ?? null, kind: scene?.kind ?? 'scene' }
 })
 
 export default defineNuxtConfig({

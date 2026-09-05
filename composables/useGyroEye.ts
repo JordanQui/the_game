@@ -98,19 +98,42 @@ export function useGyroEye() {
     }
   }
 
-  /** Le nom sous l'oeil, s'il y en a un. */
-  function hitTest(x: number, y: number): { name: string; archetype: string } | null {
-    const nodes = document.querySelectorAll<HTMLElement>('[data-glitch-name]')
-    for (const node of nodes) {
+  /**
+   * Ce qui se trouve sous l'oeil, selon l'outil en main.
+   *
+   * L'outil décide de ce qu'on peut lire : l'oeil lit les identités, la loupe
+   * analyse les objets. C'est déjà vrai au survol sur desktop, ça doit l'être
+   * ici aussi — sinon la sélection d'outil ne veut rien dire sur mobile.
+   */
+  function hitTest(x: number, y: number): HTMLElement | null {
+    const selector = gameStore.activeTool === 'lens' ? '[data-glitch-object]' : '[data-glitch-name]'
+    for (const node of document.querySelectorAll<HTMLElement>(selector)) {
       const r = node.getBoundingClientRect()
       if (r.width === 0) continue
       // Marge verticale : viser une ligne de texte au gyroscope est difficile.
-      if (x >= r.left && x <= r.right && y >= r.top - 10 && y <= r.bottom + 10) {
-        return { name: node.dataset.glitchName ?? '', archetype: node.dataset.archetype ?? '' }
-      }
+      if (x >= r.left && x <= r.right && y >= r.top - 10 && y <= r.bottom + 10) return node
     }
     return null
   }
+
+  /**
+   * Temps d'immobilité avant que l'épreuve s'ouvre.
+   *
+   * Plus long qu'à la souris : au gyroscope, la main tremble et l'oeil traverse
+   * volontiers un mot sans qu'on l'ait voulu. Un nom qui se révèle au passage
+   * est sans conséquence ; une épreuve qui s'ouvre, non.
+   */
+  const OBJECT_DWELL_MS = 800
+  let dwellOn: string | null = null
+  let dwellSince = 0
+  /**
+   * L'épreuve a déjà été demandée pour l'objet sous l'oeil.
+   *
+   * Sans ce verrou, refermer l'épreuve sans la résoudre la rouvrait à la frame
+   * suivante — l'oeil étant toujours sur l'objet, la condition de pause restait
+   * vraie. Il faut ressortir de l'objet pour pouvoir réessayer.
+   */
+  let dwellSpent = false
 
   function loop() {
     const pos = gameStore.eyePos
@@ -120,8 +143,37 @@ export function useGyroEye() {
     }
     gameStore.setEyePos(next)
 
-    const hit = hitTest(next.x * window.innerWidth, next.y * window.innerHeight)
-    if (hit?.name !== gameStore.revealing) gameStore.setRevealing(hit?.name ?? null)
+    // En veille pendant la saisie : la position continue de suivre l'appareil,
+    // mais rien n'est visé — ni nom révélé, ni épreuve ouverte, ni note jouée.
+    if (gameStore.typing) {
+      if (gameStore.revealing) gameStore.setRevealing(null)
+      dwellOn = null
+      dwellSpent = false
+      raf = requestAnimationFrame(loop)
+      return
+    }
+
+    const node = hitTest(next.x * window.innerWidth, next.y * window.innerHeight)
+
+    if (gameStore.activeTool === 'lens') {
+      // Rien ne se révèle avec la loupe : on analyse, on ne lit pas.
+      if (gameStore.revealing) gameStore.setRevealing(null)
+
+      const id = node?.dataset.glitchObject ?? null
+      if (id !== dwellOn) {
+        dwellOn = id
+        dwellSince = Date.now()
+        dwellSpent = false
+      } else if (id && !dwellSpent && Date.now() - dwellSince >= OBJECT_DWELL_MS) {
+        dwellSpent = true
+        gameStore.requestChallenge()
+      }
+    } else {
+      dwellOn = null
+      dwellSpent = false
+      const name = node?.dataset.glitchName ?? null
+      if (name !== gameStore.revealing) gameStore.setRevealing(name)
+    }
 
     raf = requestAnimationFrame(loop)
   }

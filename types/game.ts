@@ -7,6 +7,8 @@ export type GameScreen =
   | 'paywall'
   | 'payment_processing'
   | 'payment_success'
+  /** L'épilogue : le couchant, et le texte de fin par-dessus. */
+  | 'ending'
 
 // L'image a son propre état dans le store : elle ne doit pas bloquer la saisie.
 export type PlayingSubState =

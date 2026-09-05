@@ -89,6 +89,12 @@ const justAppeared = computed(() => {
   }) ?? null
 })
 
+/** Refermer l'épreuve doit aussi retirer la demande, sinon elle se rouvre. */
+function closeTest() {
+  testing.value = false
+  gameStore.clearChallenge()
+}
+
 function pickUp(obj: { id: string; label: string }) {
   gameStore.pickUp(obj.id, obj.label, playerStore.scene?.place?.name)
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
@@ -96,6 +102,12 @@ function pickUp(obj: { id: string; label: string }) {
 
 /** L'épreuve d'analyse de l'objet scellé. */
 const testing = ref(false)
+
+// La demande vient soit du survol à la souris, soit de l'oeil gyroscopique :
+// les deux chemins passent par le store, seul point commun entre eux.
+watch(() => gameStore.pendingChallenge, (asked) => {
+  if (asked) testing.value = true
+})
 
 /**
  * Analyse réussie : le nom devient lisible et l'observation s'inscrit dans le
@@ -105,6 +117,7 @@ const testing = ref(false)
 function onSolved() {
   const sealed = playerStore.scene?.sealed_object
   testing.value = false
+  gameStore.clearChallenge()
   if (!sealed) return
   gameStore.markDecrypted(sealed.id)
   gameStore.addNarrativeEntry('system', `${sealed.name} — analyse terminée.`)
@@ -198,7 +211,7 @@ function retryImage() {
       :object-id="playerStore.scene.sealed_object.id"
       :object-name="playerStore.scene.sealed_object.name"
       @solved="onSolved"
-      @close="testing = false"
+      @close="closeTest"
     />
 
     <!-- Un objet vient d'apparaître : on le prend d'un clic, pas en le tapant -->

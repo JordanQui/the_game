@@ -30,11 +30,40 @@ const shown = computed(() => {
   ).join('')
 })
 
+/**
+ * Temps de pause avant que l'épreuve s'ouvre.
+ *
+ * Les noms se révèlent au passage, sans délai : c'est sans conséquence. Une
+ * épreuve, elle, prend l'écran — l'ouvrir parce que la souris a balayé une
+ * ligne serait insupportable. Il faut donc s'arrêter DESSUS, ce qui est aussi
+ * le geste juste : on ne hacke pas un objet en passant devant.
+ */
+const DWELL_MS = 550
+let dwell: ReturnType<typeof setTimeout> | null = null
+
+/** Vrai quand la loupe est en main et que l'objet est encore scellé. */
+const readable = computed(() =>
+  !decrypted.value && gameStore.hasAugmentation && gameStore.activeTool === 'lens')
+
+function onEnter() {
+  if (!readable.value) return
+  cancel()
+  dwell = setTimeout(() => emit('challenge'), DWELL_MS)
+}
+
+function cancel() {
+  if (dwell) { clearTimeout(dwell); dwell = null }
+}
+
+onUnmounted(cancel)
+
+/** Le clic reste : au clavier et à la souris, on peut vouloir aller vite. */
 function onActivate() {
   if (decrypted.value) return
+  cancel()
   // Sans l'augmentation, ou avec l'oeil en main, rien à tenter : seule la
   // loupe ouvre l'épreuve.
-  if (!gameStore.hasAugmentation || gameStore.activeTool !== 'lens') {
+  if (!readable.value) {
     gameStore.denyRead()
     return
   }
@@ -52,6 +81,9 @@ function onActivate() {
     :tabindex="decrypted ? -1 : 0"
     :role="decrypted ? undefined : 'button'"
     :aria-label="decrypted ? label : 'Objet scellé — analyse requise'"
+    :data-glitch-object="decrypted ? undefined : id"
+    @mouseenter="onEnter"
+    @mouseleave="cancel"
     @click="onActivate"
     @keydown.enter="onActivate"
   >
@@ -79,8 +111,8 @@ function onActivate() {
 .overlay { position: absolute; inset: 0; text-align: center; }
 
 /* Scellé : froid, minéral — ce n'est pas une personne. */
-.is-sealed { color: #6b7794; }
+.is-sealed { color: rgb(var(--steel-400)); }
 
 /* Déchiffré : la couleur du texte, l'objet devient un mot comme un autre. */
-.is-clear { color: #dce1ea; font-weight: 600; }
+.is-clear { color: rgb(var(--ink-100)); font-weight: 600; }
 </style>

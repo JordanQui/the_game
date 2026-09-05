@@ -166,7 +166,15 @@ export interface ScriptDefaults {
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
   sealed_object: { note?: string; instruction: string }
   /** Ce que le joueur porte en arrivant, et ce que la scène doit en faire. */
-  inventory: { note?: string; prompt: string; empty: string; unread: string }
+  inventory: {
+    note?: string
+    prompt: string
+    empty: string
+    unread: string
+    /** Cadrage propre à l'épilogue : on relit, on ne résout plus. */
+    ending_prompt: string
+    ending_empty: string
+  }
   /** Comment une scène distribue ses personnages face à la tension. */
   cast: { note?: string; instruction: string }
   /** Comment l'exigence d'une scène devient l'objectif de CE joueur. */
@@ -246,6 +254,9 @@ export interface SceneScript {
   }
   /** L'acte auquel la scène appartient. Voir `acts` à la racine du script. */
   act?: string
+  /** `ending` : l'épilogue, qui ne suit pas le schéma des autres scènes. */
+  kind?: 'scene' | 'ending'
+  is_final?: boolean
   /**
    * Ce qui gouverne la scène côté joueur.
    *
