@@ -12,8 +12,24 @@ import { unlockAudio } from '~/composables/useNameChime'
  * iOS exige une permission explicite, demandée sur un geste utilisateur.
  */
 
-/** Degrés d'inclinaison pour balayer la moitié de l'écran. */
-const RANGE_DEG = 22
+/**
+ * Roulis, axe horizontal.
+ *
+ * Référence ABSOLUE : à plat comme en main, un téléphone tenu droit a un
+ * roulis nul. Zéro degré doit donc placer l'oeil au centre, sans calibrage.
+ * Le calibrage relatif d'avant prenait la toute première mesure comme origine,
+ * si bien qu'une inclinaison au moment du tap envoyait l'oeil dans un coin.
+ */
+const ROLL_RANGE_DEG = 28
+
+/**
+ * Tangage, axe vertical.
+ *
+ * Relatif, lui : on lit un téléphone à plat sur une table comme incliné à
+ * quarante-cinq degrés dans la main. Il n'existe pas de tangage neutre
+ * universel, seule la posture de départ fait référence.
+ */
+const PITCH_RANGE_DEG = 26
 
 /**
  * Hauteur de l'oeil au repos, en fraction d'écran.
@@ -46,18 +62,22 @@ export function useGyroEye() {
 
   let raf: number | null = null
   let target = { x: 0.5, y: NEUTRAL_Y }
-  let neutral: { beta: number; gamma: number } | null = null
+  let neutralBeta: number | null = null
+  let settleAt = 0
 
   function onOrientation(event: DeviceOrientationEvent) {
     const { beta, gamma } = event
     if (beta === null || gamma === null) return
 
-    // La première mesure devient l'origine : on tient rarement son téléphone
-    // à plat, et imposer une posture rendrait le dispositif pénible.
-    if (!neutral) neutral = { beta, gamma }
+    // On laisse l'appareil se stabiliser avant de figer l'origine du tangage :
+    // les toutes premières mesures arrivent pendant que la main bouge encore.
+    if (neutralBeta === null) {
+      if (Date.now() < settleAt) return
+      neutralBeta = beta
+    }
 
-    const dx = (gamma - neutral.gamma) / RANGE_DEG
-    const dy = (beta - neutral.beta) / RANGE_DEG
+    const dx = gamma / ROLL_RANGE_DEG
+    const dy = (beta - neutralBeta) / PITCH_RANGE_DEG
     target = {
       x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
       y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
@@ -112,7 +132,8 @@ export function useGyroEye() {
       }
     }
 
-    neutral = null
+    neutralBeta = null
+    settleAt = Date.now() + 400
     window.addEventListener('deviceorientation', onOrientation, true)
     enabled.value = true
     gameStore.setEyeActive(true)
