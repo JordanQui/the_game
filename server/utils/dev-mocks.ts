@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+export { scriptFingerprint } from '~/server/utils/script-fingerprint'
 
 /**
  * Enregistrement et rejeu des générations, en développement uniquement.
@@ -29,18 +30,6 @@ const DIR = '.mocks'
 /** Les mocks n'existent qu'en développement, et seulement si on les demande. */
 function enabled(): boolean {
   return import.meta.dev && process.env.DEV_MOCKS === '1'
-}
-
-/**
- * Empreinte du script courant. Mémoïsée : le contenu ne bouge pas en cours de
- * processus, et le hacher à chaque requête serait du gaspillage.
- */
-let scriptPrint: string | null = null
-export function scriptFingerprint(script: unknown): string {
-  if (!scriptPrint) {
-    scriptPrint = createHash('sha256').update(JSON.stringify(script)).digest('hex').slice(0, 12)
-  }
-  return scriptPrint
 }
 
 /** Une empreinte par scène et par joueur : deux profils, deux mocks. */

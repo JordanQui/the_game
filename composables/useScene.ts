@@ -27,11 +27,32 @@ const SCENE_TEXT_TIMEOUT_MS = 90_000
  */
 const SCENE_KEY = 'tg_scene'
 
+/**
+ * Identifiant du build en cours.
+ *
+ * Nuxt le régénère à chaque compilation : il change donc à chaque déploiement.
+ * C'est le repère le plus sûr pour jeter une scène gardée en session — plus sûr
+ * qu'une empreinte du script, puisqu'il couvre aussi les changements de code.
+ */
+function currentBuild(): string {
+  return useRuntimeConfig().app.buildId
+}
+
 function readStoredScene(): SceneTextResponse | null {
   if (!import.meta.client) return null
   try {
     const raw = sessionStorage.getItem(SCENE_KEY)
-    return raw ? (JSON.parse(raw) as SceneTextResponse) : null
+    if (!raw) return null
+    const stored = JSON.parse(raw) as SceneTextResponse
+
+    // Le jeu a été redéployé depuis : cette scène ne le reflète plus. Sans ce
+    // contrôle, un déploiement restait invisible pour tout joueur ayant déjà
+    // une scène en session — on croyait livrer sans effet.
+    if (stored.build_id !== currentBuild()) {
+      forgetStoredScene()
+      return null
+    }
+    return stored
   } catch {
     return null
   }
@@ -40,7 +61,7 @@ function readStoredScene(): SceneTextResponse | null {
 function storeScene(scene: SceneTextResponse): void {
   if (!import.meta.client) return
   try {
-    sessionStorage.setItem(SCENE_KEY, JSON.stringify(scene))
+    sessionStorage.setItem(SCENE_KEY, JSON.stringify({ ...scene, build_id: currentBuild() }))
   } catch {
     // Stockage plein ou refusé : on régénérera, c'est tout.
   }
@@ -51,11 +72,21 @@ export function forgetStoredScene(): void {
   try { sessionStorage.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
 }
 
-/** Relaie `?fresh=1` de l'URL vers l'API : en dev, force une vraie génération. */
+/**
+ * `?fresh=1` demandé dans l'URL.
+ *
+ * Il vaut dans TOUS les environnements : il jette la scène gardée en session.
+ * Seul son relais vers l'API reste réservé au développement, où il pilote les
+ * mocks sur disque — en production, une scène neuve se paie de toute façon.
+ */
+function wantsFresh(): boolean {
+  if (!import.meta.client) return false
+  return Boolean(useRoute().query.fresh)
+}
+
 function freshQuery(): Record<string, string> {
-  if (!import.meta.dev) return {}
-  const fresh = useRoute().query.fresh
-  return fresh ? { fresh: String(fresh) } : {}
+  if (!import.meta.dev || !wantsFresh()) return {}
+  return { fresh: '1' }
 }
 
 export function useScene() {
@@ -76,7 +107,7 @@ export function useScene() {
     quotaExhausted.value = false
 
     // Rechargement de page : la scène est déjà là, on la repose telle quelle.
-    const stored = !freshQuery().fresh ? readStoredScene() : null
+    const stored = wantsFresh() ? null : readStoredScene()
     if (stored) {
       scene.value = stored
       playerStore.setScene(stored)

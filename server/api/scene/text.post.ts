@@ -79,7 +79,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const assembled = scene.assembleText(generated, resolveTheme(user, runtime.script))
+  const assembled = {
+    ...scene.assembleText(generated, resolveTheme(user, runtime.script)),
+    // Permet au client de jeter une scène gardée en session dès que le script
+    // a changé — sans quoi un déploiement reste invisible pour lui.
+    script_fingerprint: scriptFingerprint(runtime.script),
+  }
   await writeMock('scene', key, assembled)
   return assembled
 })

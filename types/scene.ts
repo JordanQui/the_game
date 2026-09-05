@@ -156,6 +156,10 @@ export interface SceneTextResponse extends GeneratedScene {
   static_image: string | null
   /** Seuils de relance et de blocage, portés par le script. */
   pacing: ScenePacing
+  /** Empreinte du script ayant produit cette scène. */
+  script_fingerprint?: string
+  /** Build ayant servi la scène. Une scène d'un autre build est jetée. */
+  build_id?: string
   /** Thème intime du joueur. Les PNJ s'en nourrissent sans jamais le nommer. */
   theme: PlayerTheme | null
   /** Objet sans lequel le sas reste fermé. */
