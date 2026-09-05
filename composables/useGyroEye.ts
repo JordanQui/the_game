@@ -1,4 +1,5 @@
 import { useGameStore } from '~/stores/game'
+import { unlockAudio } from '~/composables/useNameChime'
 
 /**
  * L'oeil qu'on déplace en inclinant le téléphone.
@@ -82,6 +83,10 @@ export function useGyroEye() {
   }
 
   async function enable(): Promise<boolean> {
+    // Ce clic est le geste dont le contexte audio a besoin : on le saisit ici
+    // plutôt que d'espérer qu'un survol suffise plus tard.
+    void unlockAudio()
+
     if (!supported.value) return false
 
     const ctor = window.DeviceOrientationEvent as OrientationEventCtor

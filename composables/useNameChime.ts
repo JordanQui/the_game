@@ -130,6 +130,28 @@ function buildRack(voice: Voice): Rack {
   }
 }
 
+/**
+ * Débloque le contexte audio.
+ *
+ * iOS n'autorise le son que si `AudioContext.resume()` est appelé PENDANT un
+ * geste utilisateur — pas une frame plus tard. Or nos déclenchements viennent
+ * d'un survol ou de la boucle du gyroscope, jamais du geste lui-même. D'où
+ * cette fonction, appelée depuis le premier tap de la page.
+ *
+ * Elle est sans effet si le contexte est déjà ouvert.
+ */
+export async function unlockAudio(): Promise<void> {
+  if (!import.meta.client || started) return
+  try {
+    if (!tone) tone = await import('tone')
+    await tone.start()
+    tone.getTransport().bpm.value = BPM
+    started = true
+  } catch {
+    // Le prochain geste réessaiera.
+  }
+}
+
 async function ensureAudio(): Promise<boolean> {
   if (!import.meta.client) return false
 
