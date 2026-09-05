@@ -295,6 +295,15 @@ ${lines}`)
 
     if (!generated.quest?.title) throw new Error('Scène invalide : quest.title manquant')
 
+    // Le modèle recopie parfois la mécanique dans l'archétype affiché, ce qui
+    // révèle au joueur qui détient quoi avant même qu'il ait parlé à personne.
+    const LEAKS = /informat|d[ée]tent|porteur de|gardien de l|personnage.cl|t[ée]moin.cl|\bindice\b|\bcontact\b|\bpnj\b/i
+    for (const npc of generated.npcs ?? []) {
+      if (npc.archetype && LEAKS.test(npc.archetype)) {
+        throw new Error(`Scène invalide : l'archétype de ${npc.name} révèle sa fonction ("${npc.archetype}")`)
+      }
+    }
+
     const item = generated.key_item
     if (!item?.name || !item?.npc_id) {
       throw new Error('Scène invalide : key_item.name ou key_item.npc_id manquant')
