@@ -46,3 +46,17 @@ export function renderJournal(entries: JournalEntry[], max: number): string {
     return lines.join('\n')
   }).join('\n')
 }
+
+/**
+ * Un objet que le joueur transporte d'une scène à l'autre.
+ *
+ * `decrypted` dit si son nom a été lu — un objet dont l'épreuve n'a pas été
+ * passée ne peut pas être nommé dans le récit, puisque le joueur l'ignore.
+ */
+export interface CarriedItem {
+  id: string
+  label: string
+  decrypted: boolean
+  /** Le lieu où il a été ramassé, pour que le récit puisse y renvoyer. */
+  from?: string
+}

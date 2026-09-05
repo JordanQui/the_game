@@ -34,7 +34,7 @@ function onActivate() {
   if (decrypted.value) return
   // Sans l'augmentation, ou avec l'oeil en main, rien à tenter : seule la
   // loupe ouvre l'épreuve.
-  if (!gameStore.hasKeyItem || gameStore.activeTool !== 'lens') {
+  if (!gameStore.hasAugmentation || gameStore.activeTool !== 'lens') {
     gameStore.denyRead()
     return
   }

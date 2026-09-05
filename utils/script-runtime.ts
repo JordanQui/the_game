@@ -20,7 +20,7 @@ import type { UserProfile } from '~/types/user'
 import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
-import { renderJournal, type JournalEntry } from '~/utils/journal'
+import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import { zodiacKey } from '~/utils/zodiac'
 import { numerologyOf } from '~/utils/numerology'
 
@@ -165,7 +165,11 @@ export class SceneRuntime {
     return rest
   }
 
-  buildGenerationPrompt(user: UserProfile, journal: JournalEntry[] = []): string {
+  buildGenerationPrompt(
+    user: UserProfile,
+    journal: JournalEntry[] = [],
+    carried: CarriedItem[] = [],
+  ): string {
     const s = this.scene
 
     const slots = s.decor_slots
@@ -189,6 +193,8 @@ export class SceneRuntime {
 ${describeUser(user)}
 ${themeBlock}
 ${story}
+
+${this.describeCarried(carried)}
 
 NOM DU LIEU
 ${s.naming.instruction}
@@ -264,6 +270,26 @@ ${list(o.posture)}`
    * jamais : c'est la structure de l'arc. Ce qui change, c'est ce qu'elle
    * DEMANDE à ce joueur, et ça se déduit de la facette qui gouverne l'acte.
    */
+  /**
+   * Ce que le joueur transporte en arrivant.
+   *
+   * Sans ce bloc, chaque scène était un vase clos : le modèle ne pouvait pas
+   * bâtir un puzzle sur un objet ramassé deux scènes plus tôt, puisqu'il en
+   * ignorait l'existence. Un objet dont le nom n'a pas encore été déchiffré
+   * est décrit par sa forme, jamais nommé — le joueur ne le connaît pas.
+   */
+  private describeCarried(carried: CarriedItem[]): string {
+    const inv = this.script.defaults.inventory
+    if (!carried.length) return inv.empty
+
+    const items = carried
+      .map(o => `  - ${o.decrypted ? o.label : `un objet ${inv.unread}`}`
+        + (o.from ? ` — récupéré : ${o.from}` : ''))
+      .join('\n')
+
+    return interpolate(inv.prompt, { items })
+  }
+
   private describeObjective(theme: PlayerTheme | null): string {
     const focus = this.scene.theme_focus
     const objective = this.scene.objective
@@ -496,6 +522,9 @@ ${lines}`)
         decor: scene.decor,
       }),
       static_image: this.staticImage,
+      // Seule l'auberge remet l'augmentation ; ailleurs l'objet-clé est une
+      // carte, une fréquence, un code — utile ici et nulle part ailleurs.
+      grants_augmentation: this.scene.objective?.kind === 'acquire_augmentation',
       // Le client s'en sert pour teindre l'habillage. La scène 1 est en
       // `fixed` : son magenta est l'identité d'entrée du jeu.
       interface_palette: this.scene.interface_palette?.mode ?? 'from_scene',
@@ -765,6 +794,8 @@ export class ScriptRuntime {
       palette_derivation: { ...d.palette_derivation, ...raw.palette_derivation },
       // `structure` vient des defaults, `instruction` de la scène.
       quest: { ...d.quest, ...raw.quest },
+      // Toutes les scènes en ont un ; l'auberge garde sa propre formulation.
+      sealed_object: raw.sealed_object ?? d.sealed_object,
       narrative: { ...d.narrative, ...raw.narrative },
       turn: { ...d.turn, ...raw.turn },
       generation: { ...d.generation, ...raw.generation },

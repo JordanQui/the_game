@@ -90,7 +90,7 @@ const justAppeared = computed(() => {
 })
 
 function pickUp(obj: { id: string; label: string }) {
-  gameStore.pickUp(obj.id, obj.label)
+  gameStore.pickUp(obj.id, obj.label, playerStore.scene?.place?.name)
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
 }
 
@@ -115,7 +115,7 @@ function onSolved() {
 function collectItem() {
   const item = playerStore.scene?.key_item
   if (!item) return
-  gameStore.collectKeyItem()
+  gameStore.collectKeyItem(playerStore.scene?.grants_augmentation ?? false)
   gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
 }
 

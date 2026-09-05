@@ -23,8 +23,18 @@ export const useGameStore = defineStore('game', {
     modelTurnsUsed: 0,
     /** Dépense cumulée de la scène, en dollars, d'après l'usage réel rapporté. */
     spentUsd: 0,
-    /** Objet-clé : sans lui, le sas reste fermé. */
+    /** Objet-clé DE LA SCÈNE EN COURS : sans lui, la sortie reste fermée. */
     hasKeyItem: false,
+    /**
+     * L'augmentation, acquise une fois pour toutes à l'auberge.
+     *
+     * Elle ne se confond pas avec l'objet-clé : celui-ci change à chaque scène
+     * — une carte d'accès, une fréquence — et se perd en la quittant. La
+     * faculté de lire le nom des choses, elle, ne se rend pas. Les avoir
+     * confondues faisait qu'on arrivait à la scène 2 sans pouvoir rien lire,
+     * y compris les objets ramassés juste avant.
+     */
+    hasAugmentation: false,
     /** Échanges déjà eus avec le détenteur de l'objet, une fois informé. */
     keyItemExchanges: 0,
     /** Un autre habitué a mis le joueur sur la piste de l'objet. */
@@ -58,10 +68,20 @@ export const useGameStore = defineStore('game', {
     revealing: null as string | null,
     /** Lecture refusée : tout le texte se brouille un instant. */
     readDenied: false,
-    /** Objets dont l'épreuve a été réussie : leur nom est lisible. */
+    /**
+     * Objets dont l'épreuve a été réussie : leur nom est lisible.
+     * Vaut pour toute la partie — on ne redemande pas au joueur de refaire un
+     * test qu'il a déjà passé.
+     */
     decryptedObjectIds: [] as string[],
-    /** Objets ramassés dans la scène, par identifiant. */
-    inventory: [] as Array<{ id: string; label: string }>,
+    /**
+     * Ce que le joueur porte, depuis le début de la partie.
+     *
+     * L'inventaire ne se vide PAS en changeant de scène : un objet ramassé à
+     * l'auberge peut être ce qui débloque le troisième étage. C'est l'historique
+     * du chat qui en tient lieu à l'écran, mais la liste, elle, est ici.
+     */
+    inventory: [] as Array<{ id: string; label: string; from?: string }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
     /** La scène a été dénouée : les personnages sont venus au joueur. */
@@ -195,7 +215,7 @@ export const useGameStore = defineStore('game', {
 
     setTool(tool: 'eye' | 'lens') {
       // La loupe n'existe pas tant que l'augmentation n'a pas été obtenue.
-      if (tool === 'lens' && !this.hasKeyItem) return
+      if (tool === 'lens' && !this.hasAugmentation) return
       this.activeTool = tool
       this.revealing = null
     },
@@ -230,14 +250,20 @@ export const useGameStore = defineStore('game', {
       if (!this.decryptedObjectIds.includes(id)) this.decryptedObjectIds.push(id)
     },
 
-    pickUp(id: string, label: string) {
+    /** @param from le lieu du ramassage, pour qu'une scène suivante puisse y renvoyer. */
+    pickUp(id: string, label: string, from?: string) {
       if (this.inventory.some(o => o.id === id)) return
-      this.inventory.push({ id, label })
+      this.inventory.push({ id, label, from })
     },
 
-    collectKeyItem() {
+    /**
+     * @param grantsAugmentation vrai quand l'objet-clé de la scène EST
+     * l'augmentation — c'est le cas de l'auberge, et d'elle seule.
+     */
+    collectKeyItem(grantsAugmentation = false) {
       this.hasKeyItem = true
       this.pendingKeyItem = false
+      if (grantsAugmentation) this.hasAugmentation = true
     },
 
     recordNpcTalk(npcId: string) {
@@ -256,9 +282,13 @@ export const useGameStore = defineStore('game', {
     /**
      * Repart sur une scène neuve, sans quitter la partie.
      *
-     * Efface tout ce qui appartenait à la scène précédente — tours, dialogue,
-     * objet-clé, personnages rencontrés — et garde ce qui appartient à la
-     * PARTIE : le profil, le journal des scènes traversées, la dépense.
+     * Efface ce qui appartenait à la scène précédente — tours, dialogue,
+     * objet-clé, personnages rencontrés.
+     *
+     * GARDE ce qui appartient à la PARTIE : le profil, le journal, la dépense,
+     * l'augmentation, l'inventaire et les objets déjà déchiffrés. Le joueur
+     * arrive dans une scène avec ce qu'il a récupéré dans les précédentes —
+     * c'est souvent ce qui en résout le puzzle.
      */
     startNewScene(sceneId: string | null) {
       this.pendingSceneId = sceneId
@@ -283,6 +313,12 @@ export const useGameStore = defineStore('game', {
 
     resetGame() {
       this.pendingSceneId = null
+      // Une partie neuve ne garde ni faculté, ni objets, ni noms déchiffrés :
+      // sans ça, le joueur suivant commençait avec l'inventaire du précédent.
+      this.hasAugmentation = false
+      this.inventory = []
+      this.decryptedObjectIds = []
+      this.activeTool = 'eye'
       this.currentScreen = 'login'
       this.playingSubState = 'awaiting_input'
       this.narrativeHistory = []

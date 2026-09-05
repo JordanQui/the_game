@@ -165,6 +165,13 @@ export interface SceneTextResponse extends GeneratedScene {
   /** Seuils de relance et de blocage, portés par le script. */
   pacing: ScenePacing
   /**
+   * L'objet-clé de cette scène EST l'augmentation.
+   *
+   * Vrai à l'auberge seulement. Ailleurs, ramasser l'objet-clé ouvre la sortie
+   * de la scène sans rien conférer de durable.
+   */
+  grants_augmentation: boolean
+  /**
    * Qui teint l'habillage : la palette de la scène, ou le magenta d'origine.
    * `palette`, héritée de `GeneratedScene`, porte les couleurs elles-mêmes.
    */

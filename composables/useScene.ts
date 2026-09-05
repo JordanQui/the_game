@@ -1,6 +1,6 @@
 import type { SceneTextResponse } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
-import type { JournalEntry } from '~/utils/journal'
+import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useImageGen } from '~/composables/useImageGen'
@@ -75,20 +75,27 @@ function storeScene(scene: SceneTextResponse): void {
  * effaçait tout ce qui l'avait précédée : la scène suivante serait alors née
  * comme si le joueur venait de nulle part.
  */
-const JOURNAL_KEY = 'tg_journal'
+const CARRY_KEY = 'tg_carry'
 
-function storeJournal(journal: JournalEntry[]): void {
-  if (!import.meta.client) return
-  try { sessionStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)) } catch { /* on régénérera */ }
+interface Carry {
+  journal: JournalEntry[]
+  inventory: Array<{ id: string; label: string; from?: string }>
+  decrypted: string[]
+  augmentation: boolean
 }
 
-function readStoredJournal(): JournalEntry[] {
-  if (!import.meta.client) return []
+function storeCarry(carry: Carry): void {
+  if (!import.meta.client) return
+  try { sessionStorage.setItem(CARRY_KEY, JSON.stringify(carry)) } catch { /* on régénérera */ }
+}
+
+function readStoredCarry(): Carry | null {
+  if (!import.meta.client) return null
   try {
-    const raw = sessionStorage.getItem(JOURNAL_KEY)
-    return raw ? JSON.parse(raw) as JournalEntry[] : []
+    const raw = sessionStorage.getItem(CARRY_KEY)
+    return raw ? JSON.parse(raw) as Carry : null
   } catch {
-    return []
+    return null
   }
 }
 
@@ -126,6 +133,45 @@ export function useScene() {
   /** Quota gratuit épuisé : ce n'est pas une panne, c'est une invitation à payer. */
   const quotaExhausted = ref(false)
 
+  /**
+   * Ce que le joueur emporte d'une scène à l'autre, tel qu'il part au serveur.
+   *
+   * Un objet dont l'épreuve n'a pas été passée reste anonyme : le joueur ne
+   * connaît pas son nom, la scène ne doit donc pas le prononcer.
+   */
+  function carried(): CarriedItem[] {
+    return gameStore.inventory.map(o => ({
+      id: o.id,
+      label: o.label,
+      decrypted: gameStore.decryptedObjectIds.includes(o.id),
+      from: o.from,
+    }))
+  }
+
+  /**
+   * Sauvegarde ce qui appartient à la PARTIE, pas à la scène.
+   *
+   * Sans ça, un rechargement de page ramenait la scène mais reprenait le
+   * joueur son augmentation et tout ce qu'il portait.
+   */
+  function saveCarry() {
+    storeCarry({
+      journal: playerStore.journal,
+      inventory: gameStore.inventory,
+      decrypted: gameStore.decryptedObjectIds,
+      augmentation: gameStore.hasAugmentation,
+    })
+  }
+
+  function restoreCarry() {
+    const carry = readStoredCarry()
+    if (!carry) return
+    if (!playerStore.journal.length) playerStore.journal = carry.journal ?? []
+    if (!gameStore.inventory.length) gameStore.inventory = carry.inventory ?? []
+    if (!gameStore.decryptedObjectIds.length) gameStore.decryptedObjectIds = carry.decrypted ?? []
+    if (carry.augmentation) gameStore.hasAugmentation = true
+  }
+
   /** Phase 1. Bloquant : sans texte, pas de scène. */
   async function loadSceneText(sceneId?: string, user?: UserProfile) {
     isLoadingText.value = true
@@ -136,7 +182,7 @@ export function useScene() {
     const stored = wantsFresh() ? null : readStoredScene()
     if (stored) {
       scene.value = stored
-      if (!playerStore.journal.length) playerStore.journal = readStoredJournal()
+      restoreCarry()
       // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
       // scène revenait à ses couleurs mais l'habillage restait magenta.
       interfacePalette.applyScene(stored)
@@ -151,14 +197,14 @@ export function useScene() {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
         query: freshQuery(),
-        body: { sceneId, user, journal: playerStore.journal },
+        body: { sceneId, user, journal: playerStore.journal, carried: carried() },
         signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })
       scene.value = res
       // L'habillage prend les couleurs de la scène, si elle le demande.
       interfacePalette.applyScene(res)
       storeScene(res)
-      storeJournal(playerStore.journal)
+      saveCarry()
       playerStore.setScene(res)
       gameStore.addNarrativeEntry('narration', res.scene_text)
       gameStore.setPlayingSubState('awaiting_input')

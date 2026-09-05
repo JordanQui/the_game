@@ -163,6 +163,10 @@ export interface ScriptDefaults {
   continuity: Continuity
   /** Le schéma des champs de quête, commun à toutes les scènes. */
   quest: { note?: string; structure: Record<string, string> }
+  /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
+  sealed_object: { note?: string; instruction: string }
+  /** Ce que le joueur porte en arrivant, et ce que la scène doit en faire. */
+  inventory: { note?: string; prompt: string; empty: string; unread: string }
   /** Comment une scène distribue ses personnages face à la tension. */
   cast: { note?: string; instruction: string }
   /** Comment l'exigence d'une scène devient l'objectif de CE joueur. */
