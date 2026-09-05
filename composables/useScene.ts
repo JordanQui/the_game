@@ -97,6 +97,7 @@ export function useScene() {
   const scene = ref<SceneTextResponse | null>(null)
   const isLoadingText = ref(false)
   const error = ref<string | null>(null)
+  const interfacePalette = useInterfacePalette()
   /** Quota gratuit épuisé : ce n'est pas une panne, c'est une invitation à payer. */
   const quotaExhausted = ref(false)
 
@@ -110,6 +111,9 @@ export function useScene() {
     const stored = wantsFresh() ? null : readStoredScene()
     if (stored) {
       scene.value = stored
+      // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
+      // scène revenait à ses couleurs mais l'habillage restait magenta.
+      interfacePalette.applyScene(stored)
       playerStore.setScene(stored)
       gameStore.addNarrativeEntry('narration', stored.scene_text)
       gameStore.setPlayingSubState('awaiting_input')
@@ -125,6 +129,8 @@ export function useScene() {
         signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })
       scene.value = res
+      // L'habillage prend les couleurs de la scène, si elle le demande.
+      interfacePalette.applyScene(res)
       storeScene(res)
       playerStore.setScene(res)
       gameStore.addNarrativeEntry('narration', res.scene_text)

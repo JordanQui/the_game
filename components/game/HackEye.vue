@@ -70,14 +70,14 @@ const style = computed(() => ({
 <style scoped>
 .eye {
   transform: translate(-50%, -50%);
-  color: #ff4f9b;
-  filter: drop-shadow(0 0 6px rgba(255, 46, 136, 0.6));
+  color: rgb(var(--neon-400));
+  filter: drop-shadow(0 0 6px rgb(var(--neon-500) / 0.6));
   transition: color 0.12s ease, filter 0.12s ease;
 }
 
 /* Verrouillé sur un nom : l'oeil le dit avant même qu'on lise. */
 .is-locked-on {
-  color: #ffd9ec;
-  filter: drop-shadow(0 0 12px rgba(255, 46, 136, 0.95));
+  color: rgb(var(--neon-200));
+  filter: drop-shadow(0 0 12px rgb(var(--neon-500) / 0.95));
 }
 </style>

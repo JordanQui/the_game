@@ -34,35 +34,35 @@ export default {
          * (#0E1420) : l'interface et l'illustration doivent tenir ensemble.
          */
         ink: {
-          50: '#f3f5f9',
-          100: '#dce1ea',
-          200: '#b5bccb',
-          300: '#8791a8',
-          400: '#55617c',
-          500: '#333f58',
-          600: '#212b3f',
-          700: '#161d2c',
-          800: '#0e131e',
-          900: '#080b12',
+          50: 'rgb(var(--ink-50) / <alpha-value>)',
+          100: 'rgb(var(--ink-100) / <alpha-value>)',
+          200: 'rgb(var(--ink-200) / <alpha-value>)',
+          300: 'rgb(var(--ink-300) / <alpha-value>)',
+          400: 'rgb(var(--ink-400) / <alpha-value>)',
+          500: 'rgb(var(--ink-500) / <alpha-value>)',
+          600: 'rgb(var(--ink-600) / <alpha-value>)',
+          700: 'rgb(var(--ink-700) / <alpha-value>)',
+          800: 'rgb(var(--ink-800) / <alpha-value>)',
+          900: 'rgb(var(--ink-900) / <alpha-value>)',
         },
         /** Le ton moyen de la palette : l'architecture en lumière indirecte. */
         steel: {
-          400: '#6b7794',
-          500: '#46536e',
-          600: '#333d53',
-          700: '#232b3d',
+          400: 'rgb(var(--steel-400) / <alpha-value>)',
+          500: 'rgb(var(--steel-500) / <alpha-value>)',
+          600: 'rgb(var(--steel-600) / <alpha-value>)',
+          700: 'rgb(var(--steel-700) / <alpha-value>)',
         },
         /**
          * L'accent : le néon. Teinte volontairement éloignée des bleus sur la
          * roue chromatique, sans quoi il se noierait dans la dominante.
          */
         neon: {
-          200: '#ffd9ec',
-          300: '#ff7ab5',
-          400: '#ff4f9b',
-          500: '#ff2e88',
-          600: '#e01470',
-          700: '#a50e52',
+          200: 'rgb(var(--neon-200) / <alpha-value>)',
+          300: 'rgb(var(--neon-300) / <alpha-value>)',
+          400: 'rgb(var(--neon-400) / <alpha-value>)',
+          500: 'rgb(var(--neon-500) / <alpha-value>)',
+          600: 'rgb(var(--neon-600) / <alpha-value>)',
+          700: 'rgb(var(--neon-700) / <alpha-value>)',
         },
       },
       fontFamily: {

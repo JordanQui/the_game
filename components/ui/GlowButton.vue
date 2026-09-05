@@ -46,7 +46,7 @@ defineProps<{
 <style scoped>
 /* Le contour est un tube néon : il diffuse. */
 button.deco-cut {
-  filter: drop-shadow(0 0 6px rgba(255, 46, 136, 0.55));
+  filter: drop-shadow(0 0 6px rgb(var(--neon-500) / 0.55));
 }
 
 /* Angles coupés : la silhouette octogonale du Deco, sans rayon de courbure. */

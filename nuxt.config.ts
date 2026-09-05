@@ -1,3 +1,18 @@
+import { readFileSync } from 'node:fs'
+
+/**
+ * La palette qui teint les premiers écrans.
+ *
+ * Lue dans le script au build et exposée telle quelle : l'accueil et la scène 1
+ * n'ont pas de scène chargée d'où tirer leurs couleurs, mais leur rose doit
+ * quand même venir d'un `palette.accent` — le même chemin que les scènes
+ * générées, une seule source de vérité. Seules ces trois couleurs partent au
+ * client : le script entier n'a rien à y faire.
+ */
+const uiPalette = JSON.parse(readFileSync(
+  new URL('./game/script.json', import.meta.url), 'utf-8',
+)).defaults.interface_palette.palette
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -31,6 +46,8 @@ export default defineNuxtConfig({
     nuxtSecret: process.env.NUXT_SECRET,
 
     public: {
+      /** Dominante, secondaire et accent de l'auberge. Voir plus haut. */
+      uiPalette,
       facebookAppId: process.env.FACEBOOK_APP_ID,
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,

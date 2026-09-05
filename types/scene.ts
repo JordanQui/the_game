@@ -164,6 +164,11 @@ export interface SceneTextResponse extends GeneratedScene {
   static_image: string | null
   /** Seuils de relance et de blocage, portés par le script. */
   pacing: ScenePacing
+  /**
+   * Qui teint l'habillage : la palette de la scène, ou le magenta d'origine.
+   * `palette`, héritée de `GeneratedScene`, porte les couleurs elles-mêmes.
+   */
+  interface_palette: 'from_scene' | 'fixed'
   /** Empreinte du script ayant produit cette scène. */
   script_fingerprint?: string
   /** Build ayant servi la scène. Une scène d'un autre build est jetée. */

@@ -50,7 +50,7 @@ function choose(index: number) {
 
     <div
       class="relative z-10 w-full max-w-sm bg-ink-900 border border-neon-600/50 p-7 space-y-7"
-      style="box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 40px rgba(255,46,136,0.12)"
+      style="box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 40px rgb(var(--neon-500) / 0.12)"
     >
       <span class="absolute inset-[5px] border border-neon-500/15 pointer-events-none" />
 

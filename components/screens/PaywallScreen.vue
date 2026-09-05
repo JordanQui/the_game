@@ -49,7 +49,7 @@ onMounted(async () => {
   <div class="relative min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center px-5 py-10">
     <div
       class="absolute inset-x-0 bottom-0 h-[50vh] pointer-events-none"
-      style="background: radial-gradient(85% 100% at 50% 100%, rgba(255,46,136,0.16) 0%, transparent 68%)"
+      style="background: radial-gradient(85% 100% at 50% 100%, rgb(var(--neon-500) / 0.16) 0%, transparent 68%)"
     />
 
     <div class="relative z-10 w-full max-w-md space-y-8">

@@ -399,6 +399,9 @@ ${lines}`)
         decor: scene.decor,
       }),
       static_image: this.staticImage,
+      // Le client s'en sert pour teindre l'habillage. La scène 1 est en
+      // `fixed` : son magenta est l'identité d'entrée du jeu.
+      interface_palette: this.scene.interface_palette?.mode ?? 'from_scene',
       pacing: this.pacing,
       theme,
       key_item: {
@@ -666,6 +669,7 @@ export class ScriptRuntime {
       narrative: { ...d.narrative, ...raw.narrative },
       turn: { ...d.turn, ...raw.turn },
       generation: { ...d.generation, ...raw.generation },
+      interface_palette: { ...d.interface_palette, ...raw.interface_palette },
       error_fallbacks: d.error_fallbacks,
     }
   }

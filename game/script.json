@@ -201,6 +201,25 @@
       "key_item_received": "Tu tiens maintenant {{item_name}}.",
       "key_item_offer": "Récupérer {{item_name}}",
       "resolution_error": "Le barman pose quelque chose devant toi sans un mot. « Tu en auras besoin dehors. »"
+    },
+    "interface_palette": {
+      "note": "Qui teint l'habillage : 'from_scene' reprend la palette demandée au prompt image (dominante -> fond, secondaire -> bords, accent -> néon), 'fixed' reprend la palette déclarée ci-dessous.",
+      "mode": "from_scene",
+      "palette": {
+        "note": "La palette de l'image figée de l'auberge. C'est elle qui teint l'écran d'accueil et la scène 1 : le rose de l'interface est son `accent`, pas une couleur écrite en dur dans le CSS. Changer l'accent ici repeint tous les premiers écrans.",
+        "dominant": {
+          "hex": "#0E1420",
+          "name": "Nuit Bleutée"
+        },
+        "secondary": {
+          "hex": "#46536E",
+          "name": "Acier Froid"
+        },
+        "accent": {
+          "hex": "#FF2E88",
+          "name": "Néon Magenta"
+        }
+      }
     }
   },
   "scenes": [
@@ -361,6 +380,10 @@
       },
       "sealed_object": {
         "instruction": "L'OBJET SCELLÉ — un second objet, distinct de l'augmentation. Un personnage le donne au joueur au fil de la conversation, ou celui-ci le trouve sur lui. Il le ramasse, il le garde, et il ne peut RIEN en faire tant qu'il ne l'a pas analysé.\nSon nom n'est pas lisible : c'est une chose du dehors, et le dehors ne se nomme pas de soi-même. Il faudra l'augmentation pour le déchiffrer.\n\n`observation` est ce que le joueur découvre une fois l'objet analysé. Ce texte ne fait pas avancer la quête et ne débloque aucune porte : il l'APPROFONDIT. Il révèle un pan de {{quest_title}} que personne n'a dit à voix haute — d'où vient le déséquilibre, qui en a profité, ce qu'on a tu. Trois à quatre phrases, dans le style du jeu textuel.\nIl doit s'accrocher au profil du joueur : ce que l'objet révèle touche la tension de son SIGNE, vue de l'extérieur cette fois — non plus ce qu'il ressent, mais ce que la ville en a fait."
+      },
+      "interface_palette": {
+        "mode": "fixed",
+        "why": "L'auberge a une illustration figée en magenta, et l'écran d'accueil est dans le même ton : c'est l'identité visuelle d'entrée du jeu. Les scènes suivantes, elles, sont générées et emportent l'habillage avec elles."
       }
     }
   ],

@@ -105,8 +105,8 @@ function onTouch() {
   overflow: hidden;
   vertical-align: baseline;
   outline: none;
-  color: #ff4f9b;
-  text-shadow: 0 0 6px rgba(255, 46, 136, 0.45);
+  color: rgb(var(--neon-400));
+  text-shadow: 0 0 6px rgb(var(--neon-500) / 0.45);
   transition: color 0.12s ease;
   /*
    * Monospace dans TOUS les états. C'est ce qui garantit que le bruit occupe
@@ -130,9 +130,9 @@ function onTouch() {
 
 /* Déchiffré : le nom en clair, une seconde. */
 .is-revealed {
-  color: #ffd9ec;
+  color: rgb(var(--neon-200));
   text-shadow:
-    0 0 4px rgba(255, 46, 136, 0.95),
-    0 0 14px rgba(255, 46, 136, 0.7);
+    0 0 4px rgb(var(--neon-500) / 0.95),
+    0 0 14px rgb(var(--neon-500) / 0.7);
 }
 </style>

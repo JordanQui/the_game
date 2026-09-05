@@ -120,9 +120,37 @@ export interface ErrorFallbacks {
 }
 
 /** Bloc hérité par toutes les scènes. Chaque scène peut le surcharger partiellement. */
+/**
+ * Qui teint l'habillage de l'interface.
+ *
+ * `from_scene` reprend la palette que la scène a demandée au prompt image :
+ * dominante -> fond, secondaire -> bords, accent -> néon. `fixed` garde le
+ * magenta d'origine — c'est le cas de l'écran d'accueil et de l'auberge, dont
+ * l'illustration est figée.
+ */
+export interface InterfacePalette {
+  mode: 'from_scene' | 'fixed'
+  /**
+   * La palette du mode `fixed` : celle de l'image figée de l'auberge.
+   *
+   * Le rose de l'accueil et de la scène 1 est son `accent`. Il n'est donc plus
+   * une couleur écrite en dur quelque part dans le CSS, mais la même donnée
+   * que celle des scènes générées, lue par le même chemin.
+   */
+  palette?: {
+    note?: string
+    dominant: { hex: string; name?: string }
+    secondary: { hex: string; name?: string }
+    accent: { hex: string; name?: string }
+  }
+  note?: string
+  why?: string
+}
+
 export interface ScriptDefaults {
   art_direction: ArtDirection
   palette_derivation: PaletteDerivation
+  interface_palette: InterfacePalette
   narrative: NarrativeRules
   turn: TurnRules
   generation: GenerationConfig
@@ -182,6 +210,7 @@ export interface SceneScript {
   /** Surcharges optionnelles des defaults, scène par scène. */
   art_direction?: Partial<ArtDirection>
   palette_derivation?: Partial<PaletteDerivation>
+  interface_palette?: Partial<InterfacePalette>
   narrative?: Partial<NarrativeRules>
   turn?: Partial<TurnRules>
   generation?: Partial<GenerationConfig>
@@ -306,6 +335,7 @@ export interface Script {
 export interface ResolvedScene extends SceneScript {
   art_direction: ArtDirection
   palette_derivation: PaletteDerivation
+  interface_palette: InterfacePalette
   narrative: NarrativeRules
   turn: TurnRules
   generation: GenerationConfig

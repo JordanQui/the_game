@@ -96,10 +96,10 @@ watch(
  */
 .is-hacking :deep(.glitch-name),
 .is-hacking :deep(.glitch-name *) {
-  color: #ffd9ec !important;
+  color: rgb(var(--neon-200)) !important;
   text-shadow:
-    0 0 4px rgba(255, 46, 136, 0.95),
-    0 0 14px rgba(255, 46, 136, 0.7) !important;
+    0 0 4px rgb(var(--neon-500) / 0.95),
+    0 0 14px rgb(var(--neon-500) / 0.7) !important;
 }
 
 /*
