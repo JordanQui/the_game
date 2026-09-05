@@ -107,7 +107,7 @@
     "generation": {
       "model": "gpt-4o",
       "temperature": 0.9,
-      "max_tokens": 2200,
+      "max_tokens": 3200,
       "system_prompt": "Tu es l'architecte narratif d'un jeu d'aventure textuel cyberpunk en français. Tu reçois le profil réel d'un joueur et tu le transposes en fiction. Règle absolue : rien du profil réel n'apparaît littéralement — ni nom de ville, ni nom d'entreprise, ni nom d'école, ni titre d'oeuvre. Tout est transposé en équivalent cyberpunk. Tu réponds exclusivement en JSON valide, sans markdown, sans commentaire.",
       "output_schema": {
         "place": {

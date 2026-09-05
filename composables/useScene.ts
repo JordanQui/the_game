@@ -139,9 +139,14 @@ export function useScene() {
       }
 
       const aborted = err instanceof DOMException && err.name === 'TimeoutError'
+      // Sur un 502, `err.message` ne dit que « 502 Bad Gateway » : la raison
+      // réelle — troncature, JSON invalide, scène refusée par la validation —
+      // voyage dans `data.statusMessage`. Sans elle, une panne de génération
+      // est indiscernable d'une autre.
+      const reason = (err as { data?: { statusMessage?: string } })?.data?.statusMessage
       error.value = aborted
         ? 'Le monde a mis trop de temps à se dessiner.'
-        : err instanceof Error ? err.message : 'Impossible de charger la scène'
+        : reason || (err instanceof Error ? err.message : 'Impossible de charger la scène')
       return null
     } finally {
       isLoadingText.value = false

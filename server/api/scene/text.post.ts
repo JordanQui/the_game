@@ -58,21 +58,40 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const raw = completion.choices[0]?.message?.content
+  const choice = completion.choices[0]
+  const raw = choice?.message?.content
   if (!raw) {
     throw createError({ statusCode: 502, statusMessage: `${gen.model} n'a rien renvoyé` })
+  }
+
+  // Coupé au plafond : le JSON s'arrête au milieu d'une chaîne et `JSON.parse`
+  // échoue plus bas, sur un message qui accuse le modèle à tort. On le dit ici,
+  // pendant qu'on sait encore pourquoi — c'est `max_tokens` qu'il faut lever,
+  // ou le schéma qu'il faut alléger.
+  if (choice.finish_reason === 'length') {
+    console.error(
+      `[scene/text] réponse tronquée à max_tokens=${gen.max_tokens}`,
+      `(${completion.usage?.completion_tokens ?? '?'} tokens produits)`)
+    throw createError({
+      statusCode: 502,
+      statusMessage: `Réponse tronquée : la scène dépasse le plafond de ${gen.max_tokens} tokens`,
+    })
   }
 
   let generated: GeneratedScene
   try {
     generated = JSON.parse(raw) as GeneratedScene
   } catch {
+    // Les 300 derniers caractères disent où ça s'est arrêté — sans eux, on ne
+    // peut pas distinguer une coupure d'un modèle qui bavarde hors JSON.
+    console.error('[scene/text] JSON invalide, fin de la réponse :', raw.slice(-300))
     throw createError({ statusCode: 502, statusMessage: `${gen.model} a renvoyé un JSON invalide` })
   }
 
   try {
     scene.assertValid(generated)
   } catch (err) {
+    console.error('[scene/text] scène invalide :', err instanceof Error ? err.message : err)
     throw createError({
       statusCode: 502,
       statusMessage: err instanceof Error ? err.message : 'Scène invalide',
