@@ -74,8 +74,8 @@ function onTouch() {
     composable qui balaie le document, pas chaque nom qui s'observe lui-même.
   -->
   <span
-    class="glitch-name cursor-eye"
-    :class="revealed && 'is-revealed'"
+    class="glitch-name"
+    :class="[revealed ? 'cursor-eye-open is-revealed' : 'cursor-eye']"
     :data-glitch-name="name"
     :data-archetype="assigned.voice.key"
     tabindex="0"

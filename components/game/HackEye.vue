@@ -44,7 +44,13 @@ const style = computed(() => ({
     >
       <svg viewBox="0 0 24 16" class="w-10 h-7" fill="none" stroke="currentColor" stroke-width="1.2">
         <path d="M1 8s4-6.5 11-6.5S23 8 23 8s-4 6.5-11 6.5S1 8 1 8Z" />
-        <circle cx="12" cy="8" r="3.4" fill="currentColor" fill-opacity="0.35" />
+        <!-- Pupille retirée dès qu'un nom est verrouillé : elle se poserait
+             pile sur les lettres qu'on essaie de lire. -->
+        <circle
+          v-if="!gameStore.revealing"
+          cx="12" cy="8" r="3.4"
+          fill="currentColor" fill-opacity="0.35"
+        />
         <path d="M12 0v3M12 13v3M0 8h3M21 8h3" stroke-width="0.8" opacity="0.7" />
       </svg>
     </div>

@@ -167,6 +167,17 @@
     cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDE2Ij48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwODBiMTIiIHN0cm9rZS13aWR0aD0iMy4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMS41IDhTNS4yIDIgMTIgMnMxMC41IDYgMTAuNSA2LTMuNyA2LTEwLjUgNlMxLjUgOCAxLjUgOFoiLz48cGF0aCBkPSJNMTIgLjh2Mi40TTEyIDEyLjh2Mi40TS40IDhoMi4yTTIxLjQgOGgyLjIiLz48L2c+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmYyZTg4IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEuNSA4UzUuMiAyIDEyIDJzMTAuNSA2IDEwLjUgNi0zLjcgNi0xMC41IDZTMS41IDggMS41IDhaIi8+PHBhdGggZD0iTTEyIC44djIuNE0xMiAxMi44djIuNE0uNCA4aDIuMk0yMS40IDhoMi4yIiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSIzIiBmaWxsPSIjZmYyZTg4Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSIxLjEiIGZpbGw9IiMwODBiMTIiLz48L3N2Zz4=") 16 12, crosshair;
   }
 
+  /**
+   * L'oeil ouvert, pupille retirée.
+   *
+   * Pendant la lecture d'un nom, le curseur se pose exactement sur les lettres
+   * qu'on cherche à déchiffrer : sa pupille pleine les masquait. Elle
+   * disparaît, il ne reste que le contour — on vise toujours, on ne cache plus.
+   */
+  .cursor-eye-open {
+    cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDE2Ij48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwODBiMTIiIHN0cm9rZS13aWR0aD0iMy4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMS41IDhTNS4yIDIgMTIgMnMxMC41IDYgMTAuNSA2LTMuNyA2LTEwLjUgNlMxLjUgOCAxLjUgOFoiLz48cGF0aCBkPSJNMTIgLjh2Mi40TTEyIDEyLjh2Mi40TS40IDhoMi4yTTIxLjQgOGgyLjIiLz48L2c+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZkOWVjIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEuNSA4UzUuMiAyIDEyIDJzMTAuNSA2IDEwLjUgNi0zLjcgNi0xMC41IDZTMS41IDggMS41IDhaIi8+PHBhdGggZD0iTTEyIC44djIuNE0xMiAxMi44djIuNE0uNCA4aDIuMk0yMS40IDhoMi4yIiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PC9zdmc+") 16 12, crosshair;
+  }
+
   /** Un trait de pluie. La chute est portée par l'animation rain-fall. */
   .rain-drop {
     @apply absolute w-px;
