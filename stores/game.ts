@@ -32,6 +32,17 @@ export const useGameStore = defineStore('game', {
      * Le curseur, sur desktop, prend la forme de l'outil actif.
      */
     activeTool: 'eye' as 'eye' | 'lens',
+    /**
+     * Posture de lecture déclarée par le joueur.
+     *
+     * Assis, on tient le téléphone incliné vers soi ; allongé, on le tient
+     * presque à l'horizontale au-dessus du visage. Le tangage neutre n'est pas
+     * le même, et sans ce réglage la visée devient pénible dans l'une des deux
+     * positions — l'oeil bute en haut ou en bas de l'écran.
+     */
+    posture: 'assis' as 'assis' | 'allonge',
+    /** Le panneau de réglages est ouvert. */
+    settingsOpen: false,
     /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
     eyeActive: false,
     /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
@@ -165,6 +176,14 @@ export const useGameStore = defineStore('game', {
     /** Le détenteur tend l'objet. Le joueur doit encore le prendre. */
     offerKeyItem() {
       this.pendingKeyItem = true
+    },
+
+    setPosture(posture: 'assis' | 'allonge') {
+      this.posture = posture
+    },
+
+    toggleSettings() {
+      this.settingsOpen = !this.settingsOpen
     },
 
     setTool(tool: 'eye' | 'lens') {

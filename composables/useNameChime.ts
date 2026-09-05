@@ -193,6 +193,16 @@ async function ensureAudio(): Promise<boolean> {
       return false
     }
   }
+
+  // Un contexte débloqué peut être RESUSPENDU — passage en arrière-plan, appel
+  // entrant, verrouillage de l'écran. C'est fréquent sur mobile, et sans cette
+  // reprise plus une note ne sort jusqu'au rechargement de la page.
+  try {
+    if (tone.getContext().state !== 'running') await tone.getContext().resume()
+  } catch {
+    return false
+  }
+
   return true
 }
 
@@ -220,8 +230,15 @@ export function useNameChime() {
 
   /** Coupe le rack en cours, queue de réverbération comprise. */
   function silence() {
-    current?.synth.releaseAll?.()
-    current?.out.gain.rampTo(0, 0.08)
+    if (!current || !tone) return
+    current.synth.releaseAll?.()
+
+    // On annule ce qui était programmé avant de descendre : deux rampes
+    // concurrentes sur le même paramètre laissaient le gain dans un état
+    // imprévisible, parfois bloqué à zéro.
+    const at = tone.now()
+    current.out.gain.cancelScheduledValues(at)
+    current.out.gain.rampTo(0, 0.08)
   }
 
   /** Arrêt inconditionnel, pour un démarrage qui prend la main. */
@@ -252,8 +269,13 @@ export function useNameChime() {
       racks.set(voice.key, rack)
     }
     current = rack
-    // Le rack peut revenir d'une extinction précédente : on rouvre sa sortie.
-    rack.out.gain.rampTo(1, 0.03)
+
+    // Réouverture de la sortie. On ANNULE d'abord l'extinction éventuellement
+    // en cours : une rampe montante lancée par-dessus une rampe descendante ne
+    // remontait pas toujours, et le rack restait muet.
+    const openAt = tone.now()
+    rack.out.gain.cancelScheduledValues(openAt)
+    rack.out.gain.setValueAtTime(1, openAt)
 
     const recipe = RECIPES[voice.key]
     const pattern = buildPattern(name, mode, voice)

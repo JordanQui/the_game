@@ -40,6 +40,19 @@ const PITCH_RANGE_DEG = 26
  * relève l'appareil vers soi — le geste naturel pour parcourir une page.
  */
 const NEUTRAL_Y = 0.25
+
+/**
+ * Correction de tangage selon la posture déclarée.
+ *
+ * Assis, on tient l'appareil incliné vers soi : le zéro est déjà bien placé.
+ * Allongé, on le tient presque à plat au-dessus du visage, ce qui décale le
+ * tangage d'une vingtaine de degrés — sans compensation, l'oeil se colle en
+ * haut de l'écran et viser une ligne de texte devient impossible.
+ */
+const POSTURE_OFFSET_DEG: Record<string, number> = {
+  assis: 0,
+  allonge: -20,
+}
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
 
@@ -77,7 +90,8 @@ export function useGyroEye() {
     }
 
     const dx = gamma / ROLL_RANGE_DEG
-    const dy = (beta - neutralBeta) / PITCH_RANGE_DEG
+    const offset = POSTURE_OFFSET_DEG[gameStore.posture] ?? 0
+    const dy = (beta - neutralBeta - offset) / PITCH_RANGE_DEG
     target = {
       x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
       y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
