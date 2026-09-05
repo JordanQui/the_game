@@ -169,11 +169,11 @@ function retryImage() {
 
     </div>
 
-    <!-- Outils de lecture, et réglages de confort à droite -->
-    <div class="shrink-0 flex items-center justify-between pr-4">
-      <ToolRail />
-      <SettingsPanel />
-    </div>
+    <!-- Outils de lecture -->
+    <ToolRail />
+
+    <!-- Réglages, en surimpression en haut à droite de l'écran -->
+    <SettingsPanel />
 
     <!-- Liste des PNJ -->
     <Transition name="slide">

@@ -17,19 +17,19 @@ const POSTURES = [
 </script>
 
 <template>
-  <div class="relative">
+  <div class="fixed top-3 right-3 z-40">
     <button
-      class="p-1.5 -my-0.5 transition-colors"
+      class="p-2 bg-ink-900/85 border border-steel-600/50 transition-colors"
       :class="gameStore.settingsOpen ? 'text-neon-400' : 'text-steel-400 hover:text-neon-600'"
       :aria-expanded="gameStore.settingsOpen"
       aria-label="Réglages"
       title="Réglages"
       @click="gameStore.toggleSettings()"
     >
-      <!-- Roue crantée -->
-      <svg viewBox="0 0 20 20" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.4">
-        <circle cx="10" cy="10" r="2.8" />
-        <path d="M10 1.6v2.2M10 16.2v2.2M1.6 10h2.2M16.2 10h2.2M4.1 4.1l1.6 1.6M14.3 14.3l1.6 1.6M15.9 4.1l-1.6 1.6M5.7 14.3l-1.6 1.6" stroke-linecap="round" />
+      <!-- Roue crantée : denture calculée, pas des rayons de soleil -->
+      <svg viewBox="0 0 20 20" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round">
+        <path d="M8.78 0.88 L11.22 0.88 L11.90 3.26 L13.42 3.89 L15.58 2.69 L17.31 4.42 L16.11 6.58 L16.74 8.10 L19.12 8.78 L19.12 11.22 L16.74 11.90 L16.11 13.42 L17.31 15.58 L15.58 17.31 L13.42 16.11 L11.90 16.74 L11.22 19.12 L8.78 19.12 L8.10 16.74 L6.58 16.11 L4.42 17.31 L2.69 15.58 L3.89 13.42 L3.26 11.90 L0.88 11.22 L0.88 8.78 L3.26 8.10 L3.89 6.58 L2.69 4.42 L4.42 2.69 L6.58 3.89 L8.10 3.26 Z" />
+        <circle cx="10" cy="10" r="3.1" />
       </svg>
     </button>
 

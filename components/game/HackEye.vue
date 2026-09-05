@@ -22,7 +22,7 @@ const style = computed(() => ({
     <!-- Avant activation : le bouton de permission, exigé par iOS. -->
     <button
       v-if="!enabled"
-      class="fixed top-3 right-3 z-40 flex items-center gap-2 px-3 py-2
+      class="fixed top-3 left-3 z-40 flex items-center gap-2 px-3 py-2
              font-display text-[10px] uppercase tracking-[0.18em]
              text-neon-300 bg-ink-900/90 border border-neon-600/50"
       @click="enable"
