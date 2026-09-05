@@ -20,6 +20,7 @@ import type { UserProfile } from '~/types/user'
 import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
+import { renderJournal, type JournalEntry } from '~/utils/journal'
 import { zodiacKey } from '~/utils/zodiac'
 import { numerologyOf } from '~/utils/numerology'
 
@@ -113,6 +114,9 @@ export function resolveTheme(user: UserProfile, script: Script): PlayerTheme | n
   return { sign, numbers: resolved }
 }
 
+/** `npc_id` d'un objet qui n'est sur personne : il est dans le décor. */
+export const FOUND_ITEM_ID = 'trouve'
+
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
 
 /**
@@ -147,7 +151,21 @@ export class SceneRuntime {
   }
 
   /** Message utilisateur envoyé à gpt-4o pour produire la scène. */
-  buildGenerationPrompt(user: UserProfile): string {
+  /**
+   * Le schéma demandé au modèle, ajusté à la scène.
+   *
+   * Une scène sans objet scellé ne doit pas s'en voir réclamer un : sans son
+   * bloc d'instructions, le modèle en inventerait un au hasard, et on paierait
+   * la sortie d'un champ que personne ne lit.
+   */
+  private get outputSchema(): Record<string, unknown> {
+    const schema = this.scene.generation.output_schema as Record<string, unknown>
+    if (this.scene.sealed_object) return schema
+    const { sealed_object: _omit, ...rest } = schema
+    return rest
+  }
+
+  buildGenerationPrompt(user: UserProfile, journal: JournalEntry[] = []): string {
     const s = this.scene
 
     const slots = s.decor_slots
@@ -162,9 +180,16 @@ export class SceneRuntime {
     const themeBlock = theme ? this.describeTheme(theme) : ''
     const tension = theme?.sign?.tension ?? ''
 
+    const c = this.script.defaults.continuity
+    const story = journal.length
+      ? interpolate(c.prompt, { journal: renderJournal(journal, c.max_entries) })
+      : c.empty
+
     return `PROFIL DU JOUEUR
 ${describeUser(user)}
 ${themeBlock}
+${story}
+
 NOM DU LIEU
 ${s.naming.instruction}
 
@@ -180,8 +205,10 @@ Pour chaque élément, "visual" doit être un fragment ANGLAIS court (max 12 mot
 SYLLABAIRE
 ${this.describeSyllabary(tension)}
 
+${this.describeObjective(theme)}
 PERSONNAGES
 ${s.npcs.instruction} Exactement ${s.npcs.count} personnages.
+${this.describeCast()}
 
 QUÊTE
 ${s.quest.instruction}
@@ -190,9 +217,9 @@ ${questFields}
 OBJET-CLÉ
 ${s.key_item.instruction}
 
-OBJET SCELLÉ
-${interpolate(s.sealed_object.instruction, { quest_title: 'la quête' })}
-
+${s.sealed_object
+  ? `OBJET SCELLÉ\n${interpolate(s.sealed_object.instruction, { quest_title: 'la quête' })}\n`
+  : ''}
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
 ${s.narrative.vocabulary}
@@ -206,7 +233,7 @@ Le champ "interactables" doit lister exactement les objets nommés dans le texte
 
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
-${JSON.stringify(s.generation.output_schema, null, 2)}`
+${JSON.stringify(this.outputSchema, null, 2)}`
   }
 
   /** La table de composition des noms. Jointe à la génération, jamais aux tours. */
@@ -230,6 +257,57 @@ ${list(o.posture)}`
   }
 
   /** Les sections SIGNE et NOMBRES du prompt de génération. */
+  /**
+   * L'objectif de la scène, tel que ce joueur-là le rencontre.
+   *
+   * L'exigence mécanique — obtenir la carte, lire la fréquence — ne bouge
+   * jamais : c'est la structure de l'arc. Ce qui change, c'est ce qu'elle
+   * DEMANDE à ce joueur, et ça se déduit de la facette qui gouverne l'acte.
+   */
+  private describeObjective(theme: PlayerTheme | null): string {
+    const focus = this.scene.theme_focus
+    const objective = this.scene.objective
+    if (!focus || !objective?.requirement) return ''
+
+    // La valeur de la facette vient du profil ; sans elle, on garde le libellé
+    // plutôt que d'écrire « undefined » dans le prompt.
+    const value = (theme?.numbers as Record<string, string | null> | undefined)?.[focus.facet]
+
+    return '\n' + interpolate(this.script.defaults.objective_derivation.instruction, {
+      requirement: objective.requirement,
+      axis: focus.axis,
+      step: String(focus.step),
+      act: this.scene.act ?? '',
+      facet: focus.facet_label,
+      facet_value: value ?? 'non renseignée — appuie-toi alors sur la seule tension du SIGNE',
+    }) + '\n'
+  }
+
+  /**
+   * Les positions imposées aux personnages de la scène.
+   *
+   * Elles viennent du syllabaire : une syllabe de posture n'est pas une
+   * étiquette, c'est ce que le personnage a fait de la même tension que le
+   * joueur. Elle décide donc à la fois de son nom, de sa voix et de ce qu'il
+   * veut — les trois tiennent ensemble ou aucun ne tient.
+   */
+  private describeCast(): string {
+    const stances = this.scene.cast_stances
+    if (!stances?.length) return ''
+
+    const { holder_stance: holder, informant_stance: informant } = this.scene.key_item
+    const lines = stances.map((st, i) => {
+      const marks = [
+        i === 0 ? 'c\'est lui qui accueille le joueur' : '',
+        holder && st.posture === holder ? 'c\'est LUI qui DÉTIENT l\'objet-clé' : '',
+        informant && st.posture === informant ? 'c\'est lui qui SAIT où il est, sans l\'avoir' : '',
+      ].filter(Boolean)
+      return `  ${i + 1}. ${st.posture} : ${st.means}${marks.length ? ' — ' + marks.join(' ; ') : ''}`
+    }).join('\n')
+
+    return `${this.script.defaults.cast.instruction}\nPositions imposées, dans cet ordre :\n${lines}`
+  }
+
   private describeTheme(theme: PlayerTheme): string {
     const parts: string[] = []
 
@@ -331,27 +409,46 @@ ${lines}`)
       }
     }
 
+    if (!Array.isArray(generated.npcs) || generated.npcs.length === 0) {
+      throw new Error('Scène invalide : aucun PNJ')
+    }
+
     const item = generated.key_item
     if (!item?.name || !item?.npc_id) {
       throw new Error('Scène invalide : key_item.name ou key_item.npc_id manquant')
     }
+
+    // Comment l'objet-clé s'obtient dépend de la scène, pas du moteur. L'auberge
+    // a trois rôles distincts — celui qui expose, celui qui sait, celui qui
+    // garde — mais une plate-forme d'antennes n'a pas de barman, et une console
+    // ne se laisse pas convaincre : ce qu'elle affiche se lit, point.
+    const acquisition = this.scene.key_item.acquisition ?? 'informant_then_holder'
+
+    if (acquisition === 'found') {
+      if (item.npc_id !== FOUND_ITEM_ID) {
+        throw new Error(
+          `Scène invalide : objet à trouver, key_item.npc_id doit valoir "${FOUND_ITEM_ID}" `
+          + `(reçu "${item.npc_id}")`)
+      }
+      return
+    }
+
     // Un détenteur inconnu rendrait la sortie impossible à débloquer.
-    if (!generated.npcs?.some(n => n.id === item.npc_id)) {
+    if (!generated.npcs.some(n => n.id === item.npc_id)) {
       throw new Error(`Scène invalide : key_item.npc_id "${item.npc_id}" ne désigne aucun PNJ`)
     }
+    if (acquisition === 'holder') return
+
     if (!item.informant_npc_id || item.informant_npc_id === item.npc_id) {
       throw new Error('Scène invalide : key_item.informant_npc_id doit désigner un AUTRE PNJ')
-    }
-    // Le barman ouvre la liste : il expose la situation, il ne résout rien.
-    const barman = generated.npcs[0]?.id
-    if (barman && (item.npc_id === barman || item.informant_npc_id === barman)) {
-      throw new Error('Scène invalide : le barman ne peut être ni détenteur ni informateur')
     }
     if (!generated.npcs.some(n => n.id === item.informant_npc_id)) {
       throw new Error(`Scène invalide : informant_npc_id "${item.informant_npc_id}" ne désigne aucun PNJ`)
     }
-    if (!Array.isArray(generated.npcs) || generated.npcs.length === 0) {
-      throw new Error('Scène invalide : aucun PNJ')
+    // Le premier de la liste ouvre la scène : il expose, il ne résout rien.
+    const host = generated.npcs[0]?.id
+    if (host && (item.npc_id === host || item.informant_npc_id === host)) {
+      throw new Error('Scène invalide : celui qui accueille ne peut être ni détenteur ni informateur')
     }
   }
 
@@ -666,6 +763,8 @@ export class ScriptRuntime {
       ...raw,
       art_direction: { ...d.art_direction, ...raw.art_direction },
       palette_derivation: { ...d.palette_derivation, ...raw.palette_derivation },
+      // `structure` vient des defaults, `instruction` de la scène.
+      quest: { ...d.quest, ...raw.quest },
       narrative: { ...d.narrative, ...raw.narrative },
       turn: { ...d.turn, ...raw.turn },
       generation: { ...d.generation, ...raw.generation },

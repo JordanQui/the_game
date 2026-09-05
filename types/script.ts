@@ -147,7 +147,26 @@ export interface InterfacePalette {
   why?: string
 }
 
+/** Comment une scène sait ce qui a précédé. Voir `utils/journal.ts`. */
+export interface Continuity {
+  note?: string
+  /** Nombre de scènes retenues. Au-delà, les plus anciennes tombent. */
+  max_entries: number
+  entry_fields: string[]
+  /** Interpole `{{journal}}`. */
+  prompt: string
+  /** Ce qu'on écrit à la place quand rien ne précède. */
+  empty: string
+}
+
 export interface ScriptDefaults {
+  continuity: Continuity
+  /** Le schéma des champs de quête, commun à toutes les scènes. */
+  quest: { note?: string; structure: Record<string, string> }
+  /** Comment une scène distribue ses personnages face à la tension. */
+  cast: { note?: string; instruction: string }
+  /** Comment l'exigence d'une scène devient l'objectif de CE joueur. */
+  objective_derivation: { note?: string; instruction: string }
   art_direction: ArtDirection
   palette_derivation: PaletteDerivation
   interface_palette: InterfacePalette
@@ -184,6 +203,16 @@ export interface SceneExit {
   leads_to: string
 }
 
+/**
+ * Comment l'objet-clé d'une scène s'obtient.
+ *
+ * `informant_then_holder` : trois rôles — celui qui accueille, celui qui sait,
+ * celui qui garde. C'est le motif de l'auberge, celui qui fait parler à tout
+ * le monde. `holder` : un seul personnage l'a, sans intermédiaire. `found` :
+ * personne ne l'a, il est dans le décor et il faut savoir le lire.
+ */
+export type KeyItemAcquisition = 'informant_then_holder' | 'holder' | 'found'
+
 export interface SceneScript {
   id: string
   title: string
@@ -201,11 +230,49 @@ export interface SceneScript {
   interactables: { instruction: string; always_include: AlwaysIncludeInteractable[] }
   exits: SceneExit[]
   /** Règle de conception de l'augmentation sans laquelle on ne peut pas sortir. */
-  key_item: { instruction: string; exchanges_before_handover: number }
+  key_item: {
+    instruction: string
+    exchanges_before_handover: number
+    /** Défaut : `informant_then_holder`, le motif de l'auberge. */
+    acquisition?: KeyItemAcquisition
+    /** La posture du personnage qui détient l'objet, s'il y en a un. */
+    holder_stance?: string
+    /** La posture de celui qui met sur la piste, dans un motif à trois rôles. */
+    informant_stance?: string
+  }
+  /** L'acte auquel la scène appartient. Voir `acts` à la racine du script. */
+  act?: string
+  /**
+   * Ce qui gouverne la scène côté joueur.
+   *
+   * `facet` désigne l'un des trois nombres — manière d'agir, forme de
+   * l'objectif, accueil du monde — et `axis` dit où en est le joueur entre sa
+   * tension et sa résolution. Un acte entier partage sa facette.
+   */
+  theme_focus?: {
+    facet: 'drive' | 'destiny' | 'reception'
+    facet_label: string
+    axis: string
+    step: number
+  }
+  /** Les positions face à la tension, dans l'ordre des personnages. */
+  cast_stances?: Array<{ posture: string; means: string }>
   /** Règle de conception de l'objet scellé, à analyser. */
-  sealed_object: { instruction: string }
+  /**
+   * Le second objet, à déchiffrer pour approfondir la quête.
+   *
+   * Propre à l'auberge pour l'instant : les scènes suivantes s'en passent, et
+   * le bloc du prompt disparaît quand il n'est pas déclaré.
+   */
+  sealed_object?: { instruction: string }
   /** Ce qu'il faut accomplir pour passer à la scène suivante. */
-  objective: { note?: string; kind: string; statement: string }
+  objective: {
+    note?: string
+    kind: string
+    /** L'exigence mécanique de la scène. Invariable : c'est la structure de l'arc. */
+    requirement?: string
+    statement?: string
+  }
 
   /** Surcharges optionnelles des defaults, scène par scène. */
   art_direction?: Partial<ArtDirection>

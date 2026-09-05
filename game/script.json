@@ -11,7 +11,16 @@
   "progression": {
     "start_scene": "auberge",
     "order": [
-      "auberge"
+      "auberge",
+      "rue",
+      "passage",
+      "oracle",
+      "crete",
+      "relais",
+      "terminal",
+      "porte",
+      "etage",
+      "sommet"
     ]
   },
   "defaults": {
@@ -220,6 +229,40 @@
           "name": "Néon Magenta"
         }
       }
+    },
+    "continuity": {
+      "note": "Comment une scène sait ce qui a précédé. L'histoire n'est PAS générée d'un bloc au départ : chaque scène naît à son tour, avec un résumé borné des précédentes. Générer les dix d'un coup demanderait 26 000 tokens de sortie pour un plafond de 16 384 — c'est impossible, et ça figerait l'histoire avant que le joueur ait joué.",
+      "max_entries": 6,
+      "entry_fields": [
+        "scene_title",
+        "place_name",
+        "what_changed",
+        "who_mattered",
+        "carried"
+      ],
+      "prompt": "CE QUI PRÉCÈDE — le joueur arrive d'ailleurs, et cette scène doit s'en souvenir.\n{{journal}}\n\nCe résumé est un FAIT, pas une suggestion : ne contredis rien de ce qui y figure, ne rejoue pas une scène déjà passée, ne fais pas réapparaître un personnage qu'on a quitté. Une ou deux phrases de la description doivent montrer que le joueur porte ce qu'il a vécu — ce qu'il a sur lui, ce qu'il a appris, ce qu'il a laissé derrière.\nN'explique jamais le résumé au joueur : il l'a vécu.",
+      "empty": "C'est la première scène : le joueur ne vient de nulle part."
+    },
+    "quest": {
+      "note": "Les champs que toute quête doit renseigner. Partagé par les dix scènes : c'est un schéma, pas du contenu.",
+      "structure": {
+        "title": "Titre court et tranchant, 2 à 5 mots",
+        "hook": "Deux phrases qui plantent l'urgence",
+        "objective": "Ce qu'il faut accomplir, une phrase",
+        "stakes": "Ce qui est perdu en cas d'échec, une phrase",
+        "artifact": "Ce qui attend le joueur DEHORS, dans les scènes suivantes. Introuvable dans ce bar : personne ne l'a, personne ne l'y cherche. C'est un horizon, pas un objectif de la scène 1",
+        "antagonist_hint": "Allusion à la menace, sans la nommer",
+        "why_leave": "La raison concrète pour laquelle rester au comptoir n'est plus tenable",
+        "restoration": "Ce qu'il faut rétablir dans la ville — l'équilibre rompu, directement lié à la tension intime du joueur"
+      }
+    },
+    "cast": {
+      "note": "Comment une scène distribue ses personnages. Ils ne sont pas des fonctions à remplir : chacun occupe une POSITION FACE À LA TENSION du joueur, et c'est cette position qui décide de son nom, de sa voix et de ce qu'il veut.",
+      "instruction": "CHAQUE PERSONNAGE EST UNE RÉPONSE POSSIBLE À LA TENSION DU JOUEUR.\nLa scène impose la position de chacun, dans l'ordre, sous forme de syllabe de POSTURE (voir SYLLABAIRE). Cette syllabe termine son nom ET décide de ce qu'il est : celui qui garde ne cède pas, celui qui monnaye a un prix, celui qui a rompu n'est pas revenu.\nCe que chacun a fait de CETTE tension-là — la sienne est la même que celle du joueur, à une autre échelle — est la matière de sa `personality` et de son `knows`. Le joueur doit pouvoir se reconnaître dans l'un et se refuser dans un autre.\nLA FACETTE de la scène (bloc OBJECTIF) colore ce qu'ils veulent : sous une facette d'action, ils jugent le joueur sur ce qu'il fait ; sous une facette d'accueil, sur ce qu'il accepte ; sous une facette d'objectif, sur ce vers quoi il va.\nNe nomme jamais la tension, ne cite jamais le signe ni un nombre. Les archétypes disent ce que le personnage EST dans la ville, jamais sa fonction dans le jeu."
+    },
+    "objective_derivation": {
+      "note": "L'objectif d'une scène a deux moitiés : une exigence mécanique, invariable, et une formulation qui n'appartient qu'à ce joueur.",
+      "instruction": "OBJECTIF DE CETTE SCÈNE\nCe qu'il faut mécaniquement accomplir : {{requirement}}\nOù en est le joueur : {{axis}} (étape {{step}} sur 9, acte « {{act}} »).\nFacette qui gouverne cette scène : {{facet}} — {{facet_value}}\n\nLe champ `quest.objective` reformule cette exigence COMME ELLE SE POSE À CE JOUEUR-LÀ : pas « obtenir la carte », mais ce que l'obtenir lui demande de faire, à lui, compte tenu de sa manière d'agir et de la tension de son signe. L'exigence mécanique ne change jamais ; sa formulation, si.\n`quest.stakes` dit ce que ce joueur perd précisément à s'arrêter ici — pas une menace générale sur la ville.\n`quest.restoration` dit ce que cette étape remet d'aplomb de sa tension à lui.\nAucune de ces phrases ne nomme le signe, le nombre, ni la tension : elles la MONTRENT en situation."
     }
   },
   "scenes": [
@@ -291,17 +334,7 @@
       },
       "quest": {
         "instruction": "Construis la quête comme une métaphore du parcours réel du joueur, jamais une transposition littérale. Son OBJECTIF doit être la résolution, en acte concret, de la tension intime décrite dans la section SIGNE. Elle doit être entièrement exposée dans le bar et rendre la sortie désirable : le joueur doit avoir une raison précise de franchir le sas.",
-        "source": "trajectory.turning_points",
-        "structure": {
-          "title": "Titre court et tranchant, 2 à 5 mots",
-          "hook": "Deux phrases qui plantent l'urgence",
-          "objective": "Ce qu'il faut accomplir, une phrase",
-          "stakes": "Ce qui est perdu en cas d'échec, une phrase",
-          "artifact": "Ce qui attend le joueur DEHORS, dans les scènes suivantes. Introuvable dans ce bar : personne ne l'a, personne ne l'y cherche. C'est un horizon, pas un objectif de la scène 1",
-          "antagonist_hint": "Allusion à la menace, sans la nommer",
-          "why_leave": "La raison concrète pour laquelle rester au comptoir n'est plus tenable",
-          "restoration": "Ce qu'il faut rétablir dans la ville — l'équilibre rompu, directement lié à la tension intime du joueur"
-        }
+        "source": "trajectory.turning_points"
       },
       "interactables": {
         "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé : il n'est pas dans la salle, il est sur un personnage.",
@@ -371,7 +404,8 @@
       ],
       "key_item": {
         "instruction": "L'AUGMENTATION — ce n'est PAS un trophée ni l'objet de la quête. C'est un implant, un module, une greffe : une CAPACITÉ que le joueur acquiert et emporte avec lui.\n\nCE QU'ELLE FAIT, littéralement : dehors, les choses ne portent pas de nom lisible. Sans elle, le joueur ne peut rien identifier, donc rien manipuler, donc pas se repérer. Elle déchiffre l'identité des objets.\nET DÉCHIFFRER SERT À QUELQUE CHOSE : `resolving_action` est l'acte que le joueur pourra enfin accomplir une fois les noms lisibles, et c'est cet acte qui règle ce qui doit l'être. Sans lui l'augmentation n'est qu'un gadget ; avec lui, c'est un moyen. Il est TAILLÉ SUR LE JOUEUR : sa manière d'agir (NOMBRES) décide du geste, la tension de son SIGNE décide de ce que ce geste répare. C'est son laissez-passer vers l'extérieur, et la raison pour laquelle franchir le sas sans elle n'aurait aucun sens.\nDécris-la comme un objet cyberpunk concret qui tient dans une main et se porte : lentille, greffe corticale, module d'analyse, filtre optique. Pas un talisman, pas une clé magique.\n\nCE QU'ELLE DIT DU JOUEUR — et c'est là qu'elle doit être personnelle : sa forme et son nom dérivent de la MANIÈRE D'AGIR du joueur (section NOMBRES) et de la tension de son SIGNE. Celui qui absorbe ce que ressentent les autres reçoit un filtre ; celui qui fonce reçoit une visée. L'augmentation compense ou prolonge ce qu'il est — jamais un gadget interchangeable.\n\nELLE N'EST PAS DANS LE DÉCOR. Aucun élément de décor, aucun interactable, aucune mention dans le texte de scène. Rien à trouver, rien à voler : elle s'obtient UNIQUEMENT parce qu'un personnage décide de la céder, au fil d'une conversation.\n\nDEUX PERSONNAGES, DEUX RÔLES DISTINCTS, choisis PARMI LES TROIS HABITUÉS — jamais le barman, qui est le premier de la liste. Ils doivent être différents l'un de l'autre.\n- `npc_id` : LE PORTEUR. Ne le place JAMAIS en premier dans la liste.\n- `informant_npc_id` : L'INFORMATEUR, un autre habitué. Il ne détient rien mais sait qui porte l'augmentation. `informant_hint` est ce qu'il en dit : de quoi aller voir l'autre, jamais assez pour s'en passer.\n`handover_hint` dit ce que le porteur attend du joueur avant de la céder.\n`hook_story` est l'histoire qu'il raconte : celle de quelqu'un qui est sorti sans elle, et de ce que ça lui a coûté.",
-        "exchanges_before_handover": 1
+        "exchanges_before_handover": 1,
+        "acquisition": "informant_then_holder"
       },
       "objective": {
         "note": "Ce qu'il faut accomplir pour passer à la scène suivante. Chaque scène en aura un.",
@@ -384,7 +418,1213 @@
       "interface_palette": {
         "mode": "fixed",
         "why": "L'auberge a une illustration figée en magenta, et l'écran d'accueil est dans le même ton : c'est l'identité visuelle d'entrée du jeu. Les scènes suivantes, elles, sont générées et emportent l'habillage avec elles."
-      }
+      },
+      "act": "ouverture"
+    },
+    {
+      "id": "rue",
+      "title": "La Rue Noyée",
+      "order": 2,
+      "act": "route",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Une rue de mégapole sous une pluie battante, la nuit, juste devant le sas de l'auberge",
+      "focal_element": "Un panneau d'orientation dont les inscriptions ne se lisent qu'à travers l'augmentation",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « La Rue ... » / « Le Carrefour ... » / « L'Angle ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`panneau`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `origin.hometown.traits` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "origin.hometown.traits"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.panneau"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "panneau",
+          "role": "Un panneau d'orientation criblé d'inscriptions illisibles",
+          "source": "origin.current_location.traits",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "etal",
+          "role": "Un étal de rue sous bâche, éclairé par un tube néon",
+          "source": "trajectory.work",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "facades",
+          "role": "Les façades ruisselantes, enseignes éteintes et balcons en escalier",
+          "source": "origin.hometown.traits",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "flaques",
+          "role": "Les flaques où la ville se reflète à l'envers",
+          "source": "passions",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 2,
+        "instruction": "DEUX personnages de rue, qui ne se connaissent pas. L'un tient un étal sous une bâche, l'autre attend quelque chose qui ne vient pas. Aucun des deux ne dirige le joueur d'autorité : ils parlent de la ville, et c'est au joueur d'en tirer la direction."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "Le passage sous voie",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "holder",
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — la couleur de la pluie sur le néon — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : le passage sous voie, seul chemin vers les hauteurs. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
+        "exchanges_before_handover": 1,
+        "holder_stance": "-ka"
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Obtenir la carte du passage sous voie, et quitter la rue"
+      },
+      "theme_focus": {
+        "facet": "drive",
+        "facet_label": "Manière d'agir",
+        "axis": "Le joueur est encore tout entier dans sa tension : elle dicte ses gestes et il ne la voit pas.",
+        "step": 1
+      },
+      "cast_stances": [
+        {
+          "posture": "-ka",
+          "means": "qui échange, qui monnaye"
+        },
+        {
+          "posture": "-na",
+          "means": "qui attend sans agir"
+        }
+      ]
+    },
+    {
+      "id": "passage",
+      "title": "Le Passage Sous Voie",
+      "order": 3,
+      "act": "route",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Un passage souterrain sous une voie ferrée surélevée, éclairé par des tubes défaillants",
+      "focal_element": "Un tourniquet de contrôle et sa borne de lecture",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Passage ... » / « Le Souterrain ... » / « La Voûte ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`tourniquet`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.education` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "trajectory.education"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.tourniquet"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "tourniquet",
+          "role": "Le tourniquet de contrôle et sa borne de lecture",
+          "source": "trajectory.education",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "voute",
+          "role": "La voûte de béton et ses tubes défaillants",
+          "source": "origin.hometown.traits",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "affiches",
+          "role": "Un mur d'affiches lacérées, superposées sur des années",
+          "source": "trajectory.turning_points",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "rails",
+          "role": "Le grondement des rames au-dessus, la poussière qui tombe",
+          "source": "misc_facts",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 3,
+        "instruction": "TROIS personnages qui attendent dans le passage. LE PREMIER tient le poste de contrôle : il expose la règle et ne cède rien. Les deux autres attendent, et l'un d'eux sait ce que l'autre porte. Le contrôleur n'est JAMAIS ni l'informateur ni le détenteur."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "Le funiculaire, vers les hauteurs",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "informant_then_holder",
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — la couleur des tubes du passage — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : le funiculaire qui monte vers les hauteurs. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
+        "exchanges_before_handover": 1,
+        "holder_stance": "-ru",
+        "informant_stance": "-to"
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Franchir le contrôle et atteindre le funiculaire"
+      },
+      "theme_focus": {
+        "facet": "drive",
+        "facet_label": "Manière d'agir",
+        "axis": "Le joueur est encore tout entier dans sa tension : elle dicte ses gestes et il ne la voit pas.",
+        "step": 2
+      },
+      "cast_stances": [
+        {
+          "posture": "-zu",
+          "means": "qui nie, qui détourne le regard"
+        },
+        {
+          "posture": "-to",
+          "means": "qui parle, qui met sur la piste"
+        },
+        {
+          "posture": "-ru",
+          "means": "qui garde, qui ne cède pas"
+        }
+      ]
+    },
+    {
+      "id": "oracle",
+      "title": "L'Oracle",
+      "order": 4,
+      "act": "route",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Une plate-forme technique en haut d'un pylône, au-dessus des toits, dans le vent",
+      "focal_element": "Un vieux terminal radio dont l'écran monochrome ne s'éteint jamais",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « L'Antenne ... » / « Le Pylône ... » / « La Plate-forme ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`terminal`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.turning_points` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "trajectory.turning_points"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.terminal"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "terminal",
+          "role": "Le terminal radio, écran monochrome et clavier usé",
+          "source": "trajectory.work",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "pylone",
+          "role": "La structure du pylône et ses haubans qui sifflent",
+          "source": "trajectory.turning_points",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "ville",
+          "role": "La ville en dessous, noyée sous sa propre couche de pluie",
+          "source": "origin.current_location.traits",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "offrandes",
+          "role": "Ce que les précédents ont laissé au pied du terminal",
+          "source": "passions",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 2,
+        "instruction": "DEUX personnages, montés là pour la même raison que le joueur. L'un sert le terminal depuis trop longtemps et parle par formules. L'autre est venu chercher une réponse et repart sans. Ils ne détiennent RIEN : ce qui compte ici est sur l'écran."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "La passerelle, vers la crête",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "found",
+        "instruction": "L'OBJET-CLÉ n'est PAS une carte : c'est une FRÉQUENCE, une suite que le terminal affiche et que personne ne peut retenir à l'oeil nu. Le joueur la lit avec son augmentation, et c'est tout ce qu'il emporte.\nElle ne s'obtient d'aucun personnage : elle est SUR LE TERMINAL, dans le décor. `npc_id` doit valoir la chaîne \"trouve\".\nL'oracle ne dit pas quoi faire. Il dit OÙ : un point dans les hauteurs, et rien d'autre. Sa formulation reprend la tension du SIGNE du joueur, sans jamais la nommer.\n`resolving_action` est l'acte que cette fréquence rendra possible plus haut.",
+        "exchanges_before_handover": 1
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Lire la fréquence sur le terminal et gagner les hauteurs"
+      },
+      "theme_focus": {
+        "facet": "drive",
+        "facet_label": "Manière d'agir",
+        "axis": "Le joueur est encore tout entier dans sa tension : elle dicte ses gestes et il ne la voit pas.",
+        "step": 3
+      },
+      "cast_stances": [
+        {
+          "posture": "-va",
+          "means": "qui sert, qui reste derrière"
+        },
+        {
+          "posture": "-ki",
+          "means": "qui cherche encore"
+        }
+      ]
+    },
+    {
+      "id": "crete",
+      "title": "La Crête d'Antennes",
+      "order": 5,
+      "act": "hauteurs",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Un champ d'antennes mortes sur une crête, au-dessus de la couche de nuages",
+      "focal_element": "Une forêt de paraboles orientées vers rien",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « La Crête ... » / « Le Champ ... » / « Les Paraboles ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`paraboles`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `passions` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "passions"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.paraboles"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "paraboles",
+          "role": "Une forêt de paraboles orientées vers rien",
+          "source": "passions",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "cabane",
+          "role": "Un abri de fortune monté contre un mât",
+          "source": "origin.hometown.traits",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "cables",
+          "role": "Des faisceaux de câbles sectionnés qui pendent",
+          "source": "trajectory.work",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "mer_de_nuages",
+          "role": "La couche de nuages en dessous, éclairée par la ville",
+          "source": "trajectory.turning_points",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 2,
+        "instruction": "DEUX personnages qui vivent là-haut et n'en descendent plus. Ils connaissent le champ d'antennes comme un quartier. L'un d'eux garde de quoi ouvrir la station relais."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "La station relais",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "holder",
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — la couleur du ciel au-dessus des nuages — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la station relais, verrouillée depuis l'extérieur. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
+        "exchanges_before_handover": 1,
+        "holder_stance": "-ru"
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Obtenir l'accès de la station relais"
+      },
+      "theme_focus": {
+        "facet": "reception",
+        "facet_label": "Accueil du monde",
+        "axis": "Le joueur commence à voir sa tension de l'extérieur : le monde lui renvoie ce qu'il en fait.",
+        "step": 4
+      },
+      "cast_stances": [
+        {
+          "posture": "-ru",
+          "means": "qui garde, qui ne cède pas"
+        },
+        {
+          "posture": "-shi",
+          "means": "qui a rompu et n'est pas revenu"
+        }
+      ]
+    },
+    {
+      "id": "relais",
+      "title": "La Station Relais",
+      "order": 6,
+      "act": "hauteurs",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "L'intérieur d'une station relais désaffectée, baies de commutation et néons de secours",
+      "focal_element": "Une baie de commutation dont un seul module est encore alimenté",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Relais ... » / « La Station ... » / « Le Poste ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`baie`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.work` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "trajectory.work"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.baie"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "baie",
+          "role": "La baie de commutation et son unique module vivant",
+          "source": "trajectory.education",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "salle",
+          "role": "La salle de contrôle abandonnée, sièges éventrés",
+          "source": "origin.hometown.traits",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "registre",
+          "role": "Un registre papier tenu à la main jusqu'à une date précise",
+          "source": "trajectory.turning_points",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "groupe",
+          "role": "Le groupe électrogène qui tient tout ça en vie",
+          "source": "misc_facts",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 3,
+        "instruction": "TROIS personnages installés dans la station. LE PREMIER l'a ouverte au joueur et fait les présentations, sans rien détenir. Parmi les deux autres, l'un sait où est le terminal d'accès, l'autre en garde la clef."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "L'étage technique",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "informant_then_holder",
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — la couleur des néons de secours — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : le terminal d'accès, à l'étage technique. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
+        "exchanges_before_handover": 1,
+        "holder_stance": "-ru",
+        "informant_stance": "-to"
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Trouver qui garde l'accès au terminal, et l'obtenir"
+      },
+      "theme_focus": {
+        "facet": "reception",
+        "facet_label": "Accueil du monde",
+        "axis": "Le joueur commence à voir sa tension de l'extérieur : le monde lui renvoie ce qu'il en fait.",
+        "step": 5
+      },
+      "cast_stances": [
+        {
+          "posture": "-ra",
+          "means": "qui montre, qui éclaire"
+        },
+        {
+          "posture": "-to",
+          "means": "qui parle, qui met sur la piste"
+        },
+        {
+          "posture": "-ru",
+          "means": "qui garde, qui ne cède pas"
+        }
+      ]
+    },
+    {
+      "id": "terminal",
+      "title": "Le Terminal d'Accès",
+      "order": 7,
+      "act": "hauteurs",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Un local technique exigu, un terminal d'administration relié au réseau du building",
+      "focal_element": "Le terminal d'administration et son lecteur de cartes vierges",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Terminal ... » / « Le Local ... » / « La Console ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`administration`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.education` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "trajectory.education"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.administration"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "administration",
+          "role": "Le terminal d'administration et son lecteur de cartes vierges",
+          "source": "trajectory.work",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "local",
+          "role": "Le local technique, trop petit pour trois",
+          "source": "origin.current_location.traits",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "cartes",
+          "role": "Un tiroir de cartes vierges, toutes de la même teinte",
+          "source": "trajectory.education",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "plan",
+          "role": "Un plan du building punaisé, annoté à la main",
+          "source": "trajectory.turning_points",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 2,
+        "instruction": "DEUX personnages. L'un administre ce terminal et sait exactement ce qu'il délivre. L'autre attend son tour depuis des jours. Celui qui administre ne donne rien sans raison."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "La descente, vers le building",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "holder",
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — la couleur de l'écran d'administration — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la porte du building, en bas dans la ville. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\nCette carte-ci est GRAVÉE devant le joueur, pas trouvée : le terminal l'écrit.",
+        "exchanges_before_handover": 1,
+        "holder_stance": "-ru"
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Faire graver la carte du building, et redescendre"
+      },
+      "theme_focus": {
+        "facet": "reception",
+        "facet_label": "Accueil du monde",
+        "axis": "Le joueur commence à voir sa tension de l'extérieur : le monde lui renvoie ce qu'il en fait.",
+        "step": 6
+      },
+      "cast_stances": [
+        {
+          "posture": "-ru",
+          "means": "qui garde, qui ne cède pas"
+        },
+        {
+          "posture": "-na",
+          "means": "qui attend sans agir"
+        }
+      ]
+    },
+    {
+      "id": "porte",
+      "title": "La Porte",
+      "order": 8,
+      "act": "building",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Le hall d'entrée d'une tour corporative, sas biométrique et comptoir désert, la nuit",
+      "focal_element": "Le sas biométrique et son lecteur, seule lumière du hall",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Hall ... » / « La Porte ... » / « Le Seuil ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`sas`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `origin.current_location.traits` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "origin.current_location.traits"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.sas"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "sas",
+          "role": "Le sas biométrique et son lecteur",
+          "source": "trajectory.work",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "hall",
+          "role": "Le hall corporatif, marbre noir et plafond trop haut",
+          "source": "origin.current_location.traits",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "comptoir",
+          "role": "Le comptoir d'accueil déserté, écrans en veille",
+          "source": "trajectory.education",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "enseigne_corpo",
+          "role": "L'enseigne de la société, éteinte sauf deux lettres",
+          "source": "misc_facts",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 2,
+        "instruction": "DEUX personnages dans le hall. Un veilleur qui n'a plus rien à veiller, et quelqu'un qui n'aurait pas dû entrer. Ni l'un ni l'autre ne détient ce qu'il faut : c'est le hall lui-même qui le porte."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "L'ascenseur, vers le premier étage",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "found",
+        "instruction": "L'OBJET-CLÉ est le CODE D'ÉTAGE, inscrit quelque part dans ce hall — sur une plaque, un registre, une console oubliée. Il n'est pas lisible sans l'augmentation.\nIl ne s'obtient d'aucun personnage : `npc_id` doit valoir la chaîne \"trouve\".\n`resolving_action` est ce que ce code permet d'atteindre au premier étage.",
+        "exchanges_before_handover": 1
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Trouver le code d'étage et franchir le sas"
+      },
+      "theme_focus": {
+        "facet": "destiny",
+        "facet_label": "Forme de l'objectif",
+        "axis": "Le joueur agit CONTRE sa tension : chaque étage est un pas vers sa résolution.",
+        "step": 7
+      },
+      "cast_stances": [
+        {
+          "posture": "-no",
+          "means": "qui a perdu"
+        },
+        {
+          "posture": "-zu",
+          "means": "qui nie, qui détourne le regard"
+        }
+      ]
+    },
+    {
+      "id": "etage",
+      "title": "Le Premier Étage",
+      "order": 9,
+      "act": "building",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Un plateau de bureaux vidé, cloisons démontées, un seul couloir encore éclairé",
+      "focal_element": "Une salle de serveurs derrière une paroi vitrée",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Plateau ... » / « L'Étage ... » / « Le Couloir ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`serveurs`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.work` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "trajectory.work"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.serveurs"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "serveurs",
+          "role": "La salle de serveurs derrière sa paroi vitrée",
+          "source": "trajectory.education",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "plateau",
+          "role": "Le plateau de bureaux vidé, cloisons contre les murs",
+          "source": "trajectory.work",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "effets",
+          "role": "Ce que les occupants ont laissé en partant",
+          "source": "trajectory.turning_points",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "couloir",
+          "role": "Le seul couloir encore éclairé, au fond",
+          "source": "passions",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 3,
+        "instruction": "TROIS personnages restés dans le building après tout le monde. LE PREMIER accueille le joueur et explique ce qui se passe ici. Parmi les deux autres, l'un sait comment on monte, l'autre en a le moyen."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "L'escalier de service, vers le sommet",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "informant_then_holder",
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — la couleur des voyants de la salle de serveurs — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : le dernier niveau, celui de l'opération. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
+        "exchanges_before_handover": 1,
+        "holder_stance": "-me",
+        "informant_stance": "-to"
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Obtenir de quoi monter au dernier niveau"
+      },
+      "theme_focus": {
+        "facet": "destiny",
+        "facet_label": "Forme de l'objectif",
+        "axis": "Le joueur agit CONTRE sa tension : chaque étage est un pas vers sa résolution.",
+        "step": 8
+      },
+      "cast_stances": [
+        {
+          "posture": "-va",
+          "means": "qui sert, qui reste derrière"
+        },
+        {
+          "posture": "-to",
+          "means": "qui parle, qui met sur la piste"
+        },
+        {
+          "posture": "-me",
+          "means": "qui a payé le prix et tient debout"
+        }
+      ]
+    },
+    {
+      "id": "sommet",
+      "title": "L'Opération",
+      "order": 10,
+      "act": "building",
+      "is_free": false,
+      "is_paywall_gate": false,
+      "image_setting": "Le dernier niveau d'une tour, une console unique face à la ville par une baie panoramique",
+      "focal_element": "La console de l'opération, face à la baie",
+      "naming": {
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Sommet ... » / « Le Dernier Niveau ... » / « La Baie ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`console`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.turning_points` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "sources": [
+          "trajectory.turning_points"
+        ],
+        "must_reference": [
+          "palette.accent.name",
+          "decor.console"
+        ]
+      },
+      "decor_slots": [
+        {
+          "id": "console",
+          "role": "La console de l'opération, face à la baie",
+          "source": "trajectory.turning_points",
+          "visual_weight": "accent",
+          "required": true
+        },
+        {
+          "id": "baie",
+          "role": "La baie panoramique et la ville entière en dessous",
+          "source": "origin.hometown.traits",
+          "visual_weight": "dominant",
+          "required": false
+        },
+        {
+          "id": "niveau",
+          "role": "Le dernier niveau, vidé de tout sauf de l'essentiel",
+          "source": "trajectory.work",
+          "visual_weight": "secondary",
+          "required": false
+        },
+        {
+          "id": "aube",
+          "role": "La première lueur à l'horizon, qui n'est pas encore le jour",
+          "source": "passions",
+          "visual_weight": "secondary",
+          "required": false
+        }
+      ],
+      "npcs": {
+        "count": 1,
+        "instruction": "UN SEUL personnage, déjà là quand le joueur arrive. Il n'empêche rien et n'aide pas : il regarde. Ce qu'il dit ramène le joueur à ce qu'il est venu réparer."
+      },
+      "quest": {
+        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
+        "source": "trajectory.turning_points"
+      },
+      "interactables": {
+        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène.",
+        "always_include": []
+      },
+      "exits": [
+        {
+          "id": "exit_next",
+          "label": "Ce qui vient après",
+          "keywords": [
+            "sortir",
+            "sors",
+            "sort",
+            "quitter",
+            "quitte",
+            "partir",
+            "pars",
+            "avancer",
+            "avance",
+            "continuer",
+            "continue",
+            "monter",
+            "monte",
+            "descendre",
+            "descends",
+            "entrer",
+            "entre",
+            "franchir",
+            "franchis",
+            "passer",
+            "passe",
+            "aller",
+            "va",
+            "suivre",
+            "suis",
+            "dehors",
+            "plus loin",
+            "tout droit",
+            "north",
+            "nord",
+            "go",
+            "leave",
+            "exit",
+            "forward",
+            "up",
+            "enter"
+          ],
+          "triggers_paywall": false
+        }
+      ],
+      "key_item": {
+        "acquisition": "found",
+        "instruction": "L'OBJET-CLÉ est la SÉQUENCE D'OPÉRATION affichée par la console, illisible sans l'augmentation. `npc_id` doit valoir la chaîne \"trouve\".\n`resolving_action` EST le dénouement du jeu : l'acte précis que le joueur accomplit sur cette console et qui remet la ville d'aplomb. Il découle de sa MANIÈRE D'AGIR (NOMBRES) et règle, à l'échelle de la ville, la tension de son SIGNE. C'est le geste vers lequel toute la partie tendait — écris-le comme tel, concret et vérifiable, jamais comme une formule.",
+        "exchanges_before_handover": 1
+      },
+      "objective": {
+        "kind": "advance",
+        "requirement": "Accomplir l'opération, et voir ce que la ville en fait"
+      },
+      "theme_focus": {
+        "facet": "destiny",
+        "facet_label": "Forme de l'objectif",
+        "axis": "Le joueur agit CONTRE sa tension : chaque étage est un pas vers sa résolution.",
+        "step": 9
+      },
+      "cast_stances": [
+        {
+          "posture": "-me",
+          "means": "qui a payé le prix et tient debout"
+        }
+      ]
     }
   ],
   "paywall": {
@@ -648,5 +1888,40 @@
       "-me": "qui a payé le prix et tient debout",
       "-va": "qui sert, qui reste derrière"
     }
-  }
+  },
+  "acts": [
+    {
+      "id": "route",
+      "title": "La Route",
+      "scenes": [
+        "rue",
+        "passage",
+        "oracle"
+      ],
+      "arc": "Rejoindre l'oracle — un terminal radio planté sur une hauteur de la ville. Le joueur vient d'obtenir son augmentation : dehors, il découvre qu'elle ne suffit pas. Lire un nom n'est pas savoir où aller.",
+      "ends_on": "L'oracle répond, et sa réponse envoie le joueur plus haut."
+    },
+    {
+      "id": "hauteurs",
+      "title": "Les Hauteurs",
+      "scenes": [
+        "crete",
+        "relais",
+        "terminal"
+      ],
+      "arc": "Au-dessus de la couche de pluie. Il faut trouver, dans un champ d'antennes mortes, le terminal qui délivre les accès du building. La ville n'est plus qu'une lueur en dessous.",
+      "ends_on": "Le terminal délivre l'accès du building."
+    },
+    {
+      "id": "building",
+      "title": "Le Building",
+      "scenes": [
+        "porte",
+        "etage",
+        "sommet"
+      ],
+      "arc": "Entrer, monter, et accomplir l'opération qui remet la ville d'aplomb. Chaque étage tient sur ce que le joueur a compris avant, pas sur ce qu'il a ramassé.",
+      "ends_on": "Le retour à la normale, ou ce qu'il en reste."
+    }
+  ]
 }

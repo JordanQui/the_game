@@ -1,6 +1,7 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { usePaywall } from '~/composables/usePaywall'
+import { forgetStoredScene } from '~/composables/useScene'
 
 /**
  * Canal direct vers le scénario.
@@ -64,13 +65,63 @@ export function useSceneCommands() {
       },
     },
     {
+      name: 'scenes',
+      help: 'liste les scènes et leur numéro',
+      run() { jumpToScene('scene') },
+    },
+    {
       name: 'aide',
       help: 'liste les commandes disponibles',
       run() {
-        say(commands.map(c => `${PREFIX}${c.name} — ${c.help}`).join('\n'))
+        say([
+          ...commands.map(c => `${PREFIX}${c.name} — ${c.help}`),
+          `${PREFIX}scene<n> — saute à la scène n (${PREFIX}scene2, ${PREFIX}scene7...)`,
+        ].join('\n'))
       },
     },
   ]
+
+  /** Les dix scènes, dans l'ordre, telles que le build les a inscrites. */
+  function sceneIndex(): Array<{ id: string; title: string; act: string | null }> {
+    return (useRuntimeConfig().public.sceneIndex ?? []) as
+      Array<{ id: string; title: string; act: string | null }>
+  }
+
+  /**
+   * Saut direct à une scène : `#scene2`, `#scene7`...
+   *
+   * Ce n'est pas une commande comme les autres — son nom porte un numéro, donc
+   * elle se reconnaît par motif. Elle referme proprement la scène en cours :
+   * celle-ci s'inscrit au journal, et la suivante la lira, exactement comme si
+   * elle avait été jouée jusqu'au bout.
+   */
+  function jumpToScene(name: string): boolean {
+    // On accepte l'espace : « #scene3 » et « #scene 3 » se tapent aussi bien.
+    const match = /^scene\s*(\d*)$/.exec(name)
+    if (!match) return false
+
+    const scenes = sceneIndex()
+    // « #scene » sans numéro : on montre la liste plutôt qu'une erreur.
+    if (!match[1]) {
+      say(scenes.map((s, i) =>
+        `${PREFIX}scene${i + 1} — ${s.title}${s.act ? ` (${s.act})` : ''}`).join('\n'))
+      return true
+    }
+    const n = Number(match[1])
+    const target = scenes[n - 1]
+    if (!target) {
+      say(`Il n'y a pas de scène ${n} — le jeu en compte ${scenes.length}.`)
+      return true
+    }
+
+    playerStore.closeScene()
+    gameStore.startNewScene(target.id)
+    // La scène gardée en session est celle qu'on quitte : sans ça, l'écran de
+    // construction la reposerait telle quelle au lieu d'en demander une neuve.
+    forgetStoredScene()
+    gameStore.setScreen('scene_build_loading')
+    return true
+  }
 
   /** Une saisie qui commence par '#' ne doit jamais atteindre le modèle. */
   function isCommand(input: string): boolean {
@@ -82,6 +133,8 @@ export function useSceneCommands() {
     const name = raw.slice(PREFIX.length).trim().toLowerCase()
 
     gameStore.addNarrativeEntry('player_command', raw)
+
+    if (jumpToScene(name)) return
 
     const command = commands.find(c => c.name === name)
     if (!command) {

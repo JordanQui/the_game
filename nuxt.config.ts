@@ -9,9 +9,22 @@ import { readFileSync } from 'node:fs'
  * générées, une seule source de vérité. Seules ces trois couleurs partent au
  * client : le script entier n'a rien à y faire.
  */
-const uiPalette = JSON.parse(readFileSync(
+const script = JSON.parse(readFileSync(
   new URL('./game/script.json', import.meta.url), 'utf-8',
-)).defaults.interface_palette.palette
+))
+const uiPalette = script.defaults.interface_palette.palette
+
+/**
+ * L'ordre des scènes, pour que `#scene<n>` sache où aller.
+ *
+ * Des identifiants et des titres, rien d'autre : le contenu du script reste
+ * côté serveur. C'est ce qui permet au raccourci de désigner une scène par son
+ * numéro sans que le client connaisse l'histoire.
+ */
+const sceneIndex = script.progression.order.map((id: string) => {
+  const scene = script.scenes.find((s: { id: string }) => s.id === id)
+  return { id, title: scene?.title ?? id, act: scene?.act ?? null }
+})
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
@@ -48,6 +61,8 @@ export default defineNuxtConfig({
     public: {
       /** Dominante, secondaire et accent de l'auberge. Voir plus haut. */
       uiPalette,
+      /** Les dix scènes, dans l'ordre. Identifiants et titres seulement. */
+      sceneIndex,
       facebookAppId: process.env.FACEBOOK_APP_ID,
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,

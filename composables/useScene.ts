@@ -1,5 +1,6 @@
 import type { SceneTextResponse } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
+import type { JournalEntry } from '~/utils/journal'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useImageGen } from '~/composables/useImageGen'
@@ -67,6 +68,30 @@ function storeScene(scene: SceneTextResponse): void {
   }
 }
 
+/**
+ * Le journal survit au rechargement, comme la scène.
+ *
+ * Sans ça, recharger la page en pleine partie ramenait la scène en cours mais
+ * effaçait tout ce qui l'avait précédée : la scène suivante serait alors née
+ * comme si le joueur venait de nulle part.
+ */
+const JOURNAL_KEY = 'tg_journal'
+
+function storeJournal(journal: JournalEntry[]): void {
+  if (!import.meta.client) return
+  try { sessionStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)) } catch { /* on régénérera */ }
+}
+
+function readStoredJournal(): JournalEntry[] {
+  if (!import.meta.client) return []
+  try {
+    const raw = sessionStorage.getItem(JOURNAL_KEY)
+    return raw ? JSON.parse(raw) as JournalEntry[] : []
+  } catch {
+    return []
+  }
+}
+
 export function forgetStoredScene(): void {
   if (!import.meta.client) return
   try { sessionStorage.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
@@ -111,6 +136,7 @@ export function useScene() {
     const stored = wantsFresh() ? null : readStoredScene()
     if (stored) {
       scene.value = stored
+      if (!playerStore.journal.length) playerStore.journal = readStoredJournal()
       // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
       // scène revenait à ses couleurs mais l'habillage restait magenta.
       interfacePalette.applyScene(stored)
@@ -125,13 +151,14 @@ export function useScene() {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
         query: freshQuery(),
-        body: { sceneId, user },
+        body: { sceneId, user, journal: playerStore.journal },
         signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })
       scene.value = res
       // L'habillage prend les couleurs de la scène, si elle le demande.
       interfacePalette.applyScene(res)
       storeScene(res)
+      storeJournal(playerStore.journal)
       playerStore.setScene(res)
       gameStore.addNarrativeEntry('narration', res.scene_text)
       gameStore.setPlayingSubState('awaiting_input')

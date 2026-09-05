@@ -4,6 +4,13 @@ import type { GameScreen, PlayingSubState, NarrativeEntry, NarrativeEntryType } 
 export const useGameStore = defineStore('game', {
   state: () => ({
     currentScreen: 'init' as GameScreen,
+    /**
+     * La scène à construire ensuite.
+     *
+     * `null` = celle du départ. Renseignée quand on saute directement à une
+     * scène, ce que fait la commande `#scene<n>`.
+     */
+    pendingSceneId: null as string | null,
     playingSubState: 'awaiting_input' as PlayingSubState,
     narrativeHistory: [] as NarrativeEntry[],
     turnCount: 0,
@@ -246,7 +253,36 @@ export const useGameStore = defineStore('game', {
       this.currentScreen = 'paywall'
     },
 
+    /**
+     * Repart sur une scène neuve, sans quitter la partie.
+     *
+     * Efface tout ce qui appartenait à la scène précédente — tours, dialogue,
+     * objet-clé, personnages rencontrés — et garde ce qui appartient à la
+     * PARTIE : le profil, le journal des scènes traversées, la dépense.
+     */
+    startNewScene(sceneId: string | null) {
+      this.pendingSceneId = sceneId
+      this.playingSubState = 'awaiting_input'
+      this.narrativeHistory = []
+      this.turnCount = 0
+      this.currentSceneImageUrl = null
+      this.sceneImageLoading = false
+      this.sceneImageError = null
+      this.activeNpcId = null
+      this.hasKeyItem = false
+      this.keyItemExchanges = 0
+      this.informedAboutItem = false
+      this.pendingKeyItem = false
+      this.talkedToNpcIds = []
+      this.resolved = false
+      this.conversationHistory = []
+      this.lastCommand = null
+      this.lastMode = null
+      this.turnError = null
+    },
+
     resetGame() {
+      this.pendingSceneId = null
       this.currentScreen = 'login'
       this.playingSubState = 'awaiting_input'
       this.narrativeHistory = []

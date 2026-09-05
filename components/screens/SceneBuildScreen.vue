@@ -28,7 +28,13 @@ async function build() {
   startMessages()
 
   // Phase 1 : le texte. Bloquant, c'est lui qui rend la scène jouable.
-  const scene = await loadSceneText(undefined, playerStore.profile ?? undefined)
+  // `pendingSceneId` est posé par la commande `#scene<n>` ; sinon on prend
+  // la scène de départ déclarée par le script.
+  const target = gameStore.pendingSceneId ?? undefined
+  // Consommé : sans ça, une scène demandée une fois resterait épinglée et
+  // toute construction ultérieure y reviendrait.
+  gameStore.pendingSceneId = null
+  const scene = await loadSceneText(target, playerStore.profile ?? undefined)
 
   if (interval) clearInterval(interval)
 

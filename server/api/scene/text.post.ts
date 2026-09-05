@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type { GeneratedScene, SceneTextResponse } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
+import type { JournalEntry } from '~/utils/journal'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import { consumeQuota } from '~/server/utils/session-quota'
@@ -18,6 +19,11 @@ export default defineEventHandler(async (event) => {
     sceneId?: string
     /** Profil joueur. Omis en dev : on retombe sur game/user.json. */
     user?: UserProfile
+    /**
+     * Ce que le joueur a déjà vécu. Envoyé par le client, qui le tient : le
+     * serveur ne garde aucun état entre deux scènes.
+     */
+    journal?: JournalEntry[]
   }>(event) ?? {}
 
   const runtime = await ScriptRuntime.load()
@@ -30,7 +36,7 @@ export default defineEventHandler(async (event) => {
 
   // En développement, on rejoue la dernière scène enregistrée plutôt que de
   // repayer la même génération à chaque relance. `?fresh=1` la renouvelle.
-  const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}`, scriptFingerprint(runtime.script))
+  const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}|${body.journal?.length ?? 0}`, scriptFingerprint(runtime.script))
   if (import.meta.dev && !wantsFresh(event)) {
     const cached = await readMock<SceneTextResponse>('scene', key)
     if (cached) return cached
@@ -48,7 +54,7 @@ export default defineEventHandler(async (event) => {
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: gen.system_prompt },
-        { role: 'user', content: scene.buildGenerationPrompt(user) },
+        { role: 'user', content: scene.buildGenerationPrompt(user, body.journal ?? []) },
       ],
     })
   } catch (err) {

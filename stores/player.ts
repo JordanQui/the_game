@@ -1,12 +1,19 @@
 import { defineStore } from 'pinia'
 import type { UserProfile } from '~/types/user'
 import type { SceneTextResponse, SceneNPC, SceneQuest, ScenePlace, ScenePalette } from '~/types/scene'
+import { entryFrom, type JournalEntry } from '~/utils/journal'
 import type { SceneBuildProgress } from '~/types/game'
 
 export const usePlayerStore = defineStore('player', {
   state: () => ({
     profile: null as UserProfile | null,
     scene: null as SceneTextResponse | null,
+    /**
+     * Les scènes déjà traversées, résumées. C'est la mémoire de la partie :
+     * elle part avec chaque demande de scène et permet à l'histoire d'avancer
+     * pas à pas, sans avoir été écrite d'avance.
+     */
+    journal: [] as JournalEntry[],
     buildProgress: { text: false, image: false } as SceneBuildProgress,
   }),
 
@@ -25,6 +32,14 @@ export const usePlayerStore = defineStore('player', {
     setProfile(profile: UserProfile) {
       this.profile = profile
     },
+    /** Referme la scène en cours et la consigne, avant d'en ouvrir une autre. */
+    closeScene() {
+      if (!this.scene) return
+      // Une scène rejouée ne s'inscrit pas deux fois.
+      const already = this.journal.some(e => e.scene_title === this.scene!.scene_title)
+      if (!already) this.journal.push(entryFrom(this.scene))
+    },
+
     setScene(scene: SceneTextResponse) {
       this.scene = scene
       this.buildProgress.text = true
