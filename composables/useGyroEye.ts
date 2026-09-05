@@ -18,12 +18,12 @@ const RANGE_DEG = 22
 /**
  * Hauteur de l'oeil au repos, en fraction d'écran.
  *
- * Volontairement en haut, pas au centre. On lit un téléphone à plat ou
- * légèrement incliné, presque allongé : c'est cette posture-là qui doit
- * correspondre au repos. L'oeil descend ensuite dans le texte quand on relève
- * l'appareil vers soi — le geste naturel pour parcourir une page.
+ * Aux trois quarts de la hauteur en partant du bas, soit un quart depuis le
+ * haut. On lit un téléphone à plat ou presque allongé : c'est cette posture-là
+ * qui doit correspondre au repos. L'oeil descend ensuite dans le texte quand on
+ * relève l'appareil vers soi — le geste naturel pour parcourir une page.
  */
-const NEUTRAL_Y = 0.18
+const NEUTRAL_Y = 0.25
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
 

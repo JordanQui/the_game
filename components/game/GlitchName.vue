@@ -41,10 +41,10 @@ const shown = computed(() => (revealed.value ? props.name : scramble(props.name,
  */
 watch(revealed, (isRevealed, wasRevealed) => {
   if (isRevealed && !wasRevealed) void startChime(props.name, assigned.value.mode, assigned.value.voice)
-  if (!isRevealed && wasRevealed) stopChime()
+  if (!isRevealed && wasRevealed) stopChime(props.name)
 })
 
-onUnmounted(() => { if (revealed.value) stopChime() })
+onUnmounted(() => { if (revealed.value) stopChime(props.name) })
 
 /** Sur desktop, la souris EST l'instrument : aucun mode à activer. */
 function onEnter() {

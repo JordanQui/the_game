@@ -19,6 +19,15 @@ import { buildPattern, type Voice } from '~/utils/voices'
 type ToneModule = typeof import('tone')
 
 interface Rack {
+  /**
+   * Sortie du rack, juste avant le limiteur.
+   *
+   * Relâcher les voix ne suffit pas à faire taire un rack : le drone relâche
+   * en 5,5 s et traîne 12 s de réverbération derrière lui. En passant d'un
+   * personnage à l'autre, l'ancien continuait donc de sonner sous le nouveau —
+   * on croyait entendre plusieurs synthés à la fois. Ce gain les coupe net.
+   */
+  out: InstanceType<ToneModule['Gain']>
   synth: { triggerAttackRelease: (...args: never[]) => unknown; releaseAll?: () => void; dispose: () => void }
   crusher: InstanceType<ToneModule['BitCrusher']>
   shaper: InstanceType<ToneModule['Chebyshev']>
@@ -35,6 +44,18 @@ const racks = new Map<string, Rack>()
 let sequence: InstanceType<ToneModule['Sequence']> | null = null
 let current: Rack | null = null
 let playing: string | null = null
+
+/**
+ * Jeton de génération.
+ *
+ * `start` traverse un `await` — le chargement de Tone, puis un microtask même
+ * quand il est déjà chargé. Pendant ce battement, un autre nom peut prendre la
+ * main. Comparer un nom ne suffit pas : deux composants réagissent au MÊME
+ * changement d'état, dans un ordre que Vue ne garantit pas, et l'arrêt de
+ * l'ancien annulait le démarrage du nouveau. Le jeton tranche sans ambiguïté :
+ * seul le dernier appel émis a le droit de créer une séquence.
+ */
+let token = 0
 
 /**
  * Tempo posé. À 132 en doubles-croches on avait sept notes par seconde : un
@@ -103,7 +124,8 @@ function buildRack(voice: Voice): Rack {
   const r = RECIPES[voice.key]
 
   const limiter = new t.Limiter(-6).toDestination()
-  const reverb = new t.Reverb({ decay: r.decayReverb, wet: 0.62 }).connect(limiter)
+  const out = new t.Gain(0).connect(limiter)
+  const reverb = new t.Reverb({ decay: r.decayReverb, wet: 0.62 }).connect(out)
   const delay = new t.FeedbackDelay({ delayTime: '4n.', feedback: 0.42, wet: r.wetDelay }).connect(reverb)
   // Le chorus donne la largeur analogique : sans lui, les nappes restent
   // plates et l'on entend un synthé logiciel plutôt qu'un instrument.
@@ -119,13 +141,15 @@ function buildRack(voice: Voice): Rack {
   }).connect(crusher)
 
   return {
+    out,
     synth: synth as unknown as Rack['synth'],
     crusher,
     shaper,
     filter,
     dispose: () => {
       synth.dispose(); crusher.dispose(); shaper.dispose()
-      filter.dispose(); chorus.dispose(); delay.dispose(); reverb.dispose(); limiter.dispose()
+      filter.dispose(); chorus.dispose(); delay.dispose()
+      reverb.dispose(); out.dispose(); limiter.dispose()
     },
   }
 }
@@ -173,26 +197,54 @@ async function ensureAudio(): Promise<boolean> {
 }
 
 export function useNameChime() {
-  function stop() {
+  /**
+   * Coupe le son.
+   *
+   * Avec un nom, l'arrêt n'a lieu que si c'est bien ce nom qui joue : quand le
+   * pointeur passe d'un personnage à l'autre, l'ancien ne doit pas faire taire
+   * le nouveau qui vient de démarrer.
+   */
+  function stop(name?: string) {
+    if (name && playing !== name) return
+
+    token++
     sequence?.stop()
     sequence?.dispose()
     sequence = null
     playing = null
 
     if (tone) tone.getTransport().stop()
-    current?.synth.releaseAll?.()
+    silence()
     current = null
+  }
+
+  /** Coupe le rack en cours, queue de réverbération comprise. */
+  function silence() {
+    current?.synth.releaseAll?.()
+    current?.out.gain.rampTo(0, 0.08)
+  }
+
+  /** Arrêt inconditionnel, pour un démarrage qui prend la main. */
+  function takeOver(): number {
+    token++
+    sequence?.stop()
+    sequence?.dispose()
+    sequence = null
+    if (tone) tone.getTransport().stop()
+    silence()
+    return token
   }
 
   async function start(name: string, mode: Mode, voice: Voice) {
     // Déjà en train de jouer ce nom : ne pas relancer le motif au milieu.
     if (playing === name) return
-    stop()
+
+    const mine = takeOver()
     playing = name
 
     if (!(await ensureAudio()) || !tone) return
-    // Le survol a pu changer pendant le chargement de la bibliothèque.
-    if (playing !== name) return
+    // Un démarrage plus récent a pris la main pendant l'attente : on renonce.
+    if (mine !== token) return
 
     let rack = racks.get(voice.key)
     if (!rack) {
@@ -200,6 +252,8 @@ export function useNameChime() {
       racks.set(voice.key, rack)
     }
     current = rack
+    // Le rack peut revenir d'une extinction précédente : on rouvre sa sortie.
+    rack.out.gain.rampTo(1, 0.03)
 
     const recipe = RECIPES[voice.key]
     const pattern = buildPattern(name, mode, voice)
