@@ -130,7 +130,17 @@ function retryImage() {
 </script>
 
 <template>
-  <div class="flex flex-col h-[100dvh] bg-ink-900">
+  <!--
+    L'outil en main EST le curseur, sur toute la surface de jeu.
+    Il ne l'était que sur les noms chiffrés : ailleurs, flèche standard. Le
+    joueur ne voyait donc pas ce qu'il tenait tant qu'il n'avait pas trouvé
+    quelque chose à lire — alors que sur mobile l'oeil est à l'écran en
+    permanence. `tool-cursor` rend leur curseur normal aux commandes.
+  -->
+  <div
+    class="flex flex-col h-[100dvh] bg-ink-900 tool-cursor"
+    :class="gameStore.activeTool === 'eye' ? 'cursor-eye' : 'cursor-lens'"
+  >
     <!-- Le cadre reste 16/9 sur les deux tailles. Mobile : il prend toute la
          largeur. Desktop : c'est la hauteur qui le dimensionne, et il se centre
          — un 16/9 pleine largeur y ferait 810px de haut, sans place pour le

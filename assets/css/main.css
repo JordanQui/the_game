@@ -227,6 +227,26 @@
     cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDIwIDIwIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwODBiMTIiIHN0cm9rZS13aWR0aD0iMy40IiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iNiIvPjxwYXRoIGQ9Ik0xMyAxM2w1IDUiLz48L2c+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZkOWVjIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjYiLz48cGF0aCBkPSJNMTMgMTNsNSA1Ii8+PC9nPjwvc3ZnPg==") 9 9, crosshair;
   }
 
+  /**
+   * Les commandes gardent leur curseur.
+   *
+   * Le curseur-outil couvre toute la surface de jeu, mais il dit ce qu'on fait
+   * AU TEXTE : sur un bouton ou dans la saisie, il ment. Les noms et les objets
+   * chiffrés ne sont pas visés ici — ce sont des `span`, et ils portent déjà
+   * leur propre curseur, qui l'emporte sur celui dont ils héritent.
+   */
+  .tool-cursor button,
+  .tool-cursor a,
+  .tool-cursor select,
+  .tool-cursor label {
+    cursor: pointer;
+  }
+
+  .tool-cursor input,
+  .tool-cursor textarea {
+    cursor: text;
+  }
+
   /** Un trait de pluie. La chute est portée par l'animation rain-fall. */
   .rain-drop {
     @apply absolute w-px;

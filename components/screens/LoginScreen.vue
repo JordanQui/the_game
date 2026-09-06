@@ -118,9 +118,15 @@ async function acceptAndLogin() {
         <div class="neon-rule w-40 mx-auto" />
       </div>
 
+      <!--
+        L'accroche tient en une phrase et pose les deux promesses du jeu : le
+        monde est bâti sur ce joueur-là, et ce qu'il y dénoue lui revient. La
+        coupure tombe avant « vers » : ce que c'est d'un côté, où ça mène de
+        l'autre.
+      -->
       <p class="text-ink-200/75 text-sm leading-relaxed max-w-xs">
-        Une aventure forgée à partir de votre histoire,<br>
-        motivée par elle, et dont votre vie a besoin.
+        Une aventure personnalisée<br>
+        vers une résolution qui vous appartient.
       </p>
 
       <div class="w-full space-y-4 flex flex-col items-center">
