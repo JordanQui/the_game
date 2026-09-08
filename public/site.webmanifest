@@ -1,0 +1,15 @@
+{
+  "name": "La Nuit du Bout du Monde",
+  "short_name": "La Nuit",
+  "description": "Jeu de rôle textuel en français, bâti sur vos réponses. Conçu par Jordan Quiqueret.",
+  "lang": "fr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080b12",
+  "theme_color": "#080b12",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

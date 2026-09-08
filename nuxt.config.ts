@@ -60,6 +60,29 @@ const sceneIndex = script.progression.order.map((id: string) => {
   return { id, title: scene?.title ?? id, act: scene?.act ?? null, kind: scene?.kind ?? 'scene' }
 })
 
+/**
+ * Ce que le jeu dit de lui, hors du jeu.
+ *
+ * Un seul écran, une seule URL : tout le référencement tient ici et dans
+ * `app.vue`, qui y ajoute les adresses absolues (canonique, image sociale) et
+ * les données structurées. Le texte est en français, comme le jeu.
+ */
+const SITE_NAME = 'La Nuit du Bout du Monde'
+const CREATOR = 'Jordan Quiqueret'
+const SEO_TITLE = `${SITE_NAME} — jeu de rôle textuel`
+
+/** 150 caractères : au-delà, les moteurs coupent. */
+const SEO_DESCRIPTION
+  = "Jeu de rôle textuel en français. Vos réponses au formulaire "
+  + `d'admission bâtissent une ville et une quête qui n'appartiennent qu'à vous. Par ${CREATOR}.`
+
+/** Les réseaux tolèrent plus long : on y ajoute ce que le jeu fait vraiment. */
+const SOCIAL_DESCRIPTION
+  = "Une nuit dans une mégapole Art Déco, écrite pour vous seul. Vous déclarez "
+  + "qui vous êtes au bureau des admissions ; la ville, ses habitants et sa quête "
+  + "en naissent, illustrés scène après scène. On y joue en tapant ce qu'on veut "
+  + `faire. Conçu par ${CREATOR}.`
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -77,11 +100,41 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'La Nuit du Bout du Monde',
+      title: SEO_TITLE,
       htmlAttrs: { lang: 'fr' },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'theme-color', content: '#080b12' },
+
+        { name: 'description', content: SEO_DESCRIPTION },
+        { name: 'author', content: CREATOR },
+        { name: 'robots', content: 'index, follow, max-image-preview:large' },
+
+        // Partage : l'image et l'adresse absolues sont posées dans app.vue,
+        // qui seul connaît le domaine servi.
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: SITE_NAME },
+        { property: 'og:locale', content: 'fr_FR' },
+        { property: 'og:title', content: SEO_TITLE },
+        { property: 'og:description', content: SOCIAL_DESCRIPTION },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        {
+          property: 'og:image:alt',
+          content: `${SITE_NAME} — skyline Art Déco au néon rose sur fond de nuit`,
+        },
+
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: SEO_TITLE },
+        { name: 'twitter:description', content: SOCIAL_DESCRIPTION },
+      ],
+      link: [
+        // Le .ico d'abord, pour les vieux navigateurs ; le SVG le remplace
+        // partout où il est compris, et reste net à toutes les tailles.
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' },
       ],
     },
   },
@@ -102,6 +155,17 @@ export default defineNuxtConfig({
       scriptFingerprint,
       /** Durée de vie de la partie gardée par le navigateur, en jours. */
       memoryDays,
+      /**
+       * Le prix du droit d'accès, tel que le script le fixe.
+       *
+       * Exposé pour les données structurées d'`app.vue` : une offre annoncée
+       * aux moteurs qui ne serait pas celle du paywall serait un mensonge, et
+       * la recopier à la main garantissait qu'elles finiraient par diverger.
+       */
+      paywallPrice: {
+        amount: script.paywall.amount_cents / 100,
+        currency: script.paywall.currency,
+      },
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,
       squareEnvironment: process.env.SQUARE_ENVIRONMENT || 'sandbox',
