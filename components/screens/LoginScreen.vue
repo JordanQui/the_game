@@ -2,11 +2,43 @@
 import { useFacebook } from '~/composables/useFacebook'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
+import { useProgression } from '~/composables/useProgression'
+import { forgetRun } from '~/composables/useScene'
 import type { UserProfile } from '~/types/user'
 
 const { login, isLoading, error } = useFacebook()
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
+const progression = useProgression()
+
+/**
+ * La nuit en cours, s'il y en a une.
+ *
+ * Le joueur retombait ici à chaque rechargement, sans autre choix que de tout
+ * recommencer à l'auberge — y compris avec un droit d'accès payé et sept scènes
+ * derrière lui. `/api/access` dit maintenant où il en était ; il ne reste qu'à
+ * le lui proposer.
+ */
+const resumeScene = computed(() => progression.resumeTarget())
+
+function continueGame() {
+  progression.resume()
+}
+
+/**
+ * Repartir de zéro.
+ *
+ * Efface la partie gardée dans l'onglet. Sans ça, « commencer » servait la
+ * scène en session — celle d'où l'on venait — au lieu de l'auberge, et le
+ * journal des scènes précédentes suivait dans la nouvelle partie.
+ */
+function startFresh() {
+  forgetRun()
+  playerStore.journal = []
+  playerStore.reset()
+  // Remet aussi `resumeSceneId` à null : la reprise proposée n'a plus d'objet.
+  gameStore.resetGame()
+}
 
 const showDisclaimer = ref(false)
 const isLoadingDemo = ref(false)
@@ -27,6 +59,7 @@ const raindrops = Array.from({ length: 44 }, (_, i) => ({
 /** Lance la scène sur le profil de démonstration, sans passer par Meta. */
 async function startWithoutMeta() {
   isLoadingDemo.value = true
+  startFresh()
   try {
     const profile = await $fetch<UserProfile>('/api/user/demo')
     playerStore.setProfile(profile)
@@ -44,6 +77,7 @@ function openDisclaimer() {
 
 async function acceptAndLogin() {
   showDisclaimer.value = false
+  startFresh()
   await login()
 }
 </script>
@@ -128,6 +162,27 @@ async function acceptAndLogin() {
         Une aventure personnalisée<br>
         vers une résolution qui vous appartient.
       </p>
+
+      <!--
+        La nuit en cours. En tête et en pleine largeur : pour qui revient, c'est
+        la seule action qui compte — les deux entrées ci-dessous recommencent.
+      -->
+      <div v-if="resumeScene" class="w-full space-y-4 flex flex-col items-center">
+        <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
+          Votre nuit est en cours
+        </p>
+        <GlowButton class="w-full" @click="continueGame">Continuer</GlowButton>
+        <p class="text-ink-200/70 text-[11px] leading-relaxed">
+          {{ resumeScene.title }}
+          <span v-if="resumeScene.act" class="text-steel-400"> — {{ resumeScene.act }}</span>
+        </p>
+
+        <div class="flex items-center gap-4 w-full pt-3">
+          <span class="h-px flex-1 bg-steel-600/40" />
+          <span class="font-display text-[9px] uppercase tracking-[0.3em] text-steel-400">ou</span>
+          <span class="h-px flex-1 bg-steel-600/40" />
+        </div>
+      </div>
 
       <div class="w-full space-y-4 flex flex-col items-center">
         <GlowButton :loading="isLoading" @click="openDisclaimer">

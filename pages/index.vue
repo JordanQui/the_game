@@ -31,8 +31,13 @@ onMounted(async () => {
       active: boolean
       expiresAt?: number
       lock: { until: number; reason: 'stalled' | 'completed'; text?: string } | null
+      resume: { sceneId: string; index: number } | null
     }>('/api/access')
     paymentStore.setAccess(access.active, access.expiresAt ?? null)
+
+    // Où il en était. Le serveur ne la renvoie que si la reprise est permise —
+    // l'accueil n'a donc rien à vérifier, il propose ou il ne propose pas.
+    gameStore.setResumePoint(access.resume?.sceneId ?? null)
 
     // La ville est fermée : on n'ouvre même pas l'écran de connexion. Toute
     // requête coûteuse serait refusée en 423 de toute façon, et l'adieu doit

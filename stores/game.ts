@@ -11,6 +11,16 @@ export const useGameStore = defineStore('game', {
      * scène, ce que fait la commande `#scene<n>`.
      */
     pendingSceneId: null as string | null,
+    /**
+     * La scène où le joueur en était, d'après le serveur.
+     *
+     * Posée au chargement par `/api/access`, qui lit un cookie signé : c'est la
+     * seule mémoire qui survive à la fermeture de l'onglet. Elle n'est
+     * renseignée que si la reprise est permise — première scène, ou droit
+     * d'accès en cours. C'est elle que le bouton « Continuer » de l'accueil
+     * suit.
+     */
+    resumeSceneId: null as string | null,
     playingSubState: 'awaiting_input' as PlayingSubState,
     narrativeHistory: [] as NarrativeEntry[],
     turnCount: 0,
@@ -174,6 +184,11 @@ export const useGameStore = defineStore('game', {
   actions: {
     setScreen(screen: GameScreen) {
       this.currentScreen = screen
+    },
+
+    /** Le point de reprise annoncé par le serveur. Null : rien à reprendre. */
+    setResumePoint(sceneId: string | null) {
+      this.resumeSceneId = sceneId
     },
 
     setPlayingSubState(subState: PlayingSubState) {
@@ -468,6 +483,7 @@ export const useGameStore = defineStore('game', {
 
     resetGame() {
       this.pendingSceneId = null
+      this.resumeSceneId = null
       // Une partie neuve ne garde ni faculté, ni objets, ni noms déchiffrés :
       // sans ça, le joueur suivant commençait avec l'inventaire du précédent.
       this.hasAugmentation = false

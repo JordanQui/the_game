@@ -19,6 +19,7 @@ import { requireSecret } from '~/server/utils/runtime-secrets'
 const COOKIE = 'tg_quota'
 const ACCESS_COOKIE = 'tg_access'
 const LOCK_COOKIE = 'tg_lock'
+const POSITION_COOKIE = 'tg_pos'
 
 export interface SessionQuota {
   /** Identifiant de session, pour le diagnostic. */
@@ -69,6 +70,29 @@ export interface AccessPass {
   payment_id: string
   paid_at: number
   expires_at: number
+}
+
+/**
+ * Où le joueur en est, en termes de scène.
+ *
+ * Côté serveur et non côté client : la scène gardée en `sessionStorage` meurt
+ * avec l'onglet, et le joueur qui revenait le lendemain — droit d'accès encore
+ * valide — retombait sur l'écran d'accueil sans autre choix que de tout
+ * recommencer à l'auberge.
+ *
+ * Ne porte AUCUNE donnée personnelle : un identifiant de scène et un rang, rien
+ * d'autre. Le profil Meta, lui, reste dans la session de l'onglet — c'est ce
+ * que promet l'avertissement affiché avant la connexion.
+ *
+ * Signé comme le reste : sans quoi il suffirait de l'écrire à la main pour se
+ * faire servir une scène tardive sans avoir payé.
+ */
+export interface PositionPass {
+  scene_id: string
+  /** Rang dans `progression.order`. C'est lui qui dit si la scène est gratuite. */
+  index: number
+  /** Dernier passage, en millisecondes. */
+  at: number
 }
 
 function freshQuota(): SessionQuota {
@@ -138,6 +162,51 @@ export function readAccess(event: H3Event): AccessPass | null {
   const pass = unseal<AccessPass>(getCookie(event, ACCESS_COOKIE), secret)
   if (!pass?.expires_at || pass.expires_at < Date.now()) return null
   return pass
+}
+
+/**
+ * Retient la scène servie.
+ *
+ * Écrit à chaque scène rendue : c'est le seul moment où le serveur sait avec
+ * certitude où en est le joueur — le reste vient du navigateur, qui se
+ * falsifie.
+ *
+ * @param windowDays aligné sur la fenêtre payante : la reprise doit tenir
+ * aussi longtemps que le droit d'accès qui l'autorise.
+ */
+export function rememberPosition(
+  event: H3Event, sceneId: string, index: number, windowDays: number,
+): PositionPass {
+  const secret = requireSecret(useRuntimeConfig().nuxtSecret, 'NUXT_SECRET')
+  const position: PositionPass = { scene_id: sceneId, index, at: Date.now() }
+
+  setCookie(event, POSITION_COOKIE, seal(position, secret), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: !import.meta.dev,
+    path: '/',
+    maxAge: Math.ceil(windowDays * 86_400),
+  })
+  return position
+}
+
+/** Où le joueur en était, ou null si rien n'a été retenu ou si c'est falsifié. */
+export function readPosition(event: H3Event): PositionPass | null {
+  const secret = requireSecret(useRuntimeConfig().nuxtSecret, 'NUXT_SECRET')
+  const position = unseal<PositionPass>(getCookie(event, POSITION_COOKIE), secret)
+  if (!position?.scene_id || typeof position.index !== 'number') return null
+  return position
+}
+
+/**
+ * Oublie la position.
+ *
+ * Appelé quand l'histoire est allée jusqu'au bout : il n'y a plus rien à
+ * reprendre, et laisser le cookie ferait proposer une reprise vers un épilogue
+ * déjà lu.
+ */
+export function forgetPosition(event: H3Event): void {
+  deleteCookie(event, POSITION_COOKIE, { path: '/' })
 }
 
 /**

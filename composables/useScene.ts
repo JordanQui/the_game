@@ -49,12 +49,25 @@ function currentFingerprint(): string {
   return useRuntimeConfig().public.scriptFingerprint as string
 }
 
-function readStoredScene(): SceneTextResponse | null {
+/**
+ * @param expectedId la scène attendue, quand on en vise une précise.
+ *
+ * Sans ce contrôle, une reprise pouvait reposer la scène d'un autre onglet :
+ * la position vient d'un cookie partagé par tout le navigateur, la scène gardée
+ * appartient à un onglet. Le cookie disait « l'étage », l'onglet gardait
+ * « l'auberge », et le joueur repartait du comptoir sans rien comprendre.
+ */
+function readStoredScene(expectedId?: string): SceneTextResponse | null {
   if (!import.meta.client) return null
   try {
     const raw = sessionStorage.getItem(SCENE_KEY)
     if (!raw) return null
     const stored = JSON.parse(raw) as SceneTextResponse
+
+    if (expectedId && stored.scene_id !== expectedId) {
+      forgetStoredScene()
+      return null
+    }
 
     // Le jeu a été redéployé depuis : cette scène ne le reflète plus. Sans ce
     // contrôle, un déploiement restait invisible pour tout joueur ayant déjà
@@ -100,10 +113,23 @@ const CARRY_KEY = 'tg_carry'
 
 interface Carry {
   journal: JournalEntry[]
-  inventory: Array<{ id: string; label: string; from?: string }>
+  inventory: Array<{
+    id: string; label: string; from?: string
+    kind: 'key' | 'lore'; color?: string
+  }>
   decrypted: string[]
   augmentation: boolean
   primerSeen: boolean
+  /**
+   * Le profil du joueur.
+   *
+   * Il n'y était pas, et un rechargement le perdait : la scène suivante
+   * repartait alors du personnage de démonstration, dans un monde qui n'était
+   * plus le sien. En `sessionStorage` et nulle part ailleurs — l'avertissement
+   * affiché avant la connexion promet que ces données sont oubliées à la
+   * fermeture de la session, et c'est exactement ce que fait cette mémoire-là.
+   */
+  profile?: UserProfile | null
 }
 
 function storeCarry(carry: Carry): void {
@@ -124,6 +150,20 @@ function readStoredCarry(): Carry | null {
 export function forgetStoredScene(): void {
   if (!import.meta.client) return
   try { sessionStorage.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
+}
+
+/**
+ * Oublie la partie entière : la scène ET ce qui la traversait.
+ *
+ * Pour le joueur qui repart de zéro depuis l'accueil, et pour lui seul.
+ * `forgetStoredScene` ne suffit pas : sans ce coup de balai, on repartait à
+ * l'auberge avec le journal, l'inventaire et l'augmentation de la partie
+ * précédente — une première scène jouée par quelqu'un qui avait déjà tout.
+ */
+export function forgetRun(): void {
+  if (!import.meta.client) return
+  forgetStoredScene()
+  try { sessionStorage.removeItem(CARRY_KEY) } catch { /* sans conséquence */ }
 }
 
 /**
@@ -185,6 +225,7 @@ export function useScene() {
       decrypted: gameStore.decryptedObjectIds,
       augmentation: gameStore.hasAugmentation,
       primerSeen: gameStore.primerSeen,
+      profile: playerStore.profile,
     })
   }
 
@@ -196,6 +237,7 @@ export function useScene() {
     if (!gameStore.decryptedObjectIds.length) gameStore.decryptedObjectIds = carry.decrypted ?? []
     if (carry.augmentation) gameStore.hasAugmentation = true
     if (carry.primerSeen) gameStore.primerSeen = true
+    if (!playerStore.profile && carry.profile) playerStore.setProfile(carry.profile)
   }
 
   /** Phase 1. Bloquant : sans texte, pas de scène. */
@@ -219,7 +261,7 @@ export function useScene() {
     }
 
     // Rechargement de page : la scène est déjà là, on la repose telle quelle.
-    const stored = wantsFresh() ? null : readStoredScene()
+    const stored = wantsFresh() ? null : readStoredScene(sceneId)
     if (stored) {
       scene.value = stored
       // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
@@ -236,7 +278,15 @@ export function useScene() {
       const res = await $fetch<SceneTextResponse>('/api/scene/text', {
         method: 'POST',
         query: freshQuery(),
-        body: { sceneId, user, journal: playerStore.journal, carried: carried() },
+        // `user ?? profil restauré` : sur une reprise, l'appelant n'a encore
+        // rien en main — c'est `restoreCarry` juste au-dessus qui vient de
+        // remettre le profil en place.
+        body: {
+          sceneId,
+          user: user ?? playerStore.profile ?? undefined,
+          journal: playerStore.journal,
+          carried: carried(),
+        },
         signal: AbortSignal.timeout(SCENE_TEXT_TIMEOUT_MS),
       })
       scene.value = res

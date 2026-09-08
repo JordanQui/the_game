@@ -4,7 +4,9 @@ import type { UserProfile } from '~/types/user'
 import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
-import { assertNotLocked, consumeQuota, lockOut } from '~/server/utils/session-quota'
+import {
+  assertNotLocked, consumeQuota, lockOut, rememberPosition, forgetPosition,
+} from '~/server/utils/session-quota'
 import { mockKey, readMock, writeMock, wantsFresh, scriptFingerprint } from '~/server/utils/dev-mocks'
 
 /**
@@ -37,12 +39,31 @@ export default defineEventHandler(async (event) => {
   const scene = runtime.scene(body.sceneId)
   const user = body.user ?? await loadUserFixture()
 
+  /**
+   * Retient la scène servie, pour que le joueur puisse y revenir.
+   *
+   * Ici et nulle part ailleurs : c'est le seul endroit où le serveur constate
+   * qu'une scène a bien été rendue. La reprise ne doit désigner que des scènes
+   * réellement traversées — sinon le bouton « Continuer » enverrait construire
+   * une scène dont la précédente n'a jamais eu lieu.
+   */
+  const remember = () => rememberPosition(
+    event, scene.id, runtime.script.progression.order.indexOf(scene.id),
+    limits.paid.window_days,
+  )
+
   // En développement, on rejoue la dernière scène enregistrée plutôt que de
   // repayer la même génération à chaque relance. `?fresh=1` la renouvelle.
   const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}|${body.journal?.length ?? 0}|${body.carried?.length ?? 0}`, scriptFingerprint(runtime.script))
   if (import.meta.dev && !wantsFresh(event)) {
     const cached = await readMock<SceneTextResponse>('scene', key)
-    if (cached) return cached
+    if (cached) {
+      // La reprise doit rester testable sans repayer une génération. L'épilogue
+      // fait exception, comme plus bas : il n'y a rien à reprendre après lui.
+      if (scene.kind === 'ending') forgetPosition(event)
+      else remember()
+      return cached
+    }
   }
 
   const openai = new OpenAI({ apiKey: requireSecret(config.openaiApiKey, 'OPENAI_API_KEY') })
@@ -122,6 +143,9 @@ export default defineEventHandler(async (event) => {
       // tenable. L'adieu part dans le cookie : il doit survivre au
       // rechargement, l'épilogue ne s'affiche qu'une fois.
       lockOut(event, limits.lock.completed_days * 24, 'completed', ending.farewell)
+      // Plus rien à reprendre : sans cet oubli, l'accueil proposerait de
+      // « continuer » vers un épilogue déjà lu, que le verrou refuserait.
+      forgetPosition(event)
 
       await writeMock('scene', key, assembled)
       return assembled
@@ -150,6 +174,7 @@ export default defineEventHandler(async (event) => {
     // a changé — sans quoi un déploiement reste invisible pour lui.
     script_fingerprint: scriptFingerprint(runtime.script),
   }
+  remember()
   await writeMock('scene', key, assembled)
   return assembled
 })

@@ -1,5 +1,5 @@
 import { ScriptRuntime } from '~/utils/script-runtime'
-import { readAccess, readLock } from '~/server/utils/session-quota'
+import { readAccess, readLock, readPosition } from '~/server/utils/session-quota'
 
 /**
  * Le droit d'accès en cours.
@@ -19,7 +19,21 @@ export default defineEventHandler(async (event) => {
     : null
 
   const pass = readAccess(event)
-  if (!pass) return { active: false as const, lock: closed }
+
+  /**
+   * Où le joueur en était, s'il a le droit d'y retourner.
+   *
+   * C'est ICI que se décide la reprise, pas côté client : la première scène est
+   * gratuite, toutes les suivantes sont derrière le sas. Renvoyer une position
+   * tardive à qui n'a pas payé ferait proposer un « Continuer » qui n'aurait
+   * mené qu'au paywall — et la ville fermée ne se reprend pas du tout.
+   */
+  const position = closed ? null : readPosition(event)
+  const resume = position && (position.index === 0 || pass)
+    ? { sceneId: position.scene_id, index: position.index }
+    : null
+
+  if (!pass) return { active: false as const, lock: closed, resume }
 
   const runtime = await ScriptRuntime.load()
   return {
@@ -27,5 +41,6 @@ export default defineEventHandler(async (event) => {
     expiresAt: pass.expires_at,
     windowDays: runtime.script.limits.paid.window_days,
     lock: closed,
+    resume,
   }
 })

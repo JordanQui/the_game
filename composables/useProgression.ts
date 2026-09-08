@@ -55,6 +55,36 @@ export function useProgression() {
     gameStore.setScreen(scene.kind === 'ending' ? 'ending' : 'scene_build_loading')
   }
 
+  /**
+   * Reprend là où le joueur en était.
+   *
+   * Ce n'est PAS `goTo` : reprendre ne referme rien et n'oublie rien. La scène
+   * gardée en session est laissée en place — si c'est bien la même, l'écran de
+   * construction la repose telle quelle et la reprise ne coûte pas un centime.
+   * `goTo`, lui, jette cette copie pour en réclamer une neuve : l'appeler ici
+   * aurait fait repayer une génération à chaque rechargement de page.
+   *
+   * Faux si le serveur n'a rien retenu, ou si la scène retenue ne fait pas
+   * partie de ce script — un cookie peut avoir survécu à une refonte.
+   */
+  function resume(): boolean {
+    const id = gameStore.resumeSceneId
+    if (!id) return false
+
+    const target = scenes().find(s => s.id === id)
+    if (!target) return false
+
+    gameStore.startNewScene(target.id)
+    gameStore.setScreen(target.kind === 'ending' ? 'ending' : 'scene_build_loading')
+    return true
+  }
+
+  /** La scène retenue, telle qu'on peut la nommer au joueur. */
+  function resumeTarget(): SceneRef | null {
+    const id = gameStore.resumeSceneId
+    return id ? scenes().find(s => s.id === id) ?? null : null
+  }
+
   /** Passe à la suite. Faux s'il n'y a plus rien après. */
   function advance(): boolean {
     const target = next()
@@ -63,5 +93,5 @@ export function useProgression() {
     return true
   }
 
-  return { scenes, next, goTo, advance }
+  return { scenes, next, goTo, advance, resume, resumeTarget }
 }
