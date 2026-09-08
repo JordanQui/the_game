@@ -2,22 +2,34 @@
 import { usePlayerStore } from '~/stores/player'
 
 /**
- * Ce qu'est l'oeil, au moment de l'ouvrir.
+ * Ce que le bouton de l'oeil allume, au moment de le toucher.
  *
- * On dit ce qu'il EST et ce qu'il coûte, jamais comment s'en servir : le geste
- * s'apprend en le faisant, et l'icône au-dessus le montre mieux qu'une phrase.
- * Elle dérive dans un carré invisible — c'est la visée elle-même, en réduction.
+ * UNE FENÊTRE D'INTERFACE, PAS UN MORCEAU DE RÉCIT. L'oeil n'est pas un objet
+ * qu'on trouve ni un pouvoir qu'on gagne : c'est la commande qui active la
+ * lecture des noms, et le son qui va avec. Son texte est donc FIXE — écrit
+ * dans `defaults.eye_primer` —, jamais généré avec la scène.
  *
  * SUR IOS, LE GYROSCOPE N'ÉMET RIEN AVANT LA PERMISSION, et cette fenêtre est
  * précisément ce qui la précède. L'icône se pilote donc au capteur quand il
  * parle déjà — Android, iOS déjà autorisé — et dérive d'elle-même sinon. Dans
  * les deux cas elle dit la même chose : ça se déplace en inclinant.
  */
-const props = defineProps<{ text?: string }>()
 const emit = defineEmits<{ confirm: []; close: [] }>()
 
 const playerStore = usePlayerStore()
 const labels = computed(() => playerStore.scene?.eye_primer)
+
+/**
+ * Ce que dit la fenêtre si la scène n'est pas encore là.
+ *
+ * Ce texte ne dépend d'aucune scène — c'est une commande d'interface —, donc
+ * il n'y a aucune raison qu'un chargement en retard laisse la fenêtre muette.
+ */
+const FALLBACK_BODY = [
+  'Ce bouton allume l\'oeil. Il lit les noms des gens : amène-le sur l\'un d\'eux, et son nom se déchiffre.',
+  'Chacun ici a sa note, et tu l\'entends au moment où tu le reconnais. Mets le son.',
+]
+const body = computed(() => labels.value?.body?.length ? labels.value.body : FALLBACK_BODY)
 
 /** Position dans le carré, en fraction. 0,5 au centre. */
 const pos = ref({ x: 0.5, y: 0.5 })
@@ -92,8 +104,12 @@ const style = computed(() => ({
         </p>
       </div>
 
-      <p v-if="props.text" class="text-ink-200/85 text-sm leading-relaxed">
-        {{ props.text }}
+      <p
+        v-for="(line, i) in body"
+        :key="i"
+        class="text-ink-200/85 text-sm leading-relaxed"
+      >
+        {{ line }}
       </p>
 
       <GlowButton class="w-full" @click="emit('confirm')">

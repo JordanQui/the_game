@@ -189,10 +189,8 @@ export interface SceneTextResponse extends GeneratedScene {
   grants_augmentation: boolean
   /** Cette scène est la porte payante. Les autres s'enchaînent librement. */
   is_paywall_gate: boolean
-  /** Ce qu'est l'oeil de ce joueur, généré avec la scène. */
-  eye_primer_text?: string
-  /** Libellés de la fenêtre de l'oeil. */
-  eye_primer: { eyebrow: string; cta: string }
+  /** Textes de la fenêtre du bouton de l'oeil. Fixes, jamais générés. */
+  eye_primer: { eyebrow: string; body: string[]; cta: string }
   /** Textes de la fenêtre qui présente l'augmentation. */
   augmentation_primer: {
     eyebrow: string

@@ -1,5 +1,6 @@
 import type { SceneTextResponse } from '~/types/scene'
 import { normalize } from '~/utils/text-match'
+import { teaching } from '~/utils/interactables'
 
 /**
  * Répond localement, sans appeler le modèle.
@@ -13,6 +14,14 @@ import { normalize } from '~/utils/text-match'
  */
 
 export type LocalAnswerKind = 'decor' | 'npc_known' | 'guidance' | 'budget_exhausted'
+
+/** Ce que l'oracle a besoin de savoir du joueur pour répondre sans le modèle. */
+export interface OracleState {
+  hasKeyItem: boolean
+  talkedToNpcIds: string[]
+  /** Il a ouvert un objet qui avait quelque chose à lui apprendre. */
+  hasAnalysed: boolean
+}
 
 export interface LocalAnswer {
   text: string
@@ -53,7 +62,7 @@ function namedIn(input: string, name: string): boolean {
  */
 export function buildGuidance(
   scene: SceneTextResponse,
-  state: { hasKeyItem: boolean; talkedToNpcIds: string[] }
+  state: OracleState
 ): string {
   const lines: string[] = []
   lines.push(`Quête : ${scene.quest.title} — ${scene.quest.objective}`)
@@ -70,7 +79,16 @@ export function buildGuidance(
     }
   } else if (item) {
     lines.push(`Tu tiens ${item.name}. ${item.why}`)
-    lines.push(`Il ne te reste qu'à franchir ${scene.paywall.exit_keywords[0] ?? 'le sas'}.`)
+    // Le tenir ne suffit pas là où on vient de le recevoir : la porte attend
+    // qu'on s'en soit servi. Ne pas le dire ici enverrait le joueur vers un sas
+    // qui le refuserait — voir le moment `sortie_sans_analyse`.
+    if (scene.grants_augmentation && !state.hasAnalysed && teaching(scene).length) {
+      lines.push(
+        "Sers-t'en avant de sortir : la loupe ouvre les noms brouillés du récit, "
+        + "et ce qu'ils disent vaut le détour.")
+    } else {
+      lines.push(`Il ne te reste qu'à franchir ${scene.paywall.exit_keywords[0] ?? 'le sas'}.`)
+    }
   }
 
   if (scene.npcs.length) {
@@ -88,7 +106,7 @@ export function buildGuidance(
 export function resolveLocally(
   input: string,
   scene: SceneTextResponse,
-  state: { hasKeyItem: boolean; talkedToNpcIds: string[] }
+  state: OracleState
 ): LocalAnswer | null {
   const text = normalize(input)
 

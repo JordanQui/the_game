@@ -6,6 +6,7 @@ import { useNarrative } from '~/composables/useNarrative'
 import { usePaywall } from '~/composables/usePaywall'
 import { useSceneCommands } from '~/composables/useSceneCommands'
 import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
+import { teaching } from '~/utils/interactables'
 import { matchesKeyword } from '~/utils/text-match'
 
 /**
@@ -26,9 +27,28 @@ export function useStorylets() {
   const { openExit } = usePaywall()
   const { isCommand, run: runSceneCommand } = useSceneCommands()
 
+  /**
+   * Les objets du récit qui ont quelque chose à apprendre, et ceux qu'il a lus.
+   *
+   * L'augmentation ne se contente pas de s'obtenir : c'est en ouvrant un objet
+   * qu'on comprend ce qu'elle permet, et c'est ça qui ouvre le sas.
+   */
+  function lessons() {
+    const scene = playerStore.scene
+    const objects = scene ? teaching(scene) : []
+    return {
+      available: objects.length > 0,
+      read: objects.some(o => gameStore.decryptedObjectIds.includes(o.id)),
+    }
+  }
+
   /** Ce que l'oracle et le récapitulatif ont besoin de savoir du joueur. */
   function oracleState() {
-    return { hasKeyItem: gameStore.hasKeyItem, talkedToNpcIds: gameStore.talkedToNpcIds }
+    return {
+      hasKeyItem: gameStore.hasKeyItem,
+      talkedToNpcIds: gameStore.talkedToNpcIds,
+      hasAnalysed: lessons().read,
+    }
   }
 
   /**
@@ -44,6 +64,7 @@ export function useStorylets() {
     const item = scene?.key_item ?? null
     const pacing = scene?.pacing
     const npc = scene ? findAddressedNpc(input) : undefined
+    const lesson = lessons()
 
     // Les deux plafonds : le compte de tours mord en pratique, le budget en
     // dollars n'est qu'un filet si les prompts venaient à grossir.
@@ -64,6 +85,8 @@ export function useStorylets() {
       addressesHolder: Boolean(npc && item && npc.id === item.npc_id),
 
       sceneHasKeyItem: Boolean(item),
+      exitNeedsAnalysis: Boolean(scene?.grants_augmentation) && lesson.available,
+      hasAnalysed: lesson.read,
       hasKeyItem: gameStore.hasKeyItem,
       pendingKeyItem: gameStore.pendingKeyItem,
       informed: gameStore.informedAboutItem,
@@ -78,11 +101,17 @@ export function useStorylets() {
   }
 
   /** Le texte d'une réponse qui ne passe pas par le modèle. */
-  function localText(say: 'oracle' | 'nobody' | 'exhausted', q: Qualities): string {
+  function localText(say: 'oracle' | 'nobody' | 'unused_lens' | 'exhausted', q: Qualities): string {
     const scene = playerStore.scene
     if (say === 'oracle') return q.localAnswer?.text ?? ''
     if (say === 'nobody') {
-      return "Tu ne connais pas encore son nom. L'oeil, en haut à droite, lit les identités."
+      return "Tu ne connais pas encore son nom. L'oeil, en haut à gauche, lit les identités."
+    }
+    if (say === 'unused_lens') {
+      const tool = scene?.key_item?.name ?? "ce qu'on vient de te remettre"
+      return `Tu tiens ${tool} et tu ne t'en es pas encore servi. `
+        + 'La loupe, dans la barre d\'outils, ouvre les noms brouillés du récit — '
+        + 'il y a ici quelque chose à lire avant de pousser la porte.'
     }
     const notice = scene?.pacing?.autonomous_notice ?? ''
     return scene ? `${notice}\n\n${buildGuidance(scene, oracleState())}` : notice
@@ -147,8 +176,9 @@ export function useStorylets() {
       }
       // Une réponse anonyme ne consomme pas de tour : le joueur n'a rien joué,
       // il lui manque un outil.
-      if (moment.play.say === 'nobody') {
-        gameStore.addNarrativeEntry('system', localText('nobody', q))
+      // Idem pour l'outil jamais employé : il lui manque un geste, pas un tour.
+      if (moment.play.say === 'nobody' || moment.play.say === 'unused_lens') {
+        gameStore.addNarrativeEntry('system', localText(moment.play.say, q))
         gameStore.setPlayingSubState('awaiting_input')
         return
       }

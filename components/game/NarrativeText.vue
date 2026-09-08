@@ -3,7 +3,7 @@ import type { NarrativeEntry } from '~/types/game'
 import type { Term } from '~/utils/glitch'
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
-import { isTakeable } from '~/utils/interactables'
+import { analyzables } from '~/utils/interactables'
 
 const props = defineProps<{ entries: NarrativeEntry[] }>()
 
@@ -34,19 +34,11 @@ const names = computed<Term[]>(() => {
     .filter(n => n.name)
     .map(n => ({ value: n.name, kind: 'name' }))
 
-  const things: Term[] = []
-  // L'objet-clé de la scène. Son id est celui que `collectKeyItem` lui donnera :
-  // déchiffré dans le récit, il reste déchiffré une fois dans l'inventaire.
-  if (scene.key_item?.name) {
-    things.push({ value: scene.key_item.name, kind: 'object', id: `cle_${scene.scene_id}` })
-  }
-  if (scene.sealed_object?.name) {
-    things.push({ value: scene.sealed_object.name, kind: 'object', id: scene.sealed_object.id })
-  }
-  for (const obj of scene.interactables ?? []) {
-    if (!obj.label || !isTakeable(obj)) continue
-    things.push({ value: obj.label, kind: 'object', id: obj.id })
-  }
+  // La liste vit dans `utils/interactables` : la sortie de l'auberge exige
+  // qu'on ait analysé quelque chose, et elle doit interroger exactement ce que
+  // le récit a brouillé ici.
+  const things: Term[] = analyzables(scene)
+    .map(o => ({ value: o.label, kind: 'object', id: o.id }))
 
   return [...people, ...things]
 })

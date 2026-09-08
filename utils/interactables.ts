@@ -24,3 +24,52 @@ export function isTakeable(obj: Interactable): boolean {
   if (obj.triggers_paywall) return false
   return TAKE_VERBS.includes(normalize(obj.verb ?? ''))
 }
+
+/** Une chose du récit que la loupe peut ouvrir. */
+export interface Analyzable {
+  id: string
+  label: string
+  /** Ce que l'analyse révèle. Vide : l'objet se déchiffre, mais n'apprend rien. */
+  observation?: string
+}
+
+/**
+ * Tout ce qui, dans une scène, se chiffre dans le texte et s'ouvre à la loupe.
+ *
+ * UNE SEULE LISTE, parce qu'elle sert deux endroits qui ne doivent jamais
+ * diverger : ce que le récit brouille, et ce que la sortie de l'auberge exige
+ * qu'on ait lu. Deux listes séparées, et le joueur se retrouverait devant une
+ * porte qui réclame l'analyse d'un objet qu'aucun texte n'a chiffré.
+ *
+ * L'objet-clé en fait partie — il est brouillé dans le récit avant d'être
+ * remis — mais il ne porte pas d'`observation` : le déchiffrer donne son nom,
+ * pas une leçon. Ce sont les autres qui enseignent.
+ */
+export function analyzables(scene: {
+  scene_id?: string
+  key_item?: { name?: string } | null
+  sealed_object?: { id: string; name?: string; observation?: string } | null
+  interactables?: Interactable[]
+}): Analyzable[] {
+  const out: Analyzable[] = []
+  // Le même id que celui que `collectKeyItem` lui donnera : déchiffré dans le
+  // récit, il reste déchiffré une fois dans l'inventaire.
+  if (scene.key_item?.name) out.push({ id: `cle_${scene.scene_id}`, label: scene.key_item.name })
+  if (scene.sealed_object?.name) {
+    out.push({
+      id: scene.sealed_object.id,
+      label: scene.sealed_object.name,
+      observation: scene.sealed_object.observation,
+    })
+  }
+  for (const obj of scene.interactables ?? []) {
+    if (!obj.label || !isTakeable(obj)) continue
+    out.push({ id: obj.id, label: obj.label, observation: obj.observation })
+  }
+  return out
+}
+
+/** Celles qui ont quelque chose à apprendre : c'est ce que la loupe sert à lire. */
+export function teaching(scene: Parameters<typeof analyzables>[0]): Analyzable[] {
+  return analyzables(scene).filter(o => o.observation?.trim())
+}

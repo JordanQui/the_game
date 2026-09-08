@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useGameStore } from '~/stores/game'
-import { usePlayerStore } from '~/stores/player'
 import { useGyroEye } from '~/composables/useGyroEye'
 
 /**
@@ -10,11 +9,10 @@ import { useGyroEye } from '~/composables/useGyroEye'
  * déjà ce travail et un oeil de plus serait un doublon encombrant.
  */
 const gameStore = useGameStore()
-const playerStore = usePlayerStore()
 const { needsEye, supported, enabled, denied, enable } = useGyroEye()
 
 /**
- * On explique d'abord ce qu'est l'oeil, on l'ouvre ensuite.
+ * On dit d'abord ce que le bouton allume, on l'ouvre ensuite.
  *
  * Le bouton de la fenêtre est lui-même un geste utilisateur : iOS accepte donc
  * `requestPermission()` depuis là, ce qui n'aurait pas marché depuis un
@@ -37,7 +35,6 @@ const style = computed(() => ({
   <div v-if="needsEye">
     <EyePrimer
       v-if="showPrimer"
-      :text="playerStore.scene?.eye_primer_text"
       @confirm="confirmPrimer"
       @close="showPrimer = false"
     />

@@ -22,6 +22,16 @@ import { primeContext, unlockAudio } from '~/composables/useNameChime'
 const RANGE_DEG = 22
 
 /**
+ * Hauteur de l'oeil au repos, en fraction d'écran.
+ *
+ * Aux trois quarts de la hauteur en partant du bas, soit un quart depuis le
+ * haut. On lit un téléphone à plat ou presque allongé : c'est cette posture-là
+ * qui doit correspondre au repos. L'oeil descend ensuite dans le texte quand on
+ * relève l'appareil vers soi — le geste naturel pour parcourir une page.
+ */
+const NEUTRAL_Y = 0.25
+
+/**
  * Ce que la posture change : l'amplitude disponible.
  *
  * Allongé, le bras porte l'appareil au-dessus du visage et ne peut plus

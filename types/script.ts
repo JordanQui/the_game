@@ -173,8 +173,8 @@ export interface ScriptDefaults {
   game_over: { note?: string; instruction: string }
   /** Cartes et serrures : la couleur dit laquelle présenter. */
   locks: { note?: string; instruction: string }
-  /** Ce qu'est l'oeil, dit au joueur quand il l'ouvre. */
-  eye_primer: { note?: string; eyebrow: string; cta: string; instruction: string }
+  /** La fenêtre du bouton de l'oeil. Texte fixe : ce n'est pas de la fiction. */
+  eye_primer: { note?: string; eyebrow: string; body: string[]; cta: string }
   /** La fenêtre qui présente l'augmentation, à la réception. */
   augmentation_primer: {
     note?: string
