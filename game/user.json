@@ -28,36 +28,6 @@
   },
 
   "trajectory": {
-    "education": [
-      {
-        "school": "Université de Rennes",
-        "degree": "Licence d'histoire médiévale",
-        "year": "2012",
-        "type": "College"
-      },
-      {
-        "school": "École des Beaux-Arts de Nantes",
-        "degree": "DNSEP design graphique",
-        "year": "2015",
-        "type": "Graduate School"
-      }
-    ],
-    "work": [
-      {
-        "employer": "Atelier Vertigo",
-        "position": "Directrice artistique",
-        "location": "Lyon",
-        "start_date": "2019-04",
-        "end_date": null
-      },
-      {
-        "employer": "Studio Kombu",
-        "position": "Graphiste",
-        "location": "Nantes",
-        "start_date": "2015-09",
-        "end_date": "2019-03"
-      }
-    ],
     "turning_points": [
       "A quitté une ville portuaire de l'ouest pour une ville de fleuves à l'intérieur des terres",
       "A abandonné l'étude du passé pour la fabrication d'images",

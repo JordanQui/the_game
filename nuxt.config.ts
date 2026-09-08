@@ -87,7 +87,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
     openaiApiKey: process.env.OPENAI_API_KEY,
     squareAccessToken: process.env.SQUARE_ACCESS_TOKEN,
     nuxtSecret: process.env.NUXT_SECRET,
@@ -103,7 +102,6 @@ export default defineNuxtConfig({
       scriptFingerprint,
       /** Durée de vie de la partie gardée par le navigateur, en jours. */
       memoryDays,
-      facebookAppId: process.env.FACEBOOK_APP_ID,
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,
       squareEnvironment: process.env.SQUARE_ENVIRONMENT || 'sandbox',

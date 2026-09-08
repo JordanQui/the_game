@@ -19,8 +19,8 @@
  *   passions ................... passions, par intensité
  *   imprints ................... quatre traces à remettre en décor
  *   misc_facts ................. divers
- * `identity.id` et `picture_url` ne servaient qu'au classifieur Facebook : le
- * formulaire ne les demande pas. Trois questions ont été retirées faute d'usage :
+ * `identity.id` et `picture_url` ne servaient qu'à l'ancienne extraction Meta :
+ * le formulaire ne les demande pas. Trois questions ont été retirées faute d'usage :
  * les langues parlées (le jeu se joue en une langue, choisie ailleurs), la
  * formation et le parcours professionnel — un intitulé de poste ne survit pas à
  * la transposition, le prompt interdisant toute reprise littérale. Les sources
@@ -83,8 +83,8 @@ export const AGREEMENT_CHOICES: Array<{ value: UserAgreement; label: string; exa
 /**
  * Les passions proposées.
  *
- * Chacune porte ses `evidence` : le classifieur Facebook les tirait des pages
- * aimées, et le bloc joueur les affiche entre parenthèses. Sans elles, une
+ * Chacune porte ses `evidence` : trois accroches concrètes que le bloc joueur
+ * affiche entre parenthèses. Sans elles, une
  * passion se réduirait à deux mots et le modèle n'aurait rien à quoi accrocher
  * un décor.
  */

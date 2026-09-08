@@ -30,9 +30,9 @@ const CUSPS: Array<{ month: number; day: number; key: ZodiacKey }> = [
 /**
  * Extrait le mois et le jour, quel que soit le format reçu.
  *
- * Facebook renvoie `MM/DD/YYYY`, ou `MM/DD` quand l'utilisateur masque son
- * année ; la fixture de dev est en `YYYY-MM-DD`. Le signe ne dépendant que du
- * mois et du jour, une année masquée ne pose aucun problème.
+ * Le formulaire d'admission rend `YYYY-MM-DD`, comme le dossier type. Les
+ * autres formes — `MM/DD/YYYY`, ou `MM/DD` sans année — restent tolérées : le
+ * signe ne dépend que du mois et du jour.
  */
 export function parseBirthday(birthday?: string): { month: number; day: number } | null {
   if (!birthday) return null

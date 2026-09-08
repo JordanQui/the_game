@@ -269,7 +269,7 @@ function acceptAndEnroll() {
           Remplissez le formulaire d'admission
         </GlowButton>
         <p class="text-steel-400 text-[10px] uppercase tracking-[0.2em] font-display">
-          Six étapes — ni compte, ni mot de passe
+          Cinq étapes — ni compte, ni mot de passe
         </p>
       </div>
 

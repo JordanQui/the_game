@@ -33,7 +33,7 @@ import { numerologyOf } from '~/utils/numerology'
 const script = scriptJson as unknown as Script
 const userFixture = userJson as unknown as UserProfile
 
-/** Profil joueur de développement. En prod, remplacé par le classifier Facebook. */
+/** Le dossier type. En jeu, le profil vient du formulaire d'admission. */
 export function loadUserFixture(): Promise<UserProfile> {
   return Promise.resolve(userFixture)
 }
