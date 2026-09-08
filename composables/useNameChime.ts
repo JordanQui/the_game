@@ -191,10 +191,49 @@ function buildRack(voice: Voice): Rack {
  *
  * Elle est sans effet si le contexte est déjà ouvert.
  */
+/**
+ * Le contexte audio, ouvert À LA MAIN dans le geste utilisateur.
+ *
+ * C'est ici que se jouait le silence du mobile. `unlockAudio` chargeait Tone
+ * avant d'ouvrir le contexte — or `await import('tone')` prend plusieurs
+ * dizaines de millisecondes, et à son retour le geste est CONSOMMÉ. iOS refuse
+ * alors `resume()`, sans erreur visible, et plus une note ne sort de la partie.
+ *
+ * On ouvre donc un contexte natif SANS RIEN ATTENDRE, dans la fonction même
+ * qu'appelle le gestionnaire d'événement, puis on le confie à Tone quand la
+ * bibliothèque arrive.
+ */
+let primed: AudioContext | null = null
+
+export function primeContext(): void {
+  if (!import.meta.client || primed) return
+  try {
+    const Ctor = window.AudioContext
+      ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!Ctor) return
+    primed = new Ctor()
+    // Aucun `await` avant ces deux lignes : c'est toute l'astuce.
+    void primed.resume()
+    // Un tampon muet d'un échantillon : sur les Safari anciens, un contexte
+    // n'est réellement débloqué qu'après avoir joué quelque chose.
+    const source = primed.createBufferSource()
+    source.buffer = primed.createBuffer(1, 1, primed.sampleRate)
+    source.connect(primed.destination)
+    source.start(0)
+  } catch {
+    primed = null
+  }
+}
+
 export async function unlockAudio(): Promise<void> {
   if (!import.meta.client || started) return
   try {
     if (!tone) tone = await import('tone')
+    // Tone travaille sur le contexte déjà ouvert par le geste, au lieu d'en
+    // créer un second qui, lui, serait suspendu.
+    if (primed && tone.getContext().rawContext !== primed) {
+      tone.setContext(new tone.Context({ context: primed }))
+    }
     await tone.start()
     tone.getTransport().bpm.value = BPM
     started = true

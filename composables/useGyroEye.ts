@@ -1,6 +1,5 @@
 import { useGameStore } from '~/stores/game'
-import { unlockAudio } from '~/composables/useNameChime'
-import { upVector, calibrationFrom, aimFrom, type Up, type Neutral } from '~/utils/gyro-aim'
+import { primeContext, unlockAudio } from '~/composables/useNameChime'
 
 /**
  * L'oeil qu'on déplace en inclinant le téléphone.
@@ -22,32 +21,37 @@ import { upVector, calibrationFrom, aimFrom, type Up, type Neutral } from '~/uti
  */
 const RANGE_DEG = 22
 
-
-
 /**
- * Hauteur de l'oeil au repos, en fraction d'écran.
+ * Ce que la posture change : l'amplitude disponible.
  *
- * Aux trois quarts de la hauteur en partant du bas, soit un quart depuis le
- * haut. On lit un téléphone à plat ou presque allongé : c'est cette posture-là
- * qui doit correspondre au repos. L'oeil descend ensuite dans le texte quand on
- * relève l'appareil vers soi — le geste naturel pour parcourir une page.
- */
-const NEUTRAL_Y = 0.25
-
-/**
- * Le réglage de posture, réduit à ce qu'il doit être : un appoint.
- *
- * Il a longtemps porté des corrections qui n'étaient pas les siennes — un
- * décalage de tangage, puis un rapport d'amplitude de 0,7 posé au jugé. Or
- * l'origine est déjà annulée par le calibrage, et l'écart de sensibilité entre
- * assis et allongé est maintenant calculé à partir de l'inclinaison réelle. Il
- * ne reste qu'une nuance de confort : allongé, le bras porte l'appareil et le
- * geste est plus court.
+ * Allongé, le bras porte l'appareil au-dessus du visage et ne peut plus
+ * l'incliner beaucoup : il faut donc que moins de degrés suffisent à traverser
+ * l'écran. L'ORIGINE, elle, est déjà annulée par le calibrage — y ajouter un
+ * décalage de tangage serait une double correction, l'erreur d'une version
+ * précédente.
  */
 const POSTURE_RANGE_SCALE: Record<string, number> = {
   assis: 1,
-  allonge: 0.85,
+  allonge: 0.7,
 }
+
+/**
+ * Écart maximal admis entre deux mesures consécutives, en degrés.
+ *
+ * À soixante mesures par seconde, aucun poignet ne fait bouger un téléphone de
+ * quarante degrés d'un coup. Un tel saut n'est pas un mouvement : c'est la
+ * spécification qui change de représentation pour décrire la MÊME orientation —
+ * quand le tangage traverse 90°, gamma bascule de +g à -g et bêta devient
+ * 180-b. Sans garde-fou, l'oeil sautait alors d'un quart d'écran.
+ *
+ * On ne rejette pas la mesure : on déplace l'origine du même écart, si bien que
+ * l'oeil ne bouge pas d'un pixel et que le geste reprend normalement ensuite.
+ * Le modèle reste donc DIRECT — x et y déduits des angles — ce qui lui garde sa
+ * franchise. Passer par la verticale supprimait bien le saut, mais rendait la
+ * visée molle dès que l'appareil approchait de la verticale.
+ */
+const MAX_STEP_DEG = 40
+
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
 
@@ -74,7 +78,7 @@ export function useGyroEye() {
    * L'attitude de départ : la verticale telle que l'appareil la voyait, et le
    * rattrapage de roulis qui va avec. C'est elle qui fait le zéro.
    */
-  let neutral: Neutral | null = null
+  let neutral: { beta: number; gamma: number } | null = null
   let settleAt = 0
   /**
    * Mesures accumulées pour fixer l'origine.
@@ -83,14 +87,14 @@ export function useGyroEye() {
    * bougeait encore après le tap. On en moyenne une demi-seconde : le calibrage
    * cesse de dépendre d'un hasard.
    */
-  let samples: Up[] = []
+  let samples: Array<{ beta: number; gamma: number }> = []
   let calibrateUntil = 0
+  /** Dernière mesure brute, pour repérer les sauts de représentation. */
+  let previous: { beta: number; gamma: number } | null = null
 
   function onOrientation(event: DeviceOrientationEvent) {
     const { beta, gamma } = event
     if (beta === null || gamma === null) return
-
-    const up = upVector(beta, gamma)
 
     // Calibrage : on laisse d'abord l'appareil se stabiliser — les premières
     // mesures arrivent pendant que la main bouge encore après le tap — puis on
@@ -98,16 +102,35 @@ export function useGyroEye() {
     if (neutral === null) {
       const now = Date.now()
       if (now < settleAt) return
-      samples.push(up)
+      samples.push({ beta, gamma })
       if (now < calibrateUntil) return
-
-      neutral = calibrationFrom(samples)
+      const n = samples.length
+      neutral = {
+        beta: samples.reduce((a, v) => a + v.beta, 0) / n,
+        gamma: samples.reduce((a, v) => a + v.gamma, 0) / n,
+      }
       samples = []
-      if (!neutral) return
+      previous = { beta, gamma }
     }
 
+    // Saut de représentation : on décale l'origine d'autant, l'oeil ne bouge
+    // pas d'un pixel. Voir MAX_STEP_DEG.
+    if (previous) {
+      const stepBeta = beta - previous.beta
+      const stepGamma = gamma - previous.gamma
+      if (Math.abs(stepBeta) > MAX_STEP_DEG || Math.abs(stepGamma) > MAX_STEP_DEG) {
+        neutral = { beta: neutral.beta + stepBeta, gamma: neutral.gamma + stepGamma }
+      }
+    }
+    previous = { beta, gamma }
+
     const range = RANGE_DEG * (POSTURE_RANGE_SCALE[gameStore.posture] ?? 1)
-    target = aimFrom(up, neutral, range, NEUTRAL_Y)
+    const dx = (gamma - neutral.gamma) / range
+    const dy = (beta - neutral.beta) / range
+    target = {
+      x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
+      y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
+    }
   }
 
   /**
@@ -157,6 +180,12 @@ export function useGyroEye() {
 
     // En veille pendant la saisie : la position continue de suivre l'appareil,
     // mais rien n'est visé — ni nom révélé, ni épreuve ouverte, ni note jouée.
+    // Filet : la veille ne survit pas à une seconde. Si un `blur` se perd —
+    // clavier refermé par le système, champ démonté — l'oeil se rendort pour
+    // toujours, et c'est indistinguable d'une panne de son.
+    if (gameStore.typing && Date.now() - gameStore.typingSince > 60_000) {
+      gameStore.setTyping(false)
+    }
     if (gameStore.typing) {
       if (gameStore.revealing) gameStore.setRevealing(null)
       dwellOn = null
@@ -201,13 +230,16 @@ export function useGyroEye() {
   function recalibrate() {
     neutral = null
     samples = []
+    previous = null
     settleAt = Date.now() + 400
     calibrateUntil = settleAt + 500
   }
 
   async function enable(): Promise<boolean> {
     // Ce clic est le geste dont le contexte audio a besoin : on le saisit ici
-    // plutôt que d'espérer qu'un survol suffise plus tard.
+    // plutôt que d'espérer qu'un survol suffise plus tard. L'ouverture est
+    // SYNCHRONE — attendre le chargement de Tone consommerait le geste.
+    primeContext()
     void unlockAudio()
 
     if (!supported.value) return false

@@ -13,6 +13,11 @@ function submit() {
   if (!value || props.disabled) return
   emit('command', value)
   input.value = ''
+  // La veille de saisie ne doit JAMAIS rester bloquée. Sur mobile, le champ
+  // garde le focus après l'envoi : `blur` ne part pas, `typing` reste vrai, et
+  // l'oeil demeure endormi — plus un nom révélé, plus une note, sans rien pour
+  // l'expliquer. On la relâche donc dès que la commande est partie.
+  gameStore.setTyping(false)
 }
 
 function onKeydown(e: KeyboardEvent) {

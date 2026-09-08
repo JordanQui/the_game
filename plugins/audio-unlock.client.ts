@@ -1,4 +1,4 @@
-import { unlockAudio } from '~/composables/useNameChime'
+import { primeContext, unlockAudio } from '~/composables/useNameChime'
 
 /**
  * Ouvre le contexte audio au tout premier geste de la page.
@@ -15,6 +15,10 @@ export default defineNuxtPlugin(() => {
   const events = ['pointerdown', 'touchend', 'keydown'] as const
 
   const unlock = () => {
+    // D'ABORD, sans rien attendre : le contexte doit s'ouvrir tant que le geste
+    // est encore valide. Le chargement de Tone vient après, il peut prendre son
+    // temps.
+    primeContext()
     void unlockAudio()
     for (const type of events) window.removeEventListener(type, unlock)
   }

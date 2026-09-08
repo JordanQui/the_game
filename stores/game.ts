@@ -86,6 +86,8 @@ export const useGameStore = defineStore('game', {
      * — sans qu'on l'ait voulu. On le met en veille le temps de la saisie.
      */
     typing: false,
+    /** Depuis quand. Sert de filet si un `blur` se perd. */
+    typingSince: 0,
     /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
     eyeActive: false,
     /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
@@ -294,6 +296,7 @@ export const useGameStore = defineStore('game', {
 
     setTyping(typing: boolean) {
       this.typing = typing
+      this.typingSince = typing ? Date.now() : 0
       // Ce qui était en cours de lecture s'arrête net : sans ça, la note du
       // dernier nom survolé continuerait pendant toute la saisie.
       if (typing) this.revealing = null
