@@ -46,6 +46,15 @@ const scriptFingerprint = createHash('sha256')
  */
 const devInventory = process.env.NODE_ENV === 'production' ? null : script.dev_inventory
 
+/**
+ * Combien de jours le navigateur du joueur retient sa partie.
+ *
+ * Même valeur que la fenêtre payante, et pour la même raison que le cookie de
+ * position : la mémoire ne doit pas survivre au droit qui permet de s'en
+ * servir. Une seule source, le script.
+ */
+const memoryDays = script.limits.paid.window_days
+
 const sceneIndex = script.progression.order.map((id: string) => {
   const scene = script.scenes.find((s: { id: string }) => s.id === id)
   return { id, title: scene?.title ?? id, act: scene?.act ?? null, kind: scene?.kind ?? 'scene' }
@@ -92,6 +101,8 @@ export default defineNuxtConfig({
       devInventory,
       /** Empreinte du script : une scène née d'une autre version est jetée. */
       scriptFingerprint,
+      /** Durée de vie de la partie gardée par le navigateur, en jours. */
+      memoryDays,
       facebookAppId: process.env.FACEBOOK_APP_ID,
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,

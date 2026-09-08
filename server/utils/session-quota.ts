@@ -75,17 +75,15 @@ export interface AccessPass {
 /**
  * Où le joueur en est, en termes de scène.
  *
- * Côté serveur et non côté client : la scène gardée en `sessionStorage` meurt
- * avec l'onglet, et le joueur qui revenait le lendemain — droit d'accès encore
- * valide — retombait sur l'écran d'accueil sans autre choix que de tout
- * recommencer à l'auberge.
+ * Le navigateur garde déjà la partie — la scène, le journal, l'inventaire. Mais
+ * il ne peut pas décider seul jusqu'où le joueur a le droit de reprendre : la
+ * première scène est gratuite, toutes les suivantes sont derrière le sas. Cette
+ * position-là est donc tenue par le serveur, signée comme le droit d'accès —
+ * sans quoi il suffirait de l'écrire à la main pour se faire servir une scène
+ * tardive sans avoir payé.
  *
  * Ne porte AUCUNE donnée personnelle : un identifiant de scène et un rang, rien
- * d'autre. Le profil Meta, lui, reste dans la session de l'onglet — c'est ce
- * que promet l'avertissement affiché avant la connexion.
- *
- * Signé comme le reste : sans quoi il suffirait de l'écrire à la main pour se
- * faire servir une scène tardive sans avoir payé.
+ * d'autre. Le profil Meta ne quitte jamais la machine du joueur.
  */
 export interface PositionPass {
   scene_id: string

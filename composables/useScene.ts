@@ -17,16 +17,45 @@ const SCENE_TEXT_TIMEOUT_MS = 90_000
  * n'importe quel timeout serverless.
  */
 /**
- * La scène de l'onglet en cours.
+ * La scène en cours, gardée par le navigateur.
  *
  * Recharger la page relançait une génération — donc consommait le quota, donc
  * envoyait le joueur au paywall dès son deuxième chargement. Or son monde
  * existe déjà : on le remet en place au lieu de le repayer.
- *
- * `sessionStorage` plutôt que `localStorage` : la scène appartient à cette
- * visite-là, pas à ce navigateur pour toujours.
  */
 const SCENE_KEY = 'tg_scene'
+
+/**
+ * La mémoire du navigateur.
+ *
+ * `localStorage` et non `sessionStorage` : la partie ne dure pas une visite.
+ * Le droit d'accès ouvert par le paiement court sur huit jours et la position
+ * voyage dans un cookie de même durée — une mémoire qui mourait avec l'onglet
+ * faisait revenir le joueur du lendemain à la bonne scène mais sans son
+ * monde : ni profil, ni journal, ni inventaire. La scène se régénérait alors
+ * pour un inconnu, et c'est le poste de dépense le plus cher du jeu.
+ *
+ * Elle ne quitte JAMAIS la machine du joueur : rien n'est enregistré côté
+ * serveur, qui ne tient aucune base. Elle s'efface avec les données du site, en
+ * repartant de zéro depuis l'accueil, ou d'elle-même passé la fenêtre — c'est
+ * ce que dit maintenant l'avertissement affiché avant la connexion.
+ *
+ * L'accès peut lever : navigation privée, cookies refusés. On régénérera.
+ */
+function memory(): Storage | null {
+  if (!import.meta.client) return null
+  try { return window.localStorage } catch { return null }
+}
+
+/**
+ * Combien de temps le navigateur retient une partie.
+ *
+ * Alignée sur la fenêtre payante, comme le cookie de position : la mémoire ne
+ * doit pas survivre au droit qui permet de s'en servir.
+ */
+function memoryDays(): number {
+  return (useRuntimeConfig().public.memoryDays as number) || 8
+}
 
 /**
  * Identifiant du build en cours.
@@ -58,9 +87,8 @@ function currentFingerprint(): string {
  * « l'auberge », et le joueur repartait du comptoir sans rien comprendre.
  */
 function readStoredScene(expectedId?: string): SceneTextResponse | null {
-  if (!import.meta.client) return null
   try {
-    const raw = sessionStorage.getItem(SCENE_KEY)
+    const raw = memory()?.getItem(SCENE_KEY)
     if (!raw) return null
     const stored = JSON.parse(raw) as SceneTextResponse
 
@@ -94,20 +122,19 @@ function readStoredScene(expectedId?: string): SceneTextResponse | null {
 }
 
 function storeScene(scene: SceneTextResponse): void {
-  if (!import.meta.client) return
   try {
-    sessionStorage.setItem(SCENE_KEY, JSON.stringify({ ...scene, build_id: currentBuild() }))
+    memory()?.setItem(SCENE_KEY, JSON.stringify({ ...scene, build_id: currentBuild() }))
   } catch {
     // Stockage plein ou refusé : on régénérera, c'est tout.
   }
 }
 
 /**
- * Le journal survit au rechargement, comme la scène.
+ * Ce que le joueur emporte, et qui doit survivre à la fermeture du navigateur.
  *
- * Sans ça, recharger la page en pleine partie ramenait la scène en cours mais
- * effaçait tout ce qui l'avait précédée : la scène suivante serait alors née
- * comme si le joueur venait de nulle part.
+ * Sans ça, revenir en pleine partie ramenait la scène en cours mais effaçait
+ * tout ce qui l'avait précédée : la scène suivante serait alors née comme si le
+ * joueur venait de nulle part.
  */
 const CARRY_KEY = 'tg_carry'
 
@@ -121,35 +148,52 @@ interface Carry {
   augmentation: boolean
   primerSeen: boolean
   /**
-   * Le profil du joueur.
+   * Le profil du joueur, tel que Meta l'a donné et que le classifieur l'a rangé.
    *
    * Il n'y était pas, et un rechargement le perdait : la scène suivante
    * repartait alors du personnage de démonstration, dans un monde qui n'était
-   * plus le sien. En `sessionStorage` et nulle part ailleurs — l'avertissement
-   * affiché avant la connexion promet que ces données sont oubliées à la
-   * fermeture de la session, et c'est exactement ce que fait cette mémoire-là.
+   * plus le sien. C'est la seule donnée personnelle de cette mémoire — elle
+   * reste sur la machine du joueur, et disparaît avec le reste de la partie.
    */
   profile?: UserProfile | null
+  /** Date de la dernière écriture. Au-delà de la fenêtre, tout est oublié. */
+  saved_at?: number
 }
 
 function storeCarry(carry: Carry): void {
-  if (!import.meta.client) return
-  try { sessionStorage.setItem(CARRY_KEY, JSON.stringify(carry)) } catch { /* on régénérera */ }
+  try {
+    memory()?.setItem(CARRY_KEY, JSON.stringify({ ...carry, saved_at: Date.now() }))
+  } catch {
+    // Stockage plein ou refusé : on régénérera.
+  }
 }
 
 function readStoredCarry(): Carry | null {
-  if (!import.meta.client) return null
   try {
-    const raw = sessionStorage.getItem(CARRY_KEY)
-    return raw ? JSON.parse(raw) as Carry : null
+    const raw = memory()?.getItem(CARRY_KEY)
+    if (!raw) return null
+    const carry = JSON.parse(raw) as Carry
+
+    // Passée la fenêtre, la partie s'efface d'elle-même — le profil Meta avec.
+    // La scène part en même temps : la garder sans le journal ni l'inventaire
+    // ferait reprendre dans un monde amnésique.
+    if (carry.saved_at && Date.now() - carry.saved_at > memoryDays() * 86_400_000) {
+      forgetRun()
+      return null
+    }
+    return carry
   } catch {
     return null
   }
 }
 
+/** Le nom retenu par ce navigateur, s'il y en a un. Pour l'accueil. */
+export function rememberedPlayerName(): string | null {
+  return readStoredCarry()?.profile?.identity.name ?? null
+}
+
 export function forgetStoredScene(): void {
-  if (!import.meta.client) return
-  try { sessionStorage.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
+  try { memory()?.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
 }
 
 /**
@@ -161,15 +205,14 @@ export function forgetStoredScene(): void {
  * précédente — une première scène jouée par quelqu'un qui avait déjà tout.
  */
 export function forgetRun(): void {
-  if (!import.meta.client) return
   forgetStoredScene()
-  try { sessionStorage.removeItem(CARRY_KEY) } catch { /* sans conséquence */ }
+  try { memory()?.removeItem(CARRY_KEY) } catch { /* sans conséquence */ }
 }
 
 /**
  * `?fresh=1` demandé dans l'URL.
  *
- * Il vaut dans TOUS les environnements : il jette la scène gardée en session.
+ * Il vaut dans TOUS les environnements : il jette la scène gardée par le navigateur.
  * Seul son relais vers l'API reste réservé au développement, où il pilote les
  * mocks sur disque — en production, une scène neuve se paie de toute façon.
  */
@@ -247,8 +290,8 @@ export function useScene() {
     quotaExhausted.value = false
 
     // AVANT toute chose, et quel que soit le chemin pris ensuite. Ce n'était
-    // fait que si une scène était trouvée en session : après un rechargement où
-    // la scène se régénère, l'inventaire restait dans sessionStorage sans que
+    // fait que si une scène était trouvée en mémoire : après un rechargement où
+    // la scène se régénère, l'inventaire y restait sans que
     // personne aille le chercher, et le joueur perdait son augmentation et ses
     // cartes sans comprendre pourquoi.
     restoreCarry()

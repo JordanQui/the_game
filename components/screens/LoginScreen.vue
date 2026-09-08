@@ -3,7 +3,7 @@ import { useFacebook } from '~/composables/useFacebook'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useProgression } from '~/composables/useProgression'
-import { forgetRun } from '~/composables/useScene'
+import { forgetRun, rememberedPlayerName } from '~/composables/useScene'
 import type { UserProfile } from '~/types/user'
 
 const { login, isLoading, error } = useFacebook()
@@ -21,6 +21,19 @@ const progression = useProgression()
  */
 const resumeScene = computed(() => progression.resumeTarget())
 
+/**
+ * Le nom que ce navigateur a retenu.
+ *
+ * Affiché sur la reprise : puisque le jeu garde désormais les données Meta
+ * d'une visite à l'autre, le joueur doit le VOIR — une mémoire silencieuse
+ * serait la mauvaise façon de tenir cette promesse-là.
+ *
+ * Lu après le montage : la mémoire du navigateur n'existe pas au rendu serveur,
+ * et l'y toucher ferait diverger l'hydratation.
+ */
+const rememberedName = ref<string | null>(null)
+onMounted(() => { rememberedName.value = rememberedPlayerName() })
+
 function continueGame() {
   progression.resume()
 }
@@ -28,17 +41,26 @@ function continueGame() {
 /**
  * Repartir de zéro.
  *
- * Efface la partie gardée dans l'onglet. Sans ça, « commencer » servait la
- * scène en session — celle d'où l'on venait — au lieu de l'auberge, et le
- * journal des scènes précédentes suivait dans la nouvelle partie.
+ * Efface la partie gardée par le navigateur, données Meta comprises : c'est le
+ * geste d'oubli qu'annonce l'avertissement, et le seul que le joueur ait sous
+ * la main sans aller dans les réglages de son navigateur.
+ *
+ * Sans ça, « commencer » servait la scène gardée — celle d'où l'on venait — au
+ * lieu de l'auberge, et le journal des scènes précédentes suivait dans la
+ * nouvelle partie.
  */
 function startFresh() {
   forgetRun()
+  rememberedName.value = null
   playerStore.journal = []
+  playerStore.profile = null
   playerStore.reset()
   // Remet aussi `resumeSceneId` à null : la reprise proposée n'a plus d'objet.
   gameStore.resetGame()
 }
+
+/** Combien de jours le navigateur retient la partie. Dit tel quel au joueur. */
+const memoryDays = useRuntimeConfig().public.memoryDays as number
 
 const showDisclaimer = ref(false)
 const isLoadingDemo = ref(false)
@@ -169,7 +191,8 @@ async function acceptAndLogin() {
       -->
       <div v-if="resumeScene" class="w-full space-y-4 flex flex-col items-center">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
-          Votre nuit est en cours
+          <template v-if="rememberedName">{{ rememberedName }}, votre nuit continue</template>
+          <template v-else>Votre nuit est en cours</template>
         </p>
         <GlowButton class="w-full" @click="continueGame">Continuer</GlowButton>
         <p class="text-ink-200/70 text-[11px] leading-relaxed">
@@ -241,8 +264,9 @@ async function acceptAndLogin() {
             <li
               v-for="(point, i) in [
                 'Vos informations Facebook servent uniquement à générer votre aventure personnalisée — personnages, lieux, quête.',
-                'Nous ne stockons, ne partageons et ne revendons aucune de vos données.',
-                'Tout est traité en temps réel et oublié dès la fermeture de la session.',
+                'Elles ne sont enregistrées sur aucun serveur : nous ne les stockons, ne les partageons et ne les revendons pas.',
+                `Elles restent sur cet appareil, dans votre navigateur, le temps de votre aventure — ${memoryDays} jours — pour que vous puissiez la reprendre où vous l'avez laissée.`,
+                'Repartir de zéro ci-dessous, ou effacer les données du site, les efface avec elle.',
               ]"
               :key="i"
               class="flex items-start gap-3.5"
