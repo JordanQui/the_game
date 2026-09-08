@@ -15,23 +15,20 @@
  *   identity.agreement ......... accord des participes dans toute la narration
  *   origin.hometown ............ ville d'origine
  *   origin.current_location .... ville actuelle
- *   trajectory.education ....... formation
- *   trajectory.work ............ parcours professionnel
  *   trajectory.turning_points .. tournants de vie
  *   passions ................... passions, par intensité
  *   imprints ................... quatre traces à remettre en décor
  *   misc_facts ................. divers
  * `identity.id` et `picture_url` ne servaient qu'au classifieur Facebook : le
- * formulaire ne les demande pas. Les langues parlées ont été retirées — le jeu
- * se joue en français, la ligne ne servait à rien.
+ * formulaire ne les demande pas. Trois questions ont été retirées faute d'usage :
+ * les langues parlées (le jeu se joue en une langue, choisie ailleurs), la
+ * formation et le parcours professionnel — un intitulé de poste ne survit pas à
+ * la transposition, le prompt interdisant toute reprise littérale. Les sources
+ * de décor et la couleur secondaire qui en dépendaient tirent désormais sur
+ * `imprints`.
  */
 
 import type { UserProfile, UserPassion, UserAgreement } from '~/types/user'
-
-export interface AdmissionJob {
-  position: string
-  employer: string
-}
 
 export interface AdmissionForm {
   /** Le prénom seul : c'est lui qu'on emploie en jeu, et lui qui porte le namank. */
@@ -43,9 +40,6 @@ export interface AdmissionForm {
   agreement: UserAgreement
   hometown: string
   currentCity: string
-  education: { degree: string; school: string; year: string }
-  work: AdmissionJob
-  previousWork: AdmissionJob
   /** Thèmes retenus, DANS L'ORDRE DE CHOIX : il donne l'intensité. */
   passions: string[]
   /** Deux lignes libres, facultatives. */
@@ -65,9 +59,6 @@ export function emptyAdmissionForm(): AdmissionForm {
     agreement: 'masculin',
     hometown: '',
     currentCity: '',
-    education: { degree: '', school: '', year: '' },
-    work: { position: '', employer: '' },
-    previousWork: { position: '', employer: '' },
     passions: [],
     turningPoints: ['', ''],
     keepsake: '',
@@ -157,10 +148,9 @@ const clean = (s: string) => s.trim().replace(/\s+/g, ' ')
 /**
  * Ce qui a fait bifurquer le joueur.
  *
- * Les deux lignes libres passent en premier — c'est lui qui parle. Le reste
- * est DÉDUIT du formulaire, exactement comme le faisait
- * utils/facebook-classifier.ts : sans ces phrases, un dossier rempli à la
- * va-vite ne donnerait aucune trajectoire au modèle.
+ * Les deux lignes libres passent en premier — c'est lui qui parle. Le
+ * déménagement est DÉDUIT : sans lui, un dossier rempli à la va-vite ne
+ * donnerait aucune trajectoire au modèle.
  */
 function turningPoints(form: AdmissionForm): string[] {
   const points = form.turningPoints.map(clean).filter(Boolean)
@@ -169,22 +159,6 @@ function turningPoints(form: AdmissionForm): string[] {
   const city = clean(form.currentCity)
   if (hometown && city && hometown.toLowerCase() !== city.toLowerCase()) {
     points.push(`A quitté ${hometown} pour ${city}`)
-  }
-
-  const degree = clean(form.education.degree)
-  const position = clean(form.work.position)
-  if (degree && position) {
-    points.push(`A étudié « ${degree} » et exerce aujourd'hui comme ${position}`)
-  }
-
-  const previous = clean(form.previousWork.position)
-  if (previous && position && previous.toLowerCase() !== position.toLowerCase()) {
-    // Accordé : ces phrases partent telles quelles dans le prompt, et une
-    // seule faute d'accord suffit à faire dériver tout ce que le modèle écrit.
-    const moved = { masculin: 'Est passé', feminin: 'Est passée', neutre: 'A quitté' }[form.agreement]
-    points.push(previous && form.agreement === 'neutre'
-      ? `${moved} ${previous} pour ${position}`
-      : `${moved} de ${previous} à ${position}`)
   }
 
   return points
@@ -225,26 +199,6 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
   const hometown = clean(form.hometown)
   const city = clean(form.currentCity)
 
-  const education = clean(form.education.school) || clean(form.education.degree)
-    ? [{
-        school: clean(form.education.school) || 'établissement non précisé',
-        degree: clean(form.education.degree) || undefined,
-        year: clean(form.education.year) || undefined,
-      }]
-    : []
-
-  const jobs = [
-    { job: form.work, current: true },
-    { job: form.previousWork, current: false },
-  ]
-    .filter(({ job }) => clean(job.employer) || clean(job.position))
-    .map(({ job, current }) => ({
-      employer: clean(job.employer) || 'employeur non précisé',
-      position: clean(job.position) || undefined,
-      // `end_date: null` est ce qui marque « en cours » dans le bloc joueur.
-      end_date: current ? null : '—',
-    }))
-
   const passions: UserPassion[] = form.passions.slice(0, MAX_PASSIONS).map((theme, i) => ({
     theme,
     intensity: intensityAt(i),
@@ -265,8 +219,6 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
       current_location: city ? { name: city } : undefined,
     },
     trajectory: {
-      education,
-      work: jobs,
       turning_points: turningPoints(form),
     },
     passions,

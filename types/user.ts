@@ -18,21 +18,6 @@ export interface UserPlace {
   traits?: string[]
 }
 
-export interface UserEducation {
-  school: string
-  degree?: string
-  year?: string
-  type?: string
-}
-
-export interface UserWork {
-  employer: string
-  position?: string
-  location?: string
-  start_date?: string
-  end_date?: string | null
-}
-
 /**
  * Accord grammatical du joueur.
  *
@@ -85,9 +70,16 @@ export interface UserProfile {
     hometown?: UserPlace
     current_location?: UserPlace
   }
+  /**
+   * Ce qui a fait bifurquer le joueur.
+   *
+   * Il y avait ici une formation et un parcours professionnel : le formulaire
+   * ne les demande plus. Un intitulé de poste et un nom d'école ne survivaient
+   * pas à la transposition — le prompt interdit toute reprise littérale, et il
+   * n'en restait qu'une enseigne. Les empreintes ont pris leur place partout
+   * où elles servaient de source, y compris pour la couleur secondaire.
+   */
   trajectory: {
-    education: UserEducation[]
-    work: UserWork[]
     turning_points: string[]
   }
   passions: UserPassion[]

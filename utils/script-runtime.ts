@@ -59,22 +59,6 @@ export function describeUser(user: UserProfile): string {
     lines.push(`Ville actuelle : ${current_location.name}${traits}`)
   }
 
-  if (user.trajectory.education.length) {
-    lines.push(
-      `Formation : ${user.trajectory.education
-        .map(e => [e.degree, e.school, e.year].filter(Boolean).join(', '))
-        .join(' | ')}`
-    )
-  }
-
-  if (user.trajectory.work.length) {
-    lines.push(
-      `Parcours professionnel : ${user.trajectory.work
-        .map(w => `${w.position ?? 'poste inconnu'} chez ${w.employer}${w.end_date === null ? ' (en cours)' : ''}`)
-        .join(' | ')}`
-    )
-  }
-
   if (user.trajectory.turning_points.length) {
     lines.push(`Tournants de vie :\n${user.trajectory.turning_points.map(t => `  - ${t}`).join('\n')}`)
   }

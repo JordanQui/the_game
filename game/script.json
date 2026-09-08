@@ -54,15 +54,15 @@
       "image_prompt_template": "{{setting}} named {{scene_name}}, drawn in the DARK DECO style of the 1990s Batman animated series crossed with the flat polygonal backdrops of the 1992 video game Flashback: painted on black paper, retro-futurist Art Deco megastructure, bold angular geometry, flat cel-shaded shapes with hard edges, heavy black shadows, dramatic film-noir lighting from a single source. Wide cinematic view at eye level.\n\nSTRICT THREE-COLOR PALETTE. These three colors and nothing else — no tints, no shades, no blends:\n1. {{dominant_hex}} ({{dominant_name}}) — about 70 percent: the deep shadowed ground of the image, walls, ceiling, floor, everything not lit.\n2. {{secondary_hex}} ({{secondary_name}}) — about 20 percent: architecture, beams, furniture and character silhouettes catching indirect light.\n3. {{accent_hex}} ({{accent_name}}) — a full 10 percent, the ONLY light in the scene.\n\nTHE ACCENT IS THE MOST IMPORTANT INSTRUCTION. {{accent_hex}} is the light itself and must blaze out of the darkness. Fill it as LARGE SOLID SHAPES, never thin outlines — thin lines make it vanish. Paint entirely in {{accent_hex}}: {{focal_element}}, the neon tubes running along the bar, the hard-edged shafts and pools of light they throw across the wet floor, every screen and holographic sign, and the glow through the rain-streaked window. Everything the light touches is {{accent_hex}}; everything else is shadow. Roughly one tenth of the image must be pure {{accent_hex}}. If in doubt, use more, not less.\n\nScene contains: {{decor_line}}.\n{{constraints}}. No text, no lettering, no numbers anywhere."
     },
     "palette_derivation": {
-      "instruction": "Choisis exactement trois couleurs à partir du joueur, dans une logique Dark Deco (série animée Batman des années 90) : une nuit profonde percée par une seule lumière.\n- Dominante (70%) : l'ombre du lieu, dérivée de l'ambiance de sa ville d'origine ou de vie. TRÈS SOMBRE et sourde, proche du noir teinté.\n- Secondaire (20%) : l'architecture éclairée indirectement, dérivée de son métier ou de sa formation. Ton MOYEN, ni noir ni clair.\n- Accent (10%) : la lumière elle-même — un néon —, dérivée de sa passion la plus intense. Couleur franchement CHROMATIQUE et VIVE — saturation élevée, teinte identifiable au premier coup d'oeil. Interdits absolus : blanc, blanc cassé, crème, beige, ivoire, gris, noir, pastel, désaturé. Teinte franchement éloignée de celles de la dominante et de la secondaire sur la roue chromatique.",
+      "instruction": "Choisis exactement trois couleurs à partir du joueur, dans une logique Dark Deco (série animée Batman des années 90) : une nuit profonde percée par une seule lumière.\n- Dominante (70%) : l'ombre du lieu, dérivée de l'ambiance de sa ville d'origine ou de vie. TRÈS SOMBRE et sourde, proche du noir teinté.\n- Secondaire (20%) : l'architecture éclairée indirectement, dérivée du lieu où il se réfugie ou de l'objet auquel il tient. Ton MOYEN, ni noir ni clair.\n- Accent (10%) : la lumière elle-même — un néon —, dérivée de sa passion la plus intense. Couleur franchement CHROMATIQUE et VIVE — saturation élevée, teinte identifiable au premier coup d'oeil. Interdits absolus : blanc, blanc cassé, crème, beige, ivoire, gris, noir, pastel, désaturé. Teinte franchement éloignée de celles de la dominante et de la secondaire sur la roue chromatique.",
       "sources": {
         "dominant": [
           "origin.hometown",
           "origin.current_location"
         ],
         "secondary": [
-          "trajectory.work",
-          "trajectory.education"
+          "imprints.refuge",
+          "imprints.keepsake"
         ],
         "accent": [
           "passions[0]"
@@ -369,14 +369,14 @@
         },
         {
           "id": "outils_suspendus",
-          "role": "Du matériel de métier accroché aux structures et aux faisceaux de câbles, transposé en équivalents cyberpunk",
-          "source": "trajectory.work",
+          "role": "Des affaires personnelles accrochées aux structures et aux faisceaux de câbles, transposées en équivalents cyberpunk — des choses que quelqu'un a tenu à garder",
+          "source": "imprints.keepsake",
           "visual_weight": "secondary"
         },
         {
           "id": "mur_de_souvenirs",
-          "role": "Un mur d'écrans cathodiques, de plaques d'accréditation et de badges évoquant un savoir accumulé",
-          "source": "trajectory.education",
+          "role": "Un mur d'écrans cathodiques et de plaques gravées, vues d'un lieu où l'on revient toujours",
+          "source": "imprints.refuge",
           "visual_weight": "dominant"
         },
         {
@@ -534,7 +534,7 @@
         {
           "id": "etal",
           "role": "Un étal de rue sous bâche, éclairé par un tube néon",
-          "source": "trajectory.work",
+          "source": "imprints.keepsake",
           "visual_weight": "secondary",
           "required": false
         },
@@ -647,9 +647,9 @@
       "image_setting": "Un passage souterrain sous une voie ferrée surélevée, éclairé par des tubes défaillants",
       "focal_element": "Un tourniquet de contrôle et sa borne de lecture",
       "naming": {
-        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Passage ... » / « Le Souterrain ... » / « La Voûte ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`tourniquet`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.education` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Passage ... » / « Le Souterrain ... » / « La Voûte ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`tourniquet`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `imprints.aversion` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
         "sources": [
-          "trajectory.education"
+          "imprints.aversion"
         ],
         "must_reference": [
           "palette.accent.name",
@@ -660,7 +660,7 @@
         {
           "id": "tourniquet",
           "role": "Le tourniquet de contrôle et sa borne de lecture",
-          "source": "trajectory.education",
+          "source": "imprints.aversion",
           "visual_weight": "accent",
           "required": true
         },
@@ -798,7 +798,7 @@
         {
           "id": "terminal",
           "role": "Le terminal radio, écran monochrome et clavier usé",
-          "source": "trajectory.work",
+          "source": "imprints.ally",
           "visual_weight": "accent",
           "required": true
         },
@@ -944,7 +944,7 @@
         {
           "id": "cables",
           "role": "Des faisceaux de câbles sectionnés qui pendent",
-          "source": "trajectory.work",
+          "source": "imprints.aversion",
           "visual_weight": "secondary",
           "required": false
         },
@@ -1050,9 +1050,9 @@
       "image_setting": "L'intérieur d'une station relais désaffectée, baies de commutation et néons de secours",
       "focal_element": "Une baie de commutation dont un seul module est encore alimenté",
       "naming": {
-        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Relais ... » / « La Station ... » / « Le Poste ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`baie`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.work` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Relais ... » / « La Station ... » / « Le Poste ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`baie`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `imprints.keepsake` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
         "sources": [
-          "trajectory.work"
+          "imprints.keepsake"
         ],
         "must_reference": [
           "palette.accent.name",
@@ -1063,7 +1063,7 @@
         {
           "id": "baie",
           "role": "La baie de commutation et son unique module vivant",
-          "source": "trajectory.education",
+          "source": "imprints.keepsake",
           "visual_weight": "accent",
           "required": true
         },
@@ -1188,9 +1188,9 @@
       "image_setting": "Un local technique exigu, un terminal d'administration relié au réseau du building",
       "focal_element": "Le terminal d'administration et son lecteur de cartes vierges",
       "naming": {
-        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Terminal ... » / « Le Local ... » / « La Console ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`administration`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.education` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Terminal ... » / « Le Local ... » / « La Console ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`administration`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `imprints.aversion` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
         "sources": [
-          "trajectory.education"
+          "imprints.aversion"
         ],
         "must_reference": [
           "palette.accent.name",
@@ -1201,7 +1201,7 @@
         {
           "id": "administration",
           "role": "Le terminal d'administration et son lecteur de cartes vierges",
-          "source": "trajectory.work",
+          "source": "imprints.aversion",
           "visual_weight": "accent",
           "required": true
         },
@@ -1215,7 +1215,7 @@
         {
           "id": "cartes",
           "role": "Un tiroir de cartes vierges, toutes de la même teinte",
-          "source": "trajectory.education",
+          "source": "imprints.refuge",
           "visual_weight": "secondary",
           "required": false
         },
@@ -1334,7 +1334,7 @@
         {
           "id": "sas",
           "role": "Le sas biométrique et son lecteur",
-          "source": "trajectory.work",
+          "source": "imprints.aversion",
           "visual_weight": "accent",
           "required": true
         },
@@ -1348,7 +1348,7 @@
         {
           "id": "comptoir",
           "role": "Le comptoir d'accueil déserté, écrans en veille",
-          "source": "trajectory.education",
+          "source": "imprints.ally",
           "visual_weight": "secondary",
           "required": false
         },
@@ -1453,9 +1453,9 @@
       "image_setting": "Un plateau de bureaux vidé, cloisons démontées, un seul couloir encore éclairé",
       "focal_element": "Une salle de serveurs derrière une paroi vitrée",
       "naming": {
-        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Plateau ... » / « L'Étage ... » / « Le Couloir ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`serveurs`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.work` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
+        "instruction": "Invente le nom de ce lieu en français, 2 à 5 mots, sur l'une de ces formes : « Le Plateau ... » / « L'Étage ... » / « Le Couloir ... ».\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'objet du décor qui la porte (`serveurs`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `imprints.refuge` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
         "sources": [
-          "trajectory.work"
+          "imprints.refuge"
         ],
         "must_reference": [
           "palette.accent.name",
@@ -1466,14 +1466,14 @@
         {
           "id": "serveurs",
           "role": "La salle de serveurs derrière sa paroi vitrée",
-          "source": "trajectory.education",
+          "source": "imprints.refuge",
           "visual_weight": "accent",
           "required": true
         },
         {
           "id": "plateau",
           "role": "Le plateau de bureaux vidé, cloisons contre les murs",
-          "source": "trajectory.work",
+          "source": "imprints.ally",
           "visual_weight": "dominant",
           "required": false
         },
@@ -1618,7 +1618,7 @@
         {
           "id": "niveau",
           "role": "Le dernier niveau, vidé de tout sauf de l'essentiel",
-          "source": "trajectory.work",
+          "source": "imprints.keepsake",
           "visual_weight": "secondary",
           "required": false
         },
@@ -1919,7 +1919,7 @@
   },
   "numerology": {
     "note": "Numérologie indienne calculée par utils/numerology.ts depuis identity.birthday, identity.first_name et identity.name. moolank (jour de naissance) = manière d'agir ; bhagyank (date entière) = forme de l'objectif ; namank (table chaldéenne appliquée au PRÉNOM, le nom par lequel on est appelé) = façon dont le monde reçoit le joueur ; namank du NOM COMPLET, prénom et nom de famille réunis = héritage, ce que son nom traîne avant qu'il ait parlé. Ce bloc porte tout le texte.",
-    "generation_instruction": "TROIS COUCHES, ET ELLES NE SE CONCURRENCENT PAS.\n1. La MATIÈRE du monde vient du profil : villes, métiers, formations, tournants de vie, passions. C'est avec ça que tu fabriques les décors, les objets et les personnages.\n2. Le CONFLIT vient de la section SIGNE : c'est ce que la quête doit résoudre, son sens.\n3. La FORME vient de la section NOMBRES : la manière d'agir donne le style des actions possibles, la forme de l'objectif donne la nature concrète de ce qu'il faut accomplir, la réception donne la façon dont les personnages traitent le joueur dès la première réplique, et l'héritage donne ce qu'on lui prête AVANT de le connaître — la réputation qui arrive avec son nom de famille, et qu'il n'a pas choisie.\nINTERDIT ABSOLU : ne nomme jamais un nombre, une planète, la numérologie, l'astrologie ni aucun signe. Rien de tout cela n'existe dans la fiction. Ces couches se voient dans les situations, jamais dans une étiquette.",
+    "generation_instruction": "TROIS COUCHES, ET ELLES NE SE CONCURRENCENT PAS.\n1. La MATIÈRE du monde vient du profil : villes, tournants de vie, passions, et surtout ses QUATRE EMPREINTES — l'objet auquel il tient, le lieu où il se réfugie, la personne qui compte, ce qu'il ne supporte pas. C'est avec ça que tu fabriques les décors, les objets et les personnages.\nLes empreintes ne sont pas du décor de plus : l'objet revient comme une chose posée là, le refuge donne au lieu son air de déjà-vu ou son exact contraire, la personne qui compte est un nom qu'on entend dans une bouche étrangère, et CE QU'IL NE SUPPORTE PAS est ce que la scène lui met en travers — c'est de là que vient la friction, jamais d'une menace générale sur la ville. Transposées, jamais recopiées.\n2. Le CONFLIT vient de la section SIGNE : c'est ce que la quête doit résoudre, son sens.\n3. La FORME vient de la section NOMBRES : la manière d'agir donne le style des actions possibles, la forme de l'objectif donne la nature concrète de ce qu'il faut accomplir, la réception donne la façon dont les personnages traitent le joueur dès la première réplique, et l'héritage donne ce qu'on lui prête AVANT de le connaître — la réputation qui arrive avec son nom de famille, et qu'il n'a pas choisie.\nINTERDIT ABSOLU : ne nomme jamais un nombre, une planète, la numérologie, l'astrologie ni aucun signe. Rien de tout cela n'existe dans la fiction. Ces couches se voient dans les situations, jamais dans une étiquette.",
     "numbers": {
       "1": {
         "drive": "Tu avances seul et tu décides seul ; déléguer te coûte plus cher que de tout porter.",
