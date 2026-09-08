@@ -122,6 +122,13 @@ export interface GenerationConfig {
   temperature: number
   max_tokens: number
   system_prompt: string
+  /**
+   * Ce qu'on renvoie au modèle quand sa scène est refusée.
+   *
+   * `{{reason}}` porte le motif du refus. Une seule reprise, et elle repart de
+   * la réponse précédente : il corrige le point visé au lieu de tout réinventer.
+   */
+  repair_prompt: string
   output_schema: Record<string, unknown>
 }
 

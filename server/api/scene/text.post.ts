@@ -3,6 +3,7 @@ import type { GeneratedScene, SceneTextResponse, GeneratedEnding } from '~/types
 import type { UserProfile } from '~/types/user'
 import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
+import { interpolate } from '~/utils/prompt-builder'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import {
   assertNotLocked, consumeQuota, lockOut, rememberPosition, forgetPosition,
@@ -78,59 +79,72 @@ export default defineEventHandler(async (event) => {
   // peupler l'image de ce que ce joueur-là a traversé.
   const isEnding = scene.kind === 'ending'
 
-  let completion
-  try {
-    completion = await openai.chat.completions.create({
-      model: gen.model,
-      temperature: gen.temperature,
-      max_tokens: gen.max_tokens,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: gen.system_prompt },
-        {
-          role: 'user',
-          content: isEnding
-            ? scene.buildEndingPrompt(user, body.journal ?? [], body.carried ?? [])
-            : scene.buildGenerationPrompt(user, body.journal ?? [], body.carried ?? []),
-        },
-      ],
-    })
-  } catch (err) {
-    throw createError({
-      statusCode: 502,
-      statusMessage: err instanceof Error ? err.message : `Appel à ${gen.model} échoué`,
-    })
+  /** Les deux messages de la demande. La reprise repart de là. */
+  type Message = { role: 'system' | 'user' | 'assistant'; content: string }
+  const messages: Message[] = [
+    { role: 'system', content: gen.system_prompt },
+    {
+      role: 'user',
+      content: isEnding
+        ? scene.buildEndingPrompt(user, body.journal ?? [], body.carried ?? [])
+        : scene.buildGenerationPrompt(user, body.journal ?? [], body.carried ?? []),
+    },
+  ]
+
+  /** Un appel au modèle, et le JSON brut qu'il rend. */
+  async function ask(msgs: Message[]): Promise<string> {
+    let completion
+    try {
+      completion = await openai.chat.completions.create({
+        model: gen.model,
+        temperature: gen.temperature,
+        max_tokens: gen.max_tokens,
+        response_format: { type: 'json_object' },
+        messages: msgs,
+      })
+    } catch (err) {
+      throw createError({
+        statusCode: 502,
+        statusMessage: err instanceof Error ? err.message : `Appel à ${gen.model} échoué`,
+      })
+    }
+
+    const choice = completion.choices[0]
+    const raw = choice?.message?.content
+    if (!raw) {
+      throw createError({ statusCode: 502, statusMessage: `${gen.model} n'a rien renvoyé` })
+    }
+
+    // Coupé au plafond : le JSON s'arrête au milieu d'une chaîne et `JSON.parse`
+    // échoue plus bas, sur un message qui accuse le modèle à tort. On le dit ici,
+    // pendant qu'on sait encore pourquoi — c'est `max_tokens` qu'il faut lever,
+    // ou le schéma qu'il faut alléger.
+    if (choice.finish_reason === 'length') {
+      console.error(
+        `[scene/text] réponse tronquée à max_tokens=${gen.max_tokens}`,
+        `(${completion.usage?.completion_tokens ?? '?'} tokens produits)`)
+      throw createError({
+        statusCode: 502,
+        statusMessage: `Réponse tronquée : la scène dépasse le plafond de ${gen.max_tokens} tokens`,
+      })
+    }
+
+    return raw
   }
 
-  const choice = completion.choices[0]
-  const raw = choice?.message?.content
-  if (!raw) {
-    throw createError({ statusCode: 502, statusMessage: `${gen.model} n'a rien renvoyé` })
+  function parseScene(raw: string): GeneratedScene {
+    try {
+      return JSON.parse(raw) as GeneratedScene
+    } catch {
+      // Les 300 derniers caractères disent où ça s'est arrêté — sans eux, on ne
+      // peut pas distinguer une coupure d'un modèle qui bavarde hors JSON.
+      console.error('[scene/text] JSON invalide, fin de la réponse :', raw.slice(-300))
+      throw createError({ statusCode: 502, statusMessage: `${gen.model} a renvoyé un JSON invalide` })
+    }
   }
 
-  // Coupé au plafond : le JSON s'arrête au milieu d'une chaîne et `JSON.parse`
-  // échoue plus bas, sur un message qui accuse le modèle à tort. On le dit ici,
-  // pendant qu'on sait encore pourquoi — c'est `max_tokens` qu'il faut lever,
-  // ou le schéma qu'il faut alléger.
-  if (choice.finish_reason === 'length') {
-    console.error(
-      `[scene/text] réponse tronquée à max_tokens=${gen.max_tokens}`,
-      `(${completion.usage?.completion_tokens ?? '?'} tokens produits)`)
-    throw createError({
-      statusCode: 502,
-      statusMessage: `Réponse tronquée : la scène dépasse le plafond de ${gen.max_tokens} tokens`,
-    })
-  }
-
-  let generated: GeneratedScene
-  try {
-    generated = JSON.parse(raw) as GeneratedScene
-  } catch {
-    // Les 300 derniers caractères disent où ça s'est arrêté — sans eux, on ne
-    // peut pas distinguer une coupure d'un modèle qui bavarde hors JSON.
-    console.error('[scene/text] JSON invalide, fin de la réponse :', raw.slice(-300))
-    throw createError({ statusCode: 502, statusMessage: `${gen.model} a renvoyé un JSON invalide` })
-  }
+  const raw = await ask(messages)
+  let generated = parseScene(raw)
 
   if (isEnding) {
     try {
@@ -162,14 +176,43 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  /**
+   * Une scène refusée par la validation vaut UNE reprise, et une seule.
+   *
+   * Le modèle manque parfois une contrainte — le plus souvent un personnage
+   * qu'il déclare dans `npcs` sans jamais le nommer dans le texte, ce qui le
+   * rend inatteignable. Jusqu'ici la scène partait en 502 : le joueur venait de
+   * remplir son dossier d'admission et tombait sur une panne, avec son quota
+   * déjà consommé.
+   *
+   * On lui renvoie donc sa propre réponse et le motif du refus, plutôt que de
+   * relancer une génération à l'aveugle : il corrige le point visé et garde le
+   * reste. Le coût d'une reprise est celui d'une génération — de l'ordre de
+   * trois centimes — et il n'est payé que sur un échec.
+   */
   try {
     scene.assertValid(generated)
   } catch (err) {
-    console.error('[scene/text] scène invalide :', err instanceof Error ? err.message : err)
-    throw createError({
-      statusCode: 502,
-      statusMessage: err instanceof Error ? err.message : 'Scène invalide',
-    })
+    const reason = err instanceof Error ? err.message : String(err)
+    console.warn('[scene/text] scène refusée, une reprise demandée :', reason)
+
+    const repaired = await ask([
+      ...messages,
+      { role: 'assistant', content: raw },
+      { role: 'user', content: interpolate(gen.repair_prompt, { reason }) },
+    ])
+    generated = parseScene(repaired)
+
+    try {
+      scene.assertValid(generated)
+    } catch (again) {
+      console.error('[scene/text] scène invalide après reprise :',
+        again instanceof Error ? again.message : again)
+      throw createError({
+        statusCode: 502,
+        statusMessage: again instanceof Error ? again.message : 'Scène invalide',
+      })
+    }
   }
 
   const assembled = {
