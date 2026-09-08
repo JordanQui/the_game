@@ -238,6 +238,8 @@ export interface PlayerTheme {
     drive: string | null
     destiny: string | null
     reception: string | null
+    /** Ce que son nom de famille traîne, avant qu'il ait parlé. */
+    heritage: string | null
   }
 }
 
@@ -289,6 +291,14 @@ export interface TurnContext {
   /** Échanges déjà eus avec le PNJ à qui l'on parle. Décide quand il s'ouvre. */
   npc_exchanges?: number
   player_name: string
+  /**
+   * L'accord grammatical, déjà formulé pour le modèle.
+   *
+   * Le profil ne monte pas jusqu'au tour — seuls les faits de la scène font le
+   * voyage. Sans ce report, la narration de la scène accordait juste et les
+   * tours, eux, repartaient au masculin.
+   */
+  player_agreement?: string
   place: ScenePlace
   quest: SceneQuest
   npcs: SceneNPC[]

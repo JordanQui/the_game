@@ -1,14 +1,18 @@
 import { ScriptRuntime } from '~/utils/script-runtime'
-import { lockOut, clearLock, readLock } from '~/server/utils/session-quota'
+import { closeForStalling, clearLock } from '~/server/utils/session-quota'
 
 /**
- * Ferme la ville pour un cycle.
+ * Referme la scène : le game over.
  *
  * Appelé par le client au moment où la nuit se referme, pour que l'écran et le
  * cookie basculent ensemble. Ce n'est PAS la seule barrière : `consumeQuota`
  * compte les tours de chaque scène côté serveur et ferme de lui-même au
  * dépassement. Un client qui n'appellerait pas cette route se ferait fermer au
  * tour suivant — celui-ci ne partirait simplement jamais.
+ *
+ * Renvoie le texte rangé dans le cookie — celui de la scène refermée — plutôt
+ * que de laisser le client fournir le sien : c'est le même texte qui reviendra
+ * après un rechargement, et il ne doit pas changer entre les deux.
  *
  * Aucune génération, donc aucun coût.
  *
@@ -25,10 +29,5 @@ export default defineEventHandler(async (event) => {
   }
 
   const runtime = await ScriptRuntime.load()
-  // Déjà fermée : on ne repousse pas l'échéance à chaque rechargement, sinon
-  // un joueur qui insiste s'enfermerait indéfiniment.
-  const existing = readLock(event)
-  if (existing) return existing
-
-  return lockOut(event, runtime.script.limits.lock.hours, 'stalled')
+  return closeForStalling(event, runtime.script.limits)
 })

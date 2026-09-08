@@ -30,6 +30,7 @@ export function useNarrative() {
     if (!scene) return null
     return {
       player_name: playerStore.playerName,
+      player_agreement: playerStore.playerAgreement ?? undefined,
       place: scene.place,
       quest: scene.quest,
       npcs: scene.npcs,
@@ -120,6 +121,27 @@ export function useNarrative() {
           history: gameStore.conversationHistory,
         }),
       })
+
+      /**
+       * 423 : la ville s'est fermée sous les pieds du joueur.
+       *
+       * Le serveur compte les tours de son côté et n'attend l'accord de
+       * personne — c'est le filet quand le client n'a pas déclenché la
+       * fermeture lui-même. Sans ce cas, le joueur voyait « Le serveur a
+       * répondu 423 » et restait devant sa saisie : un game over qui ressemble
+       * à une panne. Le texte vient du cookie, écrit pour cette scène-là.
+       */
+      if (response.status === 423) {
+        const closed = await response.json().catch(() => null) as
+          { data?: { lockedUntil?: number; text?: string } } | null
+        gameStore.removeLastNarrativeEntry()
+        gameStore.closeCity({
+          until: closed?.data?.lockedUntil ?? Date.now() + 24 * 3600_000,
+          reason: 'stalled',
+          text: closed?.data?.text ?? playerStore.scene?.game_over,
+        })
+        return ''
+      }
 
       if (!response.ok || !response.body) {
         throw new Error(`Le serveur a répondu ${response.status}`)

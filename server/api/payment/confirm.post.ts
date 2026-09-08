@@ -1,7 +1,7 @@
 import { SquareClient, SquareEnvironment } from 'square'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
-import { grantAccess } from '~/server/utils/session-quota'
+import { grantAccess, assertNotLocked } from '~/server/utils/session-quota'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -10,6 +10,11 @@ export default defineEventHandler(async (event) => {
   if (!body?.sourceId) {
     throw createError({ statusCode: 400, statusMessage: 'sourceId manquant' })
   }
+
+  // Avant de débiter quoi que ce soit : la ville fermée ne se vend pas. Voir
+  // /api/payment/intent — ici c'est la dernière barrière, et la seule qui
+  // compte, puisque c'est elle qui précède le débit.
+  assertNotLocked(event)
 
   const runtime = await ScriptRuntime.load()
   const paywall = runtime.paywall

@@ -187,9 +187,16 @@ function readStoredCarry(): Carry | null {
   }
 }
 
-/** Le nom retenu par ce navigateur, s'il y en a un. Pour l'accueil. */
-export function rememberedPlayerName(): string | null {
-  return readStoredCarry()?.profile?.identity.name ?? null
+/**
+ * Le dossier d'admission que ce navigateur a retenu, s'il y en a un.
+ *
+ * L'accueil s'en sert pour ne PAS refaire remplir le formulaire à quelqu'un
+ * qui l'a déjà rempli : le bureau a ses données, il n'a plus qu'à sortir de
+ * chez lui. Le profil est rendu tel quel — c'est celui qu'on remettra dans le
+ * store si le joueur repart pour une nuit.
+ */
+export function rememberedProfile(): UserProfile | null {
+  return readStoredCarry()?.profile ?? null
 }
 
 export function forgetStoredScene(): void {
@@ -346,6 +353,19 @@ export function useScene() {
       // propose la suite.
       if ((err as { statusCode?: number })?.statusCode === 429) {
         quotaExhausted.value = true
+        return null
+      }
+
+      // 423 : la ville est fermée. Rien à charger, et surtout pas d'écran
+      // d'erreur — le joueur doit voir la fermeture, pas une panne.
+      if ((err as { statusCode?: number })?.statusCode === 423) {
+        const closed = (err as { data?: { data?: { lockedUntil?: number; text?: string } } })
+          ?.data?.data
+        gameStore.closeCity({
+          until: closed?.lockedUntil ?? Date.now() + 24 * 3600_000,
+          reason: 'stalled',
+          text: closed?.text,
+        })
         return null
       }
 

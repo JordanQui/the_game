@@ -1,6 +1,7 @@
 import { SquareClient, SquareEnvironment } from 'square'
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { requireSecret } from '~/server/utils/runtime-secrets'
+import { assertNotLocked } from '~/server/utils/session-quota'
 
 /**
  * Square v44 : `SquareClient` / `SquareEnvironment`, et les ressources sont
@@ -10,6 +11,16 @@ import { requireSecret } from '~/server/utils/runtime-secrets'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   await readBody(event).catch(() => null)
+
+  /**
+   * On ne vend pas une porte fermée.
+   *
+   * La fenêtre payante court à partir du paiement, pas de la première scène :
+   * payer pendant les 24 h de fermeture reviendrait à acheter huit jours dont
+   * le premier est déjà perdu. Et après l'épilogue, ce serait payer pour une
+   * histoire qui ne se rejoue pas.
+   */
+  assertNotLocked(event)
 
   const runtime = await ScriptRuntime.load()
   const paywall = runtime.paywall

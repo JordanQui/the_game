@@ -120,7 +120,6 @@ export function classifyFacebookData(profile: FacebookRawProfile): UserProfile {
       picture_url: profile.picture?.data?.url,
       birthday: profile.birthday,
       age: computeAge(profile.birthday),
-      languages: profile.languages?.map(l => l.name),
     },
     origin: {
       hometown: profile.hometown?.name ? { name: profile.hometown.name } : undefined,

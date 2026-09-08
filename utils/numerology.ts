@@ -6,8 +6,12 @@
  *    C'est la manière d'agir.
  *  - bhagyank (भाग्यांक), « nombre de destinée » : réduction de la date ENTIÈRE.
  *    C'est la forme que prend l'objectif.
- *  - namank, « nombre du nom » : valeur chaldéenne des lettres du nom.
- *    C'est la façon dont le monde reçoit le joueur.
+ *  - namank, « nombre du nom » : valeur chaldéenne des lettres du PRÉNOM —
+ *    le nom par lequel on est appelé. C'est la façon dont le monde reçoit le
+ *    joueur.
+ *  - full_namank : le même calcul sur le NOM COMPLET, prénom et nom de famille
+ *    réunis. C'est l'héritage : ce que le nom traîne avant qu'on ait parlé.
+ *    Deux joueurs prénommés pareil n'ont donc pas la même nuit.
  *
  * Comme utils/zodiac.ts, ce fichier ne contient AUCUN texte de jeu : il ne
  * produit que des nombres. Leur sens vit dans game/script.json.
@@ -36,8 +40,10 @@ export interface NumerologyProfile {
   moolank: number
   /** Forme de l'objectif. Réduction de la date entière. */
   bhagyank: number | null
-  /** Façon dont le monde reçoit le joueur. Valeur du nom. */
+  /** Façon dont le monde reçoit le joueur. Valeur du PRÉNOM. */
   namank: number | null
+  /** Ce que son nom traîne. Valeur du nom complet, prénom et nom réunis. */
+  full_namank: number | null
 }
 
 /** Réduit à un chiffre de 1 à 9. */
@@ -71,15 +77,24 @@ export function namankOf(name?: string): number | null {
 /**
  * Le profil numérologique complet.
  *
- * `bhagyank` reste null quand Facebook masque l'année de naissance : il lui
- * faut la date entière, contrairement au moolank qui ne dépend que du jour.
+ * `bhagyank` reste null quand l'année de naissance manque : il lui faut la
+ * date entière, contrairement au moolank qui ne dépend que du jour.
  */
-export function numerologyOf(birthday?: string, name?: string): NumerologyProfile | null {
+/**
+ * @param name le PRÉNOM — celui par lequel on appelle le joueur.
+ * @param fullName prénom et nom de famille. Omis, l'héritage reste null : un
+ * dossier sans nom de famille ne doit pas retomber sur le prénom, sans quoi
+ * réception et héritage diraient exactement la même chose.
+ */
+export function numerologyOf(
+  birthday?: string, name?: string, fullName?: string,
+): NumerologyProfile | null {
   const date = parseBirthday(birthday)
   const namank = namankOf(name)
-  if (!date && namank === null) return null
+  const full_namank = namankOf(fullName)
+  if (!date && namank === null && full_namank === null) return null
 
-  if (!date) return { moolank: 0, bhagyank: null, namank }
+  if (!date) return { moolank: 0, bhagyank: null, namank, full_namank }
 
   const year = extractYear(birthday)
   const digitsOf = (n: number) => String(n).split('').reduce((s, d) => s + Number(d), 0)
@@ -90,6 +105,7 @@ export function numerologyOf(birthday?: string, name?: string): NumerologyProfil
       ? null
       : reduce(digitsOf(date.day) + digitsOf(date.month) + digitsOf(year)),
     namank,
+    full_namank,
   }
 }
 

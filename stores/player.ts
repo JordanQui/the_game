@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { UserProfile } from '~/types/user'
+import { agreementLine } from '~/utils/agreement'
 import type { SceneTextResponse, SceneNPC, SceneQuest, ScenePlace, ScenePalette } from '~/types/scene'
 import { entryFrom, type JournalEntry } from '~/utils/journal'
 import type { SceneBuildProgress } from '~/types/game'
@@ -18,7 +19,17 @@ export const usePlayerStore = defineStore('player', {
   }),
 
   getters: {
-    playerName: (state): string => state.profile?.identity.name ?? 'Aventurier',
+    /**
+     * Le nom sous lequel on l'interpelle.
+     *
+     * Le PRÉNOM, pas l'état civil : les personnages d'un bar ne s'adressent pas
+     * à quelqu'un par son nom de famille. Le nom entier reste dans le profil,
+     * pour le dossier et pour la génération.
+     */
+    playerName: (state): string =>
+      state.profile?.identity.first_name || state.profile?.identity.name || 'Aventurier',
+    /** L'accord à tenir dans les tours. Null tant qu'il n'a rien déclaré. */
+    playerAgreement: (state): string | null => agreementLine(state.profile),
     place: (state): ScenePlace | null => state.scene?.place ?? null,
     palette: (state): ScenePalette | null => state.scene?.palette ?? null,
     npcs: (state): SceneNPC[] => state.scene?.npcs ?? [],

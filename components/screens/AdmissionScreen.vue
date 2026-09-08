@@ -1,0 +1,482 @@
+<script setup lang="ts">
+import { usePlayerStore } from '~/stores/player'
+import { useGameStore } from '~/stores/game'
+import {
+  emptyAdmissionForm,
+  profileFromAdmission,
+  AGREEMENT_CHOICES,
+  PASSION_CHOICES,
+  MAX_PASSIONS,
+} from '~/utils/admission'
+
+/**
+ * Le formulaire d'admission.
+ *
+ * Il remplace la connexion Meta : ce que le compte donnait, le joueur le
+ * déclare. On ne demande que ce que le jeu consomme réellement — l'inventaire
+ * des champs est en tête de utils/admission.ts.
+ *
+ * Cinq écrans plutôt qu'une longue page : sur téléphone, une colonne de vingt
+ * champs se referme avant d'être remplie. Seule la première étape est
+ * obligatoire — le nom et la date fondent le signe et les nombres, tout le
+ * reste enrichit sans jamais bloquer l'entrée.
+ */
+const playerStore = usePlayerStore()
+const gameStore = useGameStore()
+
+const form = reactive(emptyAdmissionForm())
+
+const STEPS = [
+  { title: 'Identité', legend: 'Le bureau consigne qui se présente.' },
+  { title: 'Origine', legend: 'D\'où vous venez, où vous dormez.' },
+  { title: 'Trajectoire', legend: 'Ce que vous avez appris, ce que vous faites.' },
+  { title: 'Attaches', legend: 'Ce à quoi vous tenez, hors service.' },
+  { title: 'Bascules', legend: 'Les fois où votre vie a changé de rue.' },
+  { title: 'Empreintes', legend: 'Quatre détails. La nuit les remettra devant vous.' },
+]
+
+const step = ref(0)
+/** `form` tant qu'on remplit, `verdict` une fois le dossier déposé. */
+const phase = ref<'form' | 'verdict'>('form')
+
+/** Le prénom et la date : sans eux, ni signe, ni nombres, ni nom à l'écran. */
+const canAdvance = computed(() => {
+  if (step.value > 0) return true
+  return form.firstName.trim().length >= 2 && form.birthday.length === 10
+})
+
+/**
+ * L'ordre des touches fait le classement : les deux premières passions
+ * choisies pèsent le plus. Voir `intensityAt` dans utils/admission.ts.
+ */
+function togglePassion(theme: string) {
+  const i = form.passions.indexOf(theme)
+  if (i >= 0) form.passions.splice(i, 1)
+  else if (form.passions.length < MAX_PASSIONS) form.passions.push(theme)
+}
+
+function rankOf(theme: string): number {
+  return form.passions.indexOf(theme)
+}
+
+function next() {
+  if (!canAdvance.value) return
+  if (step.value < STEPS.length - 1) step.value++
+  else submit()
+}
+
+function back() {
+  if (step.value > 0) step.value--
+}
+
+/**
+ * Le dossier est déposé. Le profil part dans le store — c'est lui que
+ * `SceneBuildScreen` enverra à la génération — et l'écran bascule sur la
+ * réponse de la commission.
+ */
+function submit() {
+  playerStore.setProfile(profileFromAdmission(form))
+  phase.value = 'verdict'
+}
+
+function enterCity() {
+  gameStore.setScreen('scene_build_loading')
+}
+
+function cancel() {
+  gameStore.setScreen('login')
+}
+
+/**
+ * Numéro de dossier. Dérivé du nom, jamais tiré au hasard : deux affichages du
+ * même dossier doivent porter le même numéro, et un Math.random() ferait
+ * diverger le rendu.
+ */
+const fullName = computed(
+  () => [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' '))
+
+const fileNumber = computed(() => {
+  const seed = [...fullName.value.toUpperCase()].reduce((n, c) => n + c.charCodeAt(0), 0)
+  return String(4200 + (seed % 5700)).padStart(4, '0')
+})
+
+const displayName = computed(() => fullName.value || 'Sans-nom')
+const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous la pluie')
+</script>
+
+<template>
+  <div class="relative min-h-[100dvh] overflow-y-auto px-5 py-10 flex flex-col items-center">
+    <!-- Lueur basse, comme sur l'accueil : c'est la même nuit -->
+    <div
+      class="fixed inset-x-0 bottom-0 h-[45vh] pointer-events-none"
+      style="background: radial-gradient(90% 100% at 50% 100%, rgb(var(--neon-500) / 0.16) 0%, transparent 70%)"
+    />
+
+    <div class="relative z-10 w-full max-w-md">
+      <!-- ================= LE FORMULAIRE ================= -->
+      <template v-if="phase === 'form'">
+        <div class="text-center space-y-3 mb-8">
+          <p class="text-steel-400 text-[10px] uppercase tracking-[0.4em] font-display">
+            Bureau des entrées — secteur 7
+          </p>
+          <h1 class="neon-text font-display uppercase text-2xl sm:text-[1.9rem] tracking-[0.06em] leading-tight">
+            Formulaire<br>d'admission
+          </h1>
+          <div class="neon-rule w-28 mx-auto" />
+        </div>
+
+        <!-- Avancement : cinq crans, le cran courant seul est allumé -->
+        <div class="flex items-center gap-1.5 mb-6">
+          <span
+            v-for="(s, i) in STEPS"
+            :key="s.title"
+            class="h-[3px] flex-1 transition-colors duration-300"
+            :class="i < step ? 'bg-neon-600/70' : i === step ? 'bg-neon-400' : 'bg-steel-700'"
+          />
+        </div>
+
+        <div
+          class="dossier relative bg-ink-900/85 border border-neon-600/40 p-6 sm:p-7 space-y-6"
+          @keyup.enter="next"
+        >
+          <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
+
+          <div class="relative space-y-1">
+            <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display">
+              Étape {{ step + 1 }} / {{ STEPS.length }} — {{ STEPS[step].title }}
+            </p>
+            <p class="text-steel-400 text-[11px] leading-relaxed">{{ STEPS[step].legend }}</p>
+          </div>
+
+          <!--
+            1. IDENTITÉ — prénom et nom SÉPARÉS, et ce n'est pas cosmétique :
+            le prénom porte le namank (l'accueil du monde), le nom complet
+            porte l'héritage. Les réunir ferait perdre l'un des deux nombres.
+          -->
+          <div v-if="step === 0" class="relative space-y-5">
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block space-y-2">
+                <span class="field-label">Prénom</span>
+                <input v-model="form.firstName" type="text" class="field" placeholder="celui qu'on vous crie" autocomplete="given-name">
+              </label>
+              <label class="block space-y-2">
+                <span class="field-label">Nom</span>
+                <input v-model="form.lastName" type="text" class="field" placeholder="celui qu'on vous a laissé" autocomplete="family-name">
+              </label>
+            </div>
+
+            <label class="block space-y-2">
+              <span class="field-label">Date de naissance</span>
+              <input v-model="form.birthday" type="date" class="field" max="2020-12-31">
+              <span class="field-hint">Le bureau vérifie le jour, l'heure ne l'intéresse pas.</span>
+            </label>
+
+            <div class="space-y-2">
+              <span class="field-label">Accord</span>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="choice in AGREEMENT_CHOICES"
+                  :key="choice.value"
+                  type="button"
+                  class="chip"
+                  :class="form.agreement === choice.value && 'chip-on'"
+                  @click="form.agreement = choice.value"
+                >
+                  {{ choice.label }}
+                </button>
+              </div>
+              <span class="field-hint">
+                On vous écrira « {{ AGREEMENT_CHOICES.find(c => c.value === form.agreement)?.example }} ».
+              </span>
+            </div>
+          </div>
+
+          <!-- 2. ORIGINE -->
+          <div v-else-if="step === 1" class="relative space-y-5">
+            <label class="block space-y-2">
+              <span class="field-label">Ville d'origine</span>
+              <input v-model="form.hometown" type="text" class="field" placeholder="celle où vous êtes né">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Ville actuelle</span>
+              <input v-model="form.currentCity" type="text" class="field" placeholder="celle où vous rentrez le soir">
+              <span class="field-hint">La ville de la nuit s'y accrochera : rues, pluie, habitudes.</span>
+            </label>
+          </div>
+
+          <!-- 3. TRAJECTOIRE -->
+          <div v-else-if="step === 2" class="relative space-y-5">
+            <label class="block space-y-2">
+              <span class="field-label">Formation</span>
+              <input v-model="form.education.degree" type="text" class="field" placeholder="ce que vous avez étudié">
+            </label>
+            <div class="grid grid-cols-[1fr_5.5rem] gap-3">
+              <label class="block space-y-2">
+                <span class="field-label">Établissement</span>
+                <input v-model="form.education.school" type="text" class="field" placeholder="école, fac, atelier">
+              </label>
+              <label class="block space-y-2">
+                <span class="field-label">Année</span>
+                <input v-model="form.education.year" type="text" class="field" placeholder="2015" inputmode="numeric" maxlength="4">
+              </label>
+            </div>
+
+            <div class="h-px bg-steel-700" />
+
+            <label class="block space-y-2">
+              <span class="field-label">Métier actuel</span>
+              <input v-model="form.work.position" type="text" class="field" placeholder="ce que vous faites de vos journées">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Employeur</span>
+              <input v-model="form.work.employer" type="text" class="field" placeholder="pour qui, ou à votre compte">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Métier précédent <span class="text-steel-500">— facultatif</span></span>
+              <input v-model="form.previousWork.position" type="text" class="field" placeholder="ce que vous faisiez avant">
+            </label>
+          </div>
+
+          <!-- 4. PASSIONS -->
+          <div v-else-if="step === 3" class="relative space-y-4">
+            <p class="text-ink-200/70 text-[12px] leading-relaxed">
+              Cinq au maximum, et l'ordre compte : les deux premières touchées
+              pèsent le plus lourd dans votre nuit.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="passion in PASSION_CHOICES"
+                :key="passion.theme"
+                type="button"
+                class="chip text-left"
+                :class="[
+                  rankOf(passion.theme) >= 0 && 'chip-on',
+                  rankOf(passion.theme) < 0 && form.passions.length >= MAX_PASSIONS && 'opacity-35',
+                ]"
+                @click="togglePassion(passion.theme)"
+              >
+                <span v-if="rankOf(passion.theme) >= 0" class="text-neon-200/70 mr-1.5">{{ rankOf(passion.theme) + 1 }}</span>
+                {{ passion.theme }}
+              </button>
+            </div>
+            <p class="field-hint">{{ form.passions.length }} / {{ MAX_PASSIONS }} retenues</p>
+          </div>
+
+          <!-- 5. TOURNANTS -->
+          <div v-else-if="step === 4" class="relative space-y-5">
+            <p class="text-ink-200/70 text-[12px] leading-relaxed">
+              Facultatif, mais c'est ce qui donne à la nuit de quoi vous
+              reconnaître. Une ligne suffit : un départ, une rupture, un métier
+              lâché, une ville quittée.
+            </p>
+            <label class="block space-y-2">
+              <span class="field-label">Première bascule</span>
+              <input v-model="form.turningPoints[0]" type="text" class="field" placeholder="ce qui a tout déplacé">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Seconde bascule</span>
+              <input v-model="form.turningPoints[1]" type="text" class="field" placeholder="et celle d'après">
+            </label>
+          </div>
+
+          <!--
+            6. EMPREINTES — les quatre seuls champs qui ne racontent pas un
+            état civil. Ils reviennent en décor : l'objet sur une table, le
+            refuge en façade, le prénom dans la bouche d'un inconnu, et ce qu'il
+            ne supporte pas juste en travers de son chemin.
+          -->
+          <div v-else class="relative space-y-5">
+            <label class="block space-y-2">
+              <span class="field-label">Un objet auquel vous tenez</span>
+              <input v-model="form.keepsake" type="text" class="field" placeholder="celui que vous ne jetterez pas">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Où vous allez quand ça ne va pas</span>
+              <input v-model="form.refuge" type="text" class="field" placeholder="un bar, un quai, une chambre">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Quelqu'un qui compte <span class="text-steel-500">— prénom seul</span></span>
+              <input v-model="form.ally" type="text" class="field" placeholder="on ne vous demandera rien de plus">
+            </label>
+            <label class="block space-y-2">
+              <span class="field-label">Ce que vous ne supportez pas</span>
+              <input v-model="form.aversion" type="text" class="field" placeholder="la nuit s'en servira">
+            </label>
+          </div>
+
+          <div class="relative h-px bg-neon-600/25" />
+
+          <div class="relative flex items-center justify-between gap-4">
+            <button
+              class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400
+                     hover:text-ink-200 transition-colors py-2"
+              @click="step === 0 ? cancel() : back()"
+            >
+              {{ step === 0 ? 'Retour' : 'Précédent' }}
+            </button>
+            <GlowButton :disabled="!canAdvance" @click="next">
+              {{ step === STEPS.length - 1 ? 'Déposer le dossier' : 'Suivant' }}
+            </GlowButton>
+          </div>
+
+          <p v-if="step === 0 && !canAdvance" class="relative field-hint text-center">
+            Prénom et date de naissance sont exigés. Le reste, non.
+          </p>
+        </div>
+      </template>
+
+      <!-- ================= LA RÉPONSE DE LA COMMISSION ================= -->
+      <!--
+        Écrit en dur, et pour de bon : ce moment doit tomber à l'identique pour
+        tout le monde, arriver sans attente et ne rien coûter. Rien ici ne part
+        au modèle — la première génération, c'est la scène d'après.
+      -->
+      <template v-else>
+        <div class="text-center space-y-3 mb-8">
+          <p class="text-steel-400 text-[10px] uppercase tracking-[0.4em] font-display">
+            Commission de nuit — dossier n° {{ fileNumber }}
+          </p>
+          <h1 class="neon-text animate-neon-buzz font-display uppercase text-[2.4rem] tracking-[0.1em] leading-none">
+            Admis
+          </h1>
+          <div class="neon-rule w-28 mx-auto" />
+        </div>
+
+        <div class="dossier relative bg-ink-900/85 border border-neon-600/40 p-6 sm:p-7 space-y-6">
+          <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
+
+          <div class="relative grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5">
+            <span class="field-label pt-0.5">Nom</span>
+            <span class="text-ink-100 text-[13px]">{{ displayName }}</span>
+            <span class="field-label pt-0.5">Domicile</span>
+            <span class="text-ink-100 text-[13px]">{{ displayCity }}</span>
+            <span class="field-label pt-0.5">Statut</span>
+            <span class="text-neon-400 text-[13px] font-display uppercase tracking-[0.2em]">Retenu</span>
+            <span class="field-label pt-0.5">Validité</span>
+            <span class="text-ink-100 text-[13px]">Une nuit, jusqu'au lever du jour</span>
+          </div>
+
+          <div class="relative h-px bg-neon-600/25" />
+
+          <div class="relative space-y-4 text-ink-200/85 text-[13px] leading-relaxed">
+            <p>
+              Votre dossier est passé devant la commission de nuit. Onze mille
+              candidatures cette semaine ; quatorze retenues. La vôtre en fait
+              partie.
+            </p>
+            <p>
+              Ce n'est pas le hasard : la ville ne laisse entrer que ceux dont
+              le nom sonne juste. Le vôtre a été pesé, vérifié, accepté. Ce que
+              vous avez déclaré ici, la nuit s'en servira — vos villes, vos
+              attaches, ce que vous avez quitté.
+            </p>
+            <p>
+              <strong class="text-ink-100 font-normal">Un droit de passage temporaire vous est accordé.</strong>
+              Présentez-vous à l'auberge du Bout du Monde. On vous y attend
+              déjà, et la pluie ne va pas s'arrêter.
+            </p>
+          </div>
+
+          <div class="relative h-px bg-neon-600/25" />
+
+          <div class="relative flex flex-col items-center gap-4">
+            <GlowButton class="w-full" @click="enterCity">Entrer dans la nuit</GlowButton>
+            <button
+              class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400
+                     hover:text-ink-200 transition-colors"
+              @click="phase = 'form'"
+            >
+              Corriger le dossier
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Balayage cathodique, comme partout ailleurs -->
+    <div class="crt-scanlines fixed inset-0 z-20 pointer-events-none opacity-40" />
+  </div>
+</template>
+
+<style scoped>
+/*
+  Le dossier : un rectangle net posé sur la nuit, jamais une carte arrondie.
+  L'ombre porte loin pour le décoller du fond, le liseré néon reste fin.
+*/
+.dossier {
+  box-shadow: 0 0 0 1px rgb(var(--neon-500) / 0.1), 0 24px 60px rgba(0, 0, 0, 0.8);
+}
+
+/* Les intitulés du bureau : capitales géométriques, très espacées. */
+.field-label {
+  display: block;
+  font-family: Futura, 'Avenir Next', 'Century Gothic', 'Trebuchet MS', system-ui, sans-serif;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: rgb(var(--steel-400));
+}
+
+.field-hint {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+  color: rgb(var(--steel-500));
+}
+
+/*
+  Un champ administratif : une ligne à remplir, pas une boîte. Seul le filet du
+  bas dit où écrire — et il s'allume au néon quand le curseur y est.
+*/
+.field {
+  width: 100%;
+  background: rgb(var(--ink-800) / 0.5);
+  border: 0;
+  border-bottom: 1px solid rgb(var(--steel-600));
+  padding: 0.5rem 0.75rem;
+  color: rgb(var(--ink-100));
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.field::placeholder {
+  color: rgb(var(--steel-500));
+}
+
+.field:focus {
+  border-bottom-color: rgb(var(--neon-500));
+  background: rgb(var(--ink-800));
+}
+
+/* Le calendrier natif est blanc sur blanc en thème sombre : on l'inverse. */
+.field::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.45);
+  cursor: pointer;
+}
+
+/* Une pastille anguleuse, cochée au néon plein. */
+.chip {
+  font-family: Futura, 'Avenir Next', 'Century Gothic', 'Trebuchet MS', system-ui, sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgb(var(--steel-600));
+  color: rgb(var(--ink-300));
+  background: rgb(var(--ink-800) / 0.4);
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: rgb(var(--neon-600) / 0.6);
+  color: rgb(var(--ink-100));
+}
+
+.chip-on {
+  border-color: rgb(var(--neon-500));
+  background: rgb(var(--neon-500) / 0.15);
+  color: rgb(var(--neon-200));
+}
+</style>

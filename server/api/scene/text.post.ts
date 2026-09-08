@@ -47,9 +47,13 @@ export default defineEventHandler(async (event) => {
    * réellement traversées — sinon le bouton « Continuer » enverrait construire
    * une scène dont la précédente n'a jamais eu lieu.
    */
-  const remember = () => rememberPosition(
+  const remember = (gameOver?: string) => rememberPosition(
     event, scene.id, runtime.script.progression.order.indexOf(scene.id),
     limits.paid.window_days,
+    // Le texte de fermeture PART AVEC LA POSITION : quand la nuit se refermera,
+    // le serveur n'aura plus que ce cookie pour savoir quoi afficher, et le
+    // client n'aura plus la scène s'il a rechargé entre-temps.
+    gameOver,
   )
 
   // En développement, on rejoue la dernière scène enregistrée plutôt que de
@@ -61,7 +65,7 @@ export default defineEventHandler(async (event) => {
       // La reprise doit rester testable sans repayer une génération. L'épilogue
       // fait exception, comme plus bas : il n'y a rien à reprendre après lui.
       if (scene.kind === 'ending') forgetPosition(event)
-      else remember()
+      else remember(cached.game_over)
       return cached
     }
   }
@@ -174,7 +178,7 @@ export default defineEventHandler(async (event) => {
     // a changé — sans quoi un déploiement reste invisible pour lui.
     script_fingerprint: scriptFingerprint(runtime.script),
   }
-  remember()
+  remember(assembled.game_over)
   await writeMock('scene', key, assembled)
   return assembled
 })

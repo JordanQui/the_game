@@ -182,7 +182,17 @@ export const useGameStore = defineStore('game', {
   },
 
   actions: {
+    /**
+     * Change d'écran — sauf si la ville est fermée.
+     *
+     * L'écran de game over ne se dépasse pas : tant que le verrou tient, aucun
+     * chemin ne ramène au jeu. Le serveur refuse déjà toute requête coûteuse en
+     * 423, mais sans ce garde-fou le joueur pouvait revenir sur une saisie
+     * morte — reprise, retour de paiement, « repartir de zéro » — et croire que
+     * le jeu était cassé plutôt que fermé.
+     */
     setScreen(screen: GameScreen) {
+      if (this.lock && screen !== 'locked') return
       this.currentScreen = screen
     },
 
@@ -441,6 +451,17 @@ export const useGameStore = defineStore('game', {
       this.currentScreen = 'locked'
     },
 
+    /**
+     * Rouvre la ville. Réservé au développement.
+     *
+     * Le seul geste qui lève le verrou côté écran — il n'a de sens qu'accompagné
+     * de `/api/lockout { open: true }`, qui efface le cookie ; sans lui le
+     * prochain chargement referme aussitôt.
+     */
+    openCity() {
+      this.lock = null
+    },
+
     triggerPaywall() {
       this.paywallTriggered = true
       this.currentScreen = 'paywall'
@@ -491,7 +512,10 @@ export const useGameStore = defineStore('game', {
       this.inventory = []
       this.decryptedObjectIds = []
       this.activeTool = 'eye'
-      this.currentScreen = 'login'
+      // Repartir de zéro efface la partie, pas la fermeture : celle-ci vit dans
+      // un cookie signé que le navigateur ne peut pas toucher. Rendre l'accueil
+      // ici ne ferait que promettre une partie que le serveur refuserait.
+      this.currentScreen = this.lock ? 'locked' : 'login'
       this.playingSubState = 'awaiting_input'
       this.narrativeHistory = []
       this.turnCount = 0

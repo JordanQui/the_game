@@ -25,6 +25,21 @@ let ticker: ReturnType<typeof setInterval> | null = null
 onMounted(() => { ticker = setInterval(() => { now.value = Date.now() }, 30_000) })
 onUnmounted(() => { if (ticker) clearInterval(ticker) })
 
+/**
+ * Rouvrir, en développement seulement.
+ *
+ * Une fois l'écran affiché, le canal `#` n'est plus accessible : `#ouvre`
+ * devient injoignable, et une séance de test condamnait la journée. Le serveur
+ * refuse ce geste hors développement — le bouton n'y est même pas rendu.
+ */
+const isDev = import.meta.dev
+
+async function reopen() {
+  await $fetch('/api/lockout', { method: 'POST', body: { open: true } }).catch(() => null)
+  gameStore.openCity()
+  gameStore.setScreen('login')
+}
+
 const remaining = computed(() => {
   const until = lock.value?.until ?? 0
   const ms = Math.max(0, until - now.value)
@@ -70,6 +85,14 @@ const remaining = computed(() => {
       <p v-else class="text-steel-400 font-display uppercase text-[11px] tracking-[0.18em]">
         Toute bonne chose a une fin
       </p>
+
+      <button
+        v-if="isDev"
+        class="text-steel-400/60 underline text-[11px] tracking-wide"
+        @click="reopen"
+      >
+        Lever le verrou (développement)
+      </button>
     </div>
   </div>
 </template>

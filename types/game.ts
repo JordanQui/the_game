@@ -1,7 +1,14 @@
 export type GameScreen =
   | 'init'
   | 'login'
-  | 'facebook_loading'
+  /**
+   * Le formulaire d'admission : ce que le joueur déclare de lui.
+   *
+   * Il a remplacé la connexion Meta — le profil n'est plus récupéré d'un
+   * compte, il est saisi ici, et l'écran se referme sur la réponse (en dur) de
+   * la commission avant la première scène.
+   */
+  | 'admission'
   | 'scene_build_loading'
   | 'playing'
   | 'paywall'

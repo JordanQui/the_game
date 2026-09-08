@@ -23,6 +23,7 @@ import { enforceAccentVisibility } from '~/utils/palette'
 import { enforceNameCaps, fold } from '~/utils/naming'
 import { sanitizeHtml } from '~/utils/sanitize-html'
 import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
+import { agreementLine } from '~/utils/agreement'
 import { zodiacKey } from '~/utils/zodiac'
 import { numerologyOf } from '~/utils/numerology'
 
@@ -42,8 +43,11 @@ export function describeUser(user: UserProfile): string {
   const lines: string[] = []
 
   lines.push(`Nom : ${user.identity.name}`)
+  // Le prénom à part : c'est par lui que les personnages l'appellent.
+  if (user.identity.first_name) lines.push(`Prénom, celui qu'on lui donne : ${user.identity.first_name}`)
   if (user.identity.age) lines.push(`Âge : ${user.identity.age} ans`)
-  if (user.identity.languages?.length) lines.push(`Langues : ${user.identity.languages.join(', ')}`)
+  const agreement = agreementLine(user)
+  if (agreement) lines.push(`Accord : ${agreement}`)
 
   const { hometown, current_location } = user.origin
   if (hometown) {
@@ -78,10 +82,16 @@ export function describeUser(user: UserProfile): string {
   if (user.passions.length) {
     lines.push(
       `Passions (par intensité) :\n${user.passions
-        .map(p => `  - [${p.intensity}] ${p.theme} (${p.evidence.join(', ')})`)
+        .map(p => `  - [${p.intensity}] ${p.theme}${p.evidence.length ? ` (${p.evidence.join(', ')})` : ''}`)
         .join('\n')}`
     )
   }
+
+  const imprints = user.imprints
+  if (imprints?.keepsake) lines.push(`Objet auquel il tient : ${imprints.keepsake}`)
+  if (imprints?.refuge) lines.push(`Où il va quand ça ne va pas : ${imprints.refuge}`)
+  if (imprints?.ally) lines.push(`Quelqu'un qui compte pour lui : ${imprints.ally}`)
+  if (imprints?.aversion) lines.push(`Ce qu'il ne supporte pas : ${imprints.aversion}`)
 
   if (user.misc_facts?.length) lines.push(`Divers : ${user.misc_facts.join(' ; ')}`)
 
@@ -98,20 +108,33 @@ export function describeUser(user: UserProfile): string {
 export function resolveTheme(user: UserProfile, script: Script): PlayerTheme | null {
   const key = zodiacKey(user.identity.birthday)
   const entry = key ? script.zodiac?.signs?.[key] : undefined
-  const numbers = numerologyOf(user.identity.birthday, user.identity.name)
+  // Le namank se calcule sur le PRÉNOM : la numérologie indienne pèse le nom
+  // par lequel on est appelé, pas l'état civil complet. Le nom entier reste le
+  // repli des vieux profils, qui n'avaient qu'un champ.
+  const numbers = numerologyOf(
+    user.identity.birthday,
+    // Le namank se calcule sur le PRÉNOM : la numérologie indienne pèse le nom
+    // par lequel on est appelé. Le nom entier, lui, porte l'héritage.
+    user.identity.first_name || user.identity.name,
+    user.identity.last_name ? user.identity.name : undefined,
+  )
   const table = script.numerology?.numbers ?? {}
 
-  const facet = (n: number | null | undefined, field: 'drive' | 'destiny' | 'reception') =>
-    n ? table[String(n)]?.[field] ?? null : null
+  const facet = (
+    n: number | null | undefined,
+    field: 'drive' | 'destiny' | 'reception' | 'heritage',
+  ) => (n ? table[String(n)]?.[field] ?? null : null)
 
   const sign = key && entry ? { key, ...entry } : null
   const resolved = {
     drive: facet(numbers?.moolank, 'drive'),
     destiny: facet(numbers?.bhagyank, 'destiny'),
     reception: facet(numbers?.namank, 'reception'),
+    heritage: facet(numbers?.full_namank, 'heritage'),
   }
 
-  const hasNumbers = Boolean(resolved.drive || resolved.destiny || resolved.reception)
+  const hasNumbers = Boolean(
+    resolved.drive || resolved.destiny || resolved.reception || resolved.heritage)
   if (!sign && !hasNumbers) return null
   return { sign, numbers: resolved }
 }
@@ -261,6 +284,7 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
       drive: "sa manière d'agir",
       destiny: "la forme de son objectif",
       reception: "la façon dont le monde le reçoit",
+      heritage: "ce que son nom traîne",
     }
     const numbers = theme.numbers as Record<string, string | null>
 
@@ -521,11 +545,12 @@ Résolution recherchée : ${theme.sign.resolution}`)
     }
 
     const n = theme.numbers
-    if (n.drive || n.destiny || n.reception) {
+    if (n.drive || n.destiny || n.reception || n.heritage) {
       const lines = [
         n.drive ? `  - Manière d'agir : ${n.drive}` : '',
         n.destiny ? `  - Forme de l'objectif : ${n.destiny}` : '',
         n.reception ? `  - Accueil du monde : ${n.reception}` : '',
+        n.heritage ? `  - Ce que son nom traîne : ${n.heritage}` : '',
       ].filter(Boolean).join('\n')
 
       parts.push(`
@@ -814,8 +839,12 @@ ${lines}`)
       exit_label: this.scene.exits[0]?.label ?? 'la sortie',
     })
 
+    const agreed = ctx.player_agreement
+      ? `${base}\n\n${interpolate(t.agreement_rule, { agreement: ctx.player_agreement })}`
+      : base
+
     const withItem = ctx.key_item
-      ? `${base}\n\n${interpolate(t.key_item_context, {
+      ? `${agreed}\n\n${interpolate(t.key_item_context, {
           item_name: ctx.key_item.name,
           item_description: ctx.key_item.description,
           item_why: ctx.key_item.why,
@@ -824,7 +853,7 @@ ${lines}`)
           item_holder: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
           exit_label: this.scene.exits[0]?.label ?? 'la sortie',
         })}`
-      : base
+      : agreed
 
     const themed = ctx.theme?.sign
       ? `${withItem}\n\n${interpolate(this.script.zodiac.turn_instruction, { tension: ctx.theme.sign.tension })}`

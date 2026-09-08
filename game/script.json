@@ -99,6 +99,7 @@
       "max_tokens": 220,
       "max_words": 90,
       "system_prompt_template": "Tu es le narrateur de {{scene_title}} — {{place_name}}, dans un jeu d'aventure textuel cyberpunk en français.\n\nJoueur : {{player_name}}\nLieu : {{place_name}} — {{place_reputation}}\nQuête : {{quest_title}} — {{quest_objective}}\nEnjeu : {{quest_stakes}}\nCe qui attend dehors : {{quest_artifact}} — introuvable ici, personne dans ce bar ne l'a\nCe qui se cherche ICI : une augmentation qui rend lisibles les noms des choses, détenue par un habitué\nPersonnages présents : {{npc_list}}\n\n{{narrative_instruction}}\n\nRègles absolues :\n- Réponds toujours en français.\n- Ne dépasse jamais {{max_words}} mots.\n- N'invente aucune sortie : la seule issue de ce lieu est {{exit_label}}.\n- Ne fais jamais franchir cette sortie au joueur, quoi qu'il tape.\n- Ne brise jamais le quatrième mur, ne mentionne jamais que tu es une IA.",
+      "agreement_rule": "ACCORD GRAMMATICAL — le joueur est {{agreement}}. Tout ce qui lui est adressé s'accorde ainsi, dans la narration comme dans les répliques des personnages. Aucune phrase ne le désigne au genre opposé, et tu ne commentes jamais cette règle.",
       "ambient_prompt": "Le joueur tape : « {{player_input}} ». Réponds par 1 à 2 phrases de narration à la deuxième personne du singulier, dans le style du jeu textuel des années 80. Décris ce qui se passe ou ce qu'il découvre. Nomme explicitement tout nouvel objet manipulable. Pas de dialogue direct, pas de question au joueur.",
       "npc_dialogue_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur lui dit : « {{player_input}} ».\n{{reply_rule}}\nRéponds en 2 à 3 phrases maximum, uniquement la réplique du personnage, sans guillemets et sans son nom devant. Français parlé, sec, teinté d'argot de mégapole, jamais caricatural. Tu peux laisser filtrer une allusion à {{quest_title}}.\nUNE FOIS RÉPONDU, termine par une relance : une question, une remarque qui appelle une réponse, ou une confidence laissée en suspens. La relance vient APRÈS la réponse, jamais à la place. L'interdiction de poser des questions vaut pour la narration, jamais pour un personnage qui parle.\n{{steer_rule}}",
       "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers le sas de façon détournée : la pluie qui bat contre le battant, une sirène qui passe dans la rue, un habitué qui jette un regard vers lui, la lueur d'un néon qui filtre par l'interstice.\nRappelle que ce sas est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre.",
@@ -1916,53 +1917,62 @@
     }
   },
   "numerology": {
-    "note": "Numérologie indienne calculée par utils/numerology.ts depuis identity.birthday et identity.name. moolank (jour de naissance) = manière d'agir ; bhagyank (date entière) = forme de l'objectif ; namank (table chaldéenne appliquée au nom) = façon dont le monde reçoit le joueur. Ce bloc porte tout le texte.",
-    "generation_instruction": "TROIS COUCHES, ET ELLES NE SE CONCURRENCENT PAS.\n1. La MATIÈRE du monde vient du profil : villes, métiers, formations, tournants de vie, passions. C'est avec ça que tu fabriques les décors, les objets et les personnages.\n2. Le CONFLIT vient de la section SIGNE : c'est ce que la quête doit résoudre, son sens.\n3. La FORME vient de la section NOMBRES : la manière d'agir donne le style des actions possibles, la forme de l'objectif donne la nature concrète de ce qu'il faut accomplir, et la réception donne la façon dont les personnages traitent le joueur dès la première réplique.\nINTERDIT ABSOLU : ne nomme jamais un nombre, une planète, la numérologie, l'astrologie ni aucun signe. Rien de tout cela n'existe dans la fiction. Ces couches se voient dans les situations, jamais dans une étiquette.",
+    "note": "Numérologie indienne calculée par utils/numerology.ts depuis identity.birthday, identity.first_name et identity.name. moolank (jour de naissance) = manière d'agir ; bhagyank (date entière) = forme de l'objectif ; namank (table chaldéenne appliquée au PRÉNOM, le nom par lequel on est appelé) = façon dont le monde reçoit le joueur ; namank du NOM COMPLET, prénom et nom de famille réunis = héritage, ce que son nom traîne avant qu'il ait parlé. Ce bloc porte tout le texte.",
+    "generation_instruction": "TROIS COUCHES, ET ELLES NE SE CONCURRENCENT PAS.\n1. La MATIÈRE du monde vient du profil : villes, métiers, formations, tournants de vie, passions. C'est avec ça que tu fabriques les décors, les objets et les personnages.\n2. Le CONFLIT vient de la section SIGNE : c'est ce que la quête doit résoudre, son sens.\n3. La FORME vient de la section NOMBRES : la manière d'agir donne le style des actions possibles, la forme de l'objectif donne la nature concrète de ce qu'il faut accomplir, la réception donne la façon dont les personnages traitent le joueur dès la première réplique, et l'héritage donne ce qu'on lui prête AVANT de le connaître — la réputation qui arrive avec son nom de famille, et qu'il n'a pas choisie.\nINTERDIT ABSOLU : ne nomme jamais un nombre, une planète, la numérologie, l'astrologie ni aucun signe. Rien de tout cela n'existe dans la fiction. Ces couches se voient dans les situations, jamais dans une étiquette.",
     "numbers": {
       "1": {
         "drive": "Tu avances seul et tu décides seul ; déléguer te coûte plus cher que de tout porter.",
         "destiny": "Prendre la tête de quelque chose que personne ne veut diriger.",
-        "reception": "On te suit ou on te conteste, mais on ne t'ignore jamais."
+        "reception": "On te suit ou on te conteste, mais on ne t'ignore jamais.",
+        "heritage": "Ton nom annonce quelqu'un qui décide ; on te confie des choses avant de savoir si tu les veux."
       },
       "2": {
         "drive": "Tu perçois les rapports de force avant les mots, et tu t'ajustes sans qu'on le voie.",
         "destiny": "Réconcilier deux camps qui ont juré de ne plus se parler.",
-        "reception": "On te confie ce qu'on ne dit à personne d'autre."
+        "reception": "On te confie ce qu'on ne dit à personne d'autre.",
+        "heritage": "Ton nom te précède comme celui d'un second ; on te croit là pour arranger ce que d'autres ont commencé."
       },
       "3": {
         "drive": "Tu comprends vite et tu ne supportes pas de garder ça pour toi.",
         "destiny": "Transmettre un savoir que quelqu'un a intérêt à voir disparaître.",
-        "reception": "On vient te demander conseil, et parfois on t'en veut de l'avoir donné."
+        "reception": "On vient te demander conseil, et parfois on t'en veut de l'avoir donné.",
+        "heritage": "Ton nom sonne comme une garantie ; on attend que tu saches, et on te demande rarement si c'est vrai."
       },
       "4": {
         "drive": "Tu fais les choses de travers et ça fonctionne, jusqu'au moment où ça ne fonctionne plus.",
         "destiny": "Défaire un système de l'intérieur, sans qu'il s'en aperçoive à temps.",
-        "reception": "On se méfie de toi sans savoir dire pourquoi."
+        "reception": "On se méfie de toi sans savoir dire pourquoi.",
+        "heritage": "Ton nom traîne un dossier ; on te regarde deux fois avant de te laisser passer."
       },
       "5": {
         "drive": "Tu bouges, tu négocies, tu trouves l'angle ; rester en place t'étouffe.",
         "destiny": "Faire circuler une chose que tout le monde s'était entendu pour bloquer.",
-        "reception": "On te croit sur parole une fois de trop."
+        "reception": "On te croit sur parole une fois de trop.",
+        "heritage": "Ton nom circule vite et arrive avant toi ; on t'ouvre facilement, on te retient rarement."
       },
       "6": {
         "drive": "Tu tiens à ce qui est beau et à ceux qui t'entourent, quitte à fermer les yeux.",
         "destiny": "Sauver quelque chose que tous ont jugé sans valeur.",
-        "reception": "On s'attache à toi vite, et on te demande beaucoup."
+        "reception": "On s'attache à toi vite, et on te demande beaucoup.",
+        "heritage": "Ton nom promet de l'agrément ; on t'invite pour ce que tu adoucis, pas pour ce que tu penses."
       },
       "7": {
         "drive": "Tu cherches ce qu'il y a derrière, et tu t'éloignes de ce qu'il y a devant.",
         "destiny": "Exhumer ce qui a été enterré, puis décider quoi en faire.",
-        "reception": "On te trouve absent même quand tu es là."
+        "reception": "On te trouve absent même quand tu es là.",
+        "heritage": "Ton nom ne dit rien à personne, et c'est ce vide qu'on remplit à ta place."
       },
       "8": {
         "drive": "Tu encaisses, tu recommences, et tu n'oublies rien.",
         "destiny": "Obtenir réparation pour une dette que personne ne veut reconnaître.",
-        "reception": "On te respecte tard, et rarement à voix haute."
+        "reception": "On te respecte tard, et rarement à voix haute.",
+        "heritage": "Ton nom pèse ; on te prête une dureté que tu n'as pas demandée, et on te la fait payer d'avance."
       },
       "9": {
         "drive": "Tu vas au conflit là où les autres contournent.",
         "destiny": "Tenir une position que tout le monde a abandonnée.",
-        "reception": "On t'appelle quand ça tourne mal, jamais avant."
+        "reception": "On t'appelle quand ça tourne mal, jamais avant.",
+        "heritage": "Ton nom sent la bagarre ; on te réserve une place au combat avant que tu aies parlé."
       }
     }
   },

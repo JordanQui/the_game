@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { useFacebook } from '~/composables/useFacebook'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useProgression } from '~/composables/useProgression'
-import { forgetRun, rememberedPlayerName } from '~/composables/useScene'
+import { forgetRun, rememberedProfile } from '~/composables/useScene'
 import type { UserProfile } from '~/types/user'
 
-const { login, isLoading, error } = useFacebook()
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
 const progression = useProgression()
@@ -22,17 +20,25 @@ const progression = useProgression()
 const resumeScene = computed(() => progression.resumeTarget())
 
 /**
- * Le nom que ce navigateur a retenu.
+ * Le dossier que ce navigateur a retenu.
  *
- * Affiché sur la reprise : puisque le jeu garde désormais les données Meta
- * d'une visite à l'autre, le joueur doit le VOIR — une mémoire silencieuse
- * serait la mauvaise façon de tenir cette promesse-là.
+ * C'est la promesse tenue de la mémoire locale : quelqu'un qui a déjà rempli
+ * le formulaire ne le remplit pas deux fois — le bureau a ses données, il n'a
+ * plus qu'à sortir. Et il doit le VOIR : une mémoire silencieuse serait la
+ * mauvaise façon de tenir cette promesse-là.
  *
  * Lu après le montage : la mémoire du navigateur n'existe pas au rendu serveur,
  * et l'y toucher ferait diverger l'hydratation.
  */
-const rememberedName = ref<string | null>(null)
-onMounted(() => { rememberedName.value = rememberedPlayerName() })
+const knownDossier = ref<UserProfile | null>(null)
+onMounted(() => { knownDossier.value = rememberedProfile() })
+
+/** Le nom inscrit au dossier. Complet : c'est une pièce administrative. */
+const rememberedName = computed(() => knownDossier.value?.identity.name ?? null)
+
+/** Le prénom, pour lui parler. On n'interpelle personne par son état civil. */
+const rememberedFirstName = computed(() =>
+  knownDossier.value?.identity.first_name || rememberedName.value)
 
 function continueGame() {
   progression.resume()
@@ -41,9 +47,9 @@ function continueGame() {
 /**
  * Repartir de zéro.
  *
- * Efface la partie gardée par le navigateur, données Meta comprises : c'est le
- * geste d'oubli qu'annonce l'avertissement, et le seul que le joueur ait sous
- * la main sans aller dans les réglages de son navigateur.
+ * Efface la partie gardée par le navigateur, dossier d'admission compris :
+ * c'est le geste d'oubli qu'annonce l'avertissement, et le seul que le joueur
+ * ait sous la main sans aller dans les réglages de son navigateur.
  *
  * Sans ça, « commencer » servait la scène gardée — celle d'où l'on venait — au
  * lieu de l'auberge, et le journal des scènes précédentes suivait dans la
@@ -51,7 +57,7 @@ function continueGame() {
  */
 function startFresh() {
   forgetRun()
-  rememberedName.value = null
+  knownDossier.value = null
   playerStore.journal = []
   playerStore.profile = null
   playerStore.reset()
@@ -78,8 +84,13 @@ const raindrops = Array.from({ length: 44 }, (_, i) => ({
   opacity: 0.18 + ((i * 5) % 5) / 20,
 }))
 
-/** Lance la scène sur le profil de démonstration, sans passer par Meta. */
-async function startWithoutMeta() {
+/**
+ * Entre avec le dossier type, sans rien remplir.
+ *
+ * Le raccourci du développement, et la porte de service pour qui veut voir le
+ * jeu sans se déclarer : c'est le profil de game/user.json.
+ */
+async function startWithSampleDossier() {
   isLoadingDemo.value = true
   startFresh()
   try {
@@ -93,14 +104,31 @@ async function startWithoutMeta() {
   }
 }
 
+/**
+ * Repartir pour une nuit avec le dossier déjà connu.
+ *
+ * On efface la partie précédente — journal, inventaire, scène gardée — mais on
+ * REMET le profil aussitôt : c'est tout l'intérêt, le formulaire ne se remplit
+ * qu'une fois. Le prochain enregistrement le réinscrira dans la mémoire du
+ * navigateur.
+ */
+function goOutAgain() {
+  const dossier = knownDossier.value
+  if (!dossier) return
+  startFresh()
+  playerStore.setProfile(dossier)
+  gameStore.setScreen('scene_build_loading')
+}
+
 function openDisclaimer() {
   showDisclaimer.value = true
 }
 
-async function acceptAndLogin() {
+/** L'avertissement lu, on passe au formulaire — aucun compte, aucun tiers. */
+function acceptAndEnroll() {
   showDisclaimer.value = false
   startFresh()
-  await login()
+  gameStore.setScreen('admission')
 }
 </script>
 
@@ -191,7 +219,7 @@ async function acceptAndLogin() {
       -->
       <div v-if="resumeScene" class="w-full space-y-4 flex flex-col items-center">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
-          <template v-if="rememberedName">{{ rememberedName }}, votre nuit continue</template>
+          <template v-if="rememberedFirstName">{{ rememberedFirstName }}, votre nuit continue</template>
           <template v-else>Votre nuit est en cours</template>
         </p>
         <GlowButton class="w-full" @click="continueGame">Continuer</GlowButton>
@@ -207,17 +235,41 @@ async function acceptAndLogin() {
         </div>
       </div>
 
-      <div class="w-full space-y-4 flex flex-col items-center">
-        <GlowButton :loading="isLoading" @click="openDisclaimer">
-          <span class="flex items-center gap-2.5">
-            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
-            Commencer avec Meta
-          </span>
+      <!--
+        Le dossier est déjà au bureau. Personne ne remplit deux fois le même
+        formulaire : on annonce ce qu'on a retenu, on nomme le dossier, et on
+        ouvre la porte. Le formulaire reste accessible dessous, pour qui veut
+        repartir sous une autre identité.
+      -->
+      <div v-if="knownDossier" class="w-full space-y-4 flex flex-col items-center">
+        <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
+          Le bureau a déjà votre dossier
+        </p>
+        <GlowButton class="w-full" @click="goOutAgain">Sortir de chez vous</GlowButton>
+        <p class="text-ink-200/70 text-[11px] leading-relaxed">
+          Au nom de <span class="text-ink-100">{{ rememberedName }}</span> — rien à remplir,
+          la ville vous attend.
+        </p>
+        <button
+          class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400
+                 hover:text-ink-200 transition-colors pt-1"
+          @click="openDisclaimer"
+        >
+          Remplir un nouveau dossier
+        </button>
+      </div>
+
+      <!--
+        L'entrée dans le jeu. Plus aucun compte tiers : le joueur DÉCLARE ce
+        que le monde utilisera de lui, et la commission lui répond avant la
+        première scène.
+      -->
+      <div v-else class="w-full space-y-4 flex flex-col items-center">
+        <GlowButton class="w-full leading-relaxed" @click="openDisclaimer">
+          Remplissez le formulaire d'admission
         </GlowButton>
         <p class="text-steel-400 text-[10px] uppercase tracking-[0.2em] font-display">
-          Connexion sécurisée via Facebook / Instagram
+          Six étapes — ni compte, ni mot de passe
         </p>
       </div>
 
@@ -226,12 +278,10 @@ async function acceptAndLogin() {
                border-b border-steel-600 hover:border-neon-600 pb-1
                transition-colors disabled:opacity-40 py-2 px-1"
         :disabled="isLoadingDemo"
-        @click="startWithoutMeta"
+        @click="startWithSampleDossier"
       >
-        {{ isLoadingDemo ? 'Ouverture du sas' : 'Lancer sans les données Meta' }}
+        {{ isLoadingDemo ? 'Ouverture du sas' : 'Entrer avec un dossier type' }}
       </button>
-
-      <p v-if="error" class="text-red-400/80 text-sm">{{ error }}</p>
     </div>
 
     <!-- Balayage cathodique, tout au-dessus -->
@@ -263,8 +313,8 @@ async function acceptAndLogin() {
           <ul class="space-y-5 text-left">
             <li
               v-for="(point, i) in [
-                'Vos informations Facebook servent uniquement à générer votre aventure personnalisée — personnages, lieux, quête.',
-                'Elles ne sont enregistrées sur aucun serveur : nous ne les stockons, ne les partageons et ne les revendons pas.',
+                'Le formulaire d\'admission sert uniquement à générer votre aventure personnalisée — personnages, lieux, quête. Aucun compte, aucun réseau social, aucun tiers.',
+                'Vos réponses ne sont enregistrées sur aucun serveur : nous ne les stockons, ne les partageons et ne les revendons pas.',
                 `Elles restent sur cet appareil, dans votre navigateur, le temps de votre aventure — ${memoryDays} jours — pour que vous puissiez la reprendre où vous l'avez laissée.`,
                 'Repartir de zéro ci-dessous, ou effacer les données du site, les efface avec elle.',
               ]"
@@ -282,7 +332,7 @@ async function acceptAndLogin() {
           <div class="h-px bg-neon-600/30" />
 
           <div class="space-y-4 flex flex-col items-center">
-            <GlowButton class="w-full" @click="acceptAndLogin">Continuer</GlowButton>
+            <GlowButton class="w-full" @click="acceptAndEnroll">Continuer</GlowButton>
             <button
               class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400 hover:text-ink-200 transition-colors"
               @click="showDisclaimer = false"

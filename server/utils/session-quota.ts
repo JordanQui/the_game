@@ -40,6 +40,16 @@ export interface SessionQuota {
    * le lui dire — `turnCount` vient du navigateur, il se falsifie.
    */
   scene_turns?: number
+  /**
+   * Échéance du verrou en cours, recopiée ici à la fermeture.
+   *
+   * Le cookie de verrou meurt tout seul à l'expiration, et avec lui la seule
+   * trace que la scène avait été fermée. Sans ce doublon, le joueur qui revient
+   * après le cycle reprend la scène que son navigateur a gardée — donc SANS
+   * demander de scène neuve, donc sans remise à zéro de `scene_turns` — et se
+   * fait refermer au premier tour, un cycle après l'autre, indéfiniment.
+   */
+  locked_until?: number
 }
 
 /**
@@ -55,13 +65,14 @@ export interface LockPass {
   until: number
   reason: 'stalled' | 'completed'
   /**
-   * L'adieu, écrit pour CE joueur à la génération de l'épilogue.
+   * Le texte de l'écran, écrit pour CE joueur par le modèle : le `game_over` de
+   * la scène qui s'est refermée, ou l'adieu de l'épilogue.
    *
    * Rangé dans le cookie et non côté client : c'est la seule façon qu'il
    * survive à un rechargement, à un autre onglet, à un autre jour. Court par
    * nécessité — un cookie plafonne autour de 4 ko.
    */
-  farewell?: string
+  text?: string
 }
 
 /** Droit d'accès ouvert par le paiement. Signé, donc infalsifiable. */
@@ -91,6 +102,15 @@ export interface PositionPass {
   index: number
   /** Dernier passage, en millisecondes. */
   at: number
+  /**
+   * Le texte de fermeture de CETTE scène, tel que le modèle l'a écrit.
+   *
+   * C'est ce qui rend le game over propre à chaque scène sans rien demander au
+   * navigateur : la scène servie dépose son texte ici, et le verrou le reprend
+   * au moment de refermer. Le client n'a donc jamais à le renvoyer — il ne
+   * pourrait ni le prouver, ni le retrouver après un rechargement.
+   */
+  game_over?: string
 }
 
 function freshQuota(): SessionQuota {
@@ -171,12 +191,18 @@ export function readAccess(event: H3Event): AccessPass | null {
  *
  * @param windowDays aligné sur la fenêtre payante : la reprise doit tenir
  * aussi longtemps que le droit d'accès qui l'autorise.
+ * @param gameOver le texte de fermeture écrit pour CETTE scène. Rangé ici parce
+ * que c'est le seul endroit où le serveur le voit passer : quand la nuit se
+ * refermera, il n'aura plus que ce cookie pour savoir quoi afficher.
  */
 export function rememberPosition(
-  event: H3Event, sceneId: string, index: number, windowDays: number,
+  event: H3Event, sceneId: string, index: number, windowDays: number, gameOver?: string,
 ): PositionPass {
   const secret = requireSecret(useRuntimeConfig().nuxtSecret, 'NUXT_SECRET')
   const position: PositionPass = { scene_id: sceneId, index, at: Date.now() }
+  // Tronqué comme l'adieu : un cookie plafonne autour de 4 ko, et un texte
+  // trop lourd ferait jeter la position tout entière, donc la reprise avec.
+  if (gameOver) position.game_over = gameOver.slice(0, 700)
 
   setCookie(event, POSITION_COOKIE, seal(position, secret), {
     httpOnly: true,
@@ -224,13 +250,13 @@ export function lockOut(
   event: H3Event,
   hours: number,
   reason: LockPass['reason'],
-  farewell?: string,
+  text?: string,
 ): LockPass {
   const secret = requireSecret(useRuntimeConfig().nuxtSecret, 'NUXT_SECRET')
   const lock: LockPass = { until: Date.now() + hours * 3600_000, reason }
   // Tronqué : au-delà, le cookie devient trop lourd et le navigateur le jette
-  // en silence — on perdrait le verrou avec l'adieu.
-  if (farewell) lock.farewell = farewell.slice(0, 700)
+  // en silence — on perdrait le verrou avec le texte.
+  if (text) lock.text = text.slice(0, 700)
 
   setCookie(event, LOCK_COOKIE, seal(lock, secret), {
     httpOnly: true,
@@ -256,6 +282,37 @@ export function clearLock(event: H3Event): void {
 }
 
 /**
+ * Referme la scène en cours : le game over.
+ *
+ * Un seul chemin, deux appelants — le client au moment où la nuit se referme à
+ * l'écran, et `consumeQuota` qui compte les tours de son côté et n'attend
+ * l'accord de personne. Les deux doivent produire exactement le même verrou,
+ * sinon la fermeture dépendrait de qui l'a demandée en premier.
+ *
+ * Le texte affiché vient de la POSITION, déposée par la scène quand elle a été
+ * servie : c'est ce qui rend le game over propre à chaque scène sans jamais
+ * croire le navigateur sur parole.
+ */
+export function closeForStalling(event: H3Event, limits: LimitsConfig): LockPass {
+  // Déjà fermée : on ne repousse pas l'échéance, sinon un joueur qui insiste
+  // repartirait pour un cycle entier à chaque tentative.
+  const existing = readLock(event)
+  if (existing) return existing
+
+  const lock = lockOut(event, limits.lock.hours, 'stalled', readPosition(event)?.game_over)
+
+  // On note l'échéance dans le quota : c'est elle qui, une fois passée, rendra
+  // ses tours à la scène. Le cookie de verrou, lui, aura disparu sans laisser
+  // de trace — voir `locked_until`.
+  const windowHours = readAccess(event) ? limits.paid.window_days * 24 : limits.window_hours
+  const quota = readQuota(event, windowHours)
+  quota.locked_until = lock.until
+  writeQuota(event, quota, windowHours)
+
+  return lock
+}
+
+/**
  * Refuse toute requête coûteuse tant que le verrou tient.
  *
  * 423 et non 429 : ce n'est pas un quota atteint, c'est un accès suspendu. Le
@@ -267,7 +324,10 @@ export function assertNotLocked(event: H3Event): void {
   throw createError({
     statusCode: 423,
     statusMessage: 'La ville se recharge.',
-    data: { lockedUntil: lock.until },
+    // Le texte voyage avec le refus : un client qui découvre la fermeture ici
+    // — autre onglet, cookie posé entre-temps — a de quoi montrer le bon écran
+    // sans redemander quoi que ce soit.
+    data: { lockedUntil: lock.until, text: lock.text },
   })
 }
 
@@ -292,6 +352,19 @@ export function readQuota(event: H3Event, windowHours: number): SessionQuota {
 
   // Fenêtre glissante : au-delà, la session repart à zéro.
   if (!quota.since || Date.now() - quota.since > windowHours * 3600_000) return freshQuota()
+
+  /**
+   * Le cycle est passé : la scène repart avec ses tours entiers.
+   *
+   * Sans cette remise à zéro, le joueur qui revient au bout des 24 h reprend la
+   * scène que son navigateur a gardée — donc sans demander de scène neuve, donc
+   * sans rien remettre à zéro — et se fait refermer au premier tour. Le verrou
+   * cesserait d'être un cycle pour devenir une condamnation.
+   */
+  if (quota.locked_until && quota.locked_until <= Date.now()) {
+    quota.scene_turns = 0
+    delete quota.locked_until
+  }
   return quota
 }
 
@@ -349,11 +422,11 @@ export function consumeQuota(
   } else if (kind === 'turns' && lock?.turns_per_scene) {
     const played = quota.scene_turns ?? 0
     if (played >= lock.turns_per_scene) {
-      lockOut(event, lock.hours, 'stalled')
+      const closed = closeForStalling(event, limits)
       throw createError({
         statusCode: 423,
         statusMessage: lock.message,
-        data: { lockedUntil: Date.now() + lock.hours * 3600_000 },
+        data: { lockedUntil: closed.until, text: closed.text },
       })
     }
     quota.scene_turns = played + 1

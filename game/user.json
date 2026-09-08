@@ -1,30 +1,19 @@
 {
   "_fixture": true,
-  "_note": "Échantillon de développement. Sera remplacé à l'exécution par la sortie de utils/facebook-classifier.ts. La forme ci-dessous est le contrat : ne pas la changer sans mettre à jour script.json.",
+  "_note": "Dossier type. Sert de repli au serveur et alimente « Entrer avec un dossier type » sur l'accueil ; en jeu, ce profil est produit par le formulaire d'admission (utils/admission.ts). La forme ci-dessous est le contrat : ne pas la changer sans mettre à jour script.json.",
 
   "source": {
-    "provider": "meta",
-    "graph_api_version": "v21.0",
-    "fetched_at": "2026-09-04T10:00:00.000Z",
-    "scopes": [
-      "public_profile",
-      "user_education_history",
-      "user_work_history",
-      "user_birthday",
-      "user_location",
-      "user_hometown",
-      "user_likes"
-    ]
+    "provider": "admission_form",
+    "filled_at": "2026-09-08T10:00:00.000Z"
   },
 
   "identity": {
-    "id": "10158899234567890",
     "name": "Laure Aime",
     "first_name": "Laure",
-    "picture_url": "https://graph.facebook.com/10158899234567890/picture?type=large",
+    "last_name": "Aime",
     "birthday": "2000-01-01",
     "age": 35,
-    "languages": ["Français", "Anglais", "Espagnol"]
+    "agreement": "feminin"
   },
 
   "origin": {
@@ -104,25 +93,15 @@
     }
   ],
 
-  "misc_facts": [
-    "Née un 01 janvier",
-    "Parle trois langues",
-    "A vécu dans quatre villes différentes"
-  ],
+  "imprints": {
+    "keepsake": "un compas de marine qui ne pointe plus le nord",
+    "refuge": "le dernier bar ouvert du quai",
+    "ally": "Nils",
+    "aversion": "qu'on décide à sa place"
+  },
 
-  "_field_map": {
-    "identity.name": "GET /me?fields=name",
-    "identity.first_name": "GET /me?fields=first_name",
-    "identity.picture_url": "GET /me?fields=picture.type(large)",
-    "identity.birthday": "GET /me?fields=birthday (scope user_birthday)",
-    "identity.languages": "GET /me?fields=languages",
-    "origin.hometown.name": "GET /me?fields=hometown (scope user_hometown)",
-    "origin.current_location.name": "GET /me?fields=location (scope user_location)",
-    "origin.*.traits": "DÉRIVÉ — enrichissement local, pas fourni par Meta",
-    "trajectory.education[]": "GET /me?fields=education (scope user_education_history)",
-    "trajectory.work[]": "GET /me?fields=work (scope user_work_history)",
-    "trajectory.turning_points[]": "DÉRIVÉ — utils/facebook-classifier.ts, scoring des événements",
-    "passions[]": "GET /me?fields=likes,music,movies,books,television,games,sports (scope user_likes), regroupés par thème",
-    "misc_facts[]": "DÉRIVÉ"
-  }
+  "misc_facts": [
+    "Née un 1er janvier",
+    "A vécu dans quatre villes différentes"
+  ]
 }

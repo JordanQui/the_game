@@ -71,6 +71,13 @@ export interface TurnRules {
   max_tokens: number
   max_words: number
   system_prompt_template: string
+  /**
+   * Comment accorder ce qu'on adresse au joueur.
+   *
+   * Ajoutée au prompt système dès que le dossier d'admission dit l'accord.
+   * Sans elle, le modèle tranche seul — et il tranche au masculin.
+   */
+  agreement_rule: string
   ambient_prompt: string
   npc_dialogue_prompt: string
   exit_nudge_prompt: string
@@ -349,8 +356,10 @@ export interface NumerologyNumberScript {
   drive: string
   /** Forme concrète de l'objectif — porté par le bhagyank. */
   destiny: string
-  /** Façon dont le monde reçoit le joueur — porté par le namank. */
+  /** Façon dont le monde reçoit le joueur — porté par le namank du prénom. */
   reception: string
+  /** Ce que son nom traîne — porté par le namank du nom complet. */
+  heritage: string
 }
 
 export interface NumerologyScript {

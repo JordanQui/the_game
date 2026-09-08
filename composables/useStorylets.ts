@@ -129,14 +129,20 @@ export function useStorylets() {
     const scene = playerStore.scene
     const hours = scene?.pacing?.lock_hours ?? 24
     let until = Date.now() + hours * 3600_000
+    // Le texte que le serveur a rangé dans le cookie fait foi : c'est celui qui
+    // reviendra au rechargement, et l'écran ne doit pas en montrer un autre
+    // maintenant. Celui de la scène en main ne sert que si l'appel échoue.
+    let text = scene?.game_over
     try {
-      const lock = await $fetch<{ until: number }>('/api/lockout', { method: 'POST' })
+      const lock = await $fetch<{ until: number; text?: string }>(
+        '/api/lockout', { method: 'POST' })
       until = lock.until
+      if (lock.text) text = lock.text
     } catch {
       // Sans réponse, on garde l'échéance estimée : l'écran ne doit jamais
       // rester ouvert sur une saisie qui ne partira plus.
     }
-    gameStore.closeCity({ until, reason: 'stalled', text: scene?.game_over })
+    gameStore.closeCity({ until, reason: 'stalled', text })
   }
 
   /**

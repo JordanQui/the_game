@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   // n'est régénéré, rien n'est facturé.
   const lock = readLock(event)
   const closed = lock
-    ? { until: lock.until, reason: lock.reason, text: lock.farewell }
+    ? { until: lock.until, reason: lock.reason, text: lock.text }
     : null
 
   const pass = readAccess(event)
