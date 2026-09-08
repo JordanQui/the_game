@@ -29,7 +29,6 @@ const form = reactive(emptyAdmissionForm())
 const STEPS = [
   { title: 'Identité', legend: 'Le bureau consigne qui se présente.' },
   { title: 'Origine', legend: 'D\'où vous venez, où vous dormez.' },
-  { title: 'Trajectoire', legend: 'Ce que vous avez appris, ce que vous faites.' },
   { title: 'Attaches', legend: 'Ce à quoi vous tenez, hors service.' },
   { title: 'Bascules', legend: 'Les fois où votre vie a changé de rue.' },
   { title: 'Empreintes', legend: 'Quatre détails. La nuit les remettra devant vous.' },
@@ -204,41 +203,8 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
             </label>
           </div>
 
-          <!-- 3. TRAJECTOIRE -->
-          <div v-else-if="step === 2" class="relative space-y-5">
-            <label class="block space-y-2">
-              <span class="field-label">Formation</span>
-              <input v-model="form.education.degree" type="text" class="field" placeholder="ce que vous avez étudié">
-            </label>
-            <div class="grid grid-cols-[1fr_5.5rem] gap-3">
-              <label class="block space-y-2">
-                <span class="field-label">Établissement</span>
-                <input v-model="form.education.school" type="text" class="field" placeholder="école, fac, atelier">
-              </label>
-              <label class="block space-y-2">
-                <span class="field-label">Année</span>
-                <input v-model="form.education.year" type="text" class="field" placeholder="2015" inputmode="numeric" maxlength="4">
-              </label>
-            </div>
-
-            <div class="h-px bg-steel-700" />
-
-            <label class="block space-y-2">
-              <span class="field-label">Métier actuel</span>
-              <input v-model="form.work.position" type="text" class="field" placeholder="ce que vous faites de vos journées">
-            </label>
-            <label class="block space-y-2">
-              <span class="field-label">Employeur</span>
-              <input v-model="form.work.employer" type="text" class="field" placeholder="pour qui, ou à votre compte">
-            </label>
-            <label class="block space-y-2">
-              <span class="field-label">Métier précédent <span class="text-steel-500">— facultatif</span></span>
-              <input v-model="form.previousWork.position" type="text" class="field" placeholder="ce que vous faisiez avant">
-            </label>
-          </div>
-
-          <!-- 4. PASSIONS -->
-          <div v-else-if="step === 3" class="relative space-y-4">
+          <!-- 3. PASSIONS -->
+          <div v-else-if="step === 2" class="relative space-y-4">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
               Cinq au maximum, et l'ordre compte : les deux premières touchées
               pèsent le plus lourd dans votre nuit.
@@ -262,8 +228,8 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
             <p class="field-hint">{{ form.passions.length }} / {{ MAX_PASSIONS }} retenues</p>
           </div>
 
-          <!-- 5. TOURNANTS -->
-          <div v-else-if="step === 4" class="relative space-y-5">
+          <!-- 4. TOURNANTS -->
+          <div v-else-if="step === 3" class="relative space-y-5">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
               Facultatif, mais c'est ce qui donne à la nuit de quoi vous
               reconnaître. Une ligne suffit : un départ, une rupture, un métier
@@ -280,7 +246,7 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           </div>
 
           <!--
-            6. EMPREINTES — les quatre seuls champs qui ne racontent pas un
+            5. EMPREINTES — les quatre seuls champs qui ne racontent pas un
             état civil. Ils reviennent en décor : l'objet sur une table, le
             refuge en façade, le prénom dans la bouche d'un inconnu, et ce qu'il
             ne supporte pas juste en travers de son chemin.
