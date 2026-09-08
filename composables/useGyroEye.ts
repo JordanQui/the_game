@@ -1,5 +1,6 @@
 import { useGameStore } from '~/stores/game'
 import { primeContext, unlockAudio } from '~/composables/useNameChime'
+import { upVector, aimFrom } from '~/utils/gyro-aim'
 
 /**
  * L'oeil qu'on déplace en inclinant le téléphone.
@@ -24,43 +25,54 @@ const RANGE_DEG = 22
 /**
  * Hauteur de l'oeil au repos, en fraction d'écran.
  *
- * Aux trois quarts de la hauteur en partant du bas, soit un quart depuis le
- * haut. On lit un téléphone à plat ou presque allongé : c'est cette posture-là
- * qui doit correspondre au repos. L'oeil descend ensuite dans le texte quand on
- * relève l'appareil vers soi — le geste naturel pour parcourir une page.
+ * EN HAUT, pas au centre : téléphone posé à plat, l'oeil se range tout en haut
+ * de l'écran, et l'intégralité du débattement sert à le faire descendre dans le
+ * texte. Ce n'est pas zéro tout rond parce que le réticule est centré sur sa
+ * position : à 0 il serait coupé en deux par le bord. Mettre 0 pour l'y coller
+ * franchement.
  */
-const NEUTRAL_Y = 0.25
+const NEUTRAL_Y = 0.05
 
 /**
- * Ce que la posture change : l'amplitude disponible.
+ * L'attitude de repos de chaque posture, en degrés de tangage. C'EST L'ORIGINE.
+ *
+ * Elle est DÉCLARÉE, pas mesurée. Le calibrage qu'elle remplace prenait pour
+ * zéro l'attitude de la main à l'instant du tap : deux activations de suite ne
+ * donnaient pas la même visée, et le joueur n'avait aucun moyen de savoir
+ * laquelle il venait d'obtenir.
+ *
+ * Assis, le repos est le téléphone POSÉ À PLAT, écran vers le ciel : 0°.
+ * Allongé, c'est la même chose vue de l'autre côté — tenu à plat au-dessus du
+ * visage, écran vers le bas : 180°.
+ *
+ * LE DÉCALAGE ALLONGÉ SE DÉDUIT DE L'ASSIS, il ne se règle pas au jugé. Ce qui
+ * fixe la hauteur de l'oeil, c'est sin(bêta) : il vaut zéro à 0° comme à 180°,
+ * donc les deux postures se reposent au même endroit — en haut — et le même
+ * geste fait descendre l'oeil dans les deux. Ce sont aussi les deux seules
+ * attitudes où la gravité se lit à plein (|cos bêta| = 1), ce qui rend inutile
+ * toute compensation d'assiette. Le sens de l'inclinaison, lui, est porté par
+ * le vecteur vertical, qui n'a pas besoin qu'on lui dise de quel côté on est.
+ *
+ * Si le repos allongé est en réalité plus redressé — la tête sur un oreiller,
+ * le téléphone incliné vers le visage —, c'est CE nombre qu'on baisse : 150°
+ * pour une trentaine de degrés de plus.
+ */
+const REST_BETA_DEG: Record<string, number> = {
+  assis: 0,
+  allonge: 180,
+}
+
+/**
+ * Ce que la posture change d'autre : l'amplitude disponible.
  *
  * Allongé, le bras porte l'appareil au-dessus du visage et ne peut plus
  * l'incliner beaucoup : il faut donc que moins de degrés suffisent à traverser
- * l'écran. L'ORIGINE, elle, est déjà annulée par le calibrage — y ajouter un
- * décalage de tangage serait une double correction, l'erreur d'une version
- * précédente.
+ * l'écran. C'est de l'ergonomie, pas de la géométrie.
  */
 const POSTURE_RANGE_SCALE: Record<string, number> = {
   assis: 1,
   allonge: 0.7,
 }
-
-/**
- * Écart maximal admis entre deux mesures consécutives, en degrés.
- *
- * À soixante mesures par seconde, aucun poignet ne fait bouger un téléphone de
- * quarante degrés d'un coup. Un tel saut n'est pas un mouvement : c'est la
- * spécification qui change de représentation pour décrire la MÊME orientation —
- * quand le tangage traverse 90°, gamma bascule de +g à -g et bêta devient
- * 180-b. Sans garde-fou, l'oeil sautait alors d'un quart d'écran.
- *
- * On ne rejette pas la mesure : on déplace l'origine du même écart, si bien que
- * l'oeil ne bouge pas d'un pixel et que le geste reprend normalement ensuite.
- * Le modèle reste donc DIRECT — x et y déduits des angles — ce qui lui garde sa
- * franchise. Passer par la verticale supprimait bien le saut, mais rendait la
- * visée molle dès que l'appareil approchait de la verticale.
- */
-const MAX_STEP_DEG = 40
 
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
@@ -84,63 +96,27 @@ export function useGyroEye() {
 
   let raf: number | null = null
   let target = { x: 0.5, y: NEUTRAL_Y }
-  /**
-   * L'attitude de départ : la verticale telle que l'appareil la voyait, et le
-   * rattrapage de roulis qui va avec. C'est elle qui fait le zéro.
-   */
-  let neutral: { beta: number; gamma: number } | null = null
-  let settleAt = 0
-  /**
-   * Mesures accumulées pour fixer l'origine.
-   *
-   * Prendre UN échantillon, c'est figer le zéro sur l'instant précis où la main
-   * bougeait encore après le tap. On en moyenne une demi-seconde : le calibrage
-   * cesse de dépendre d'un hasard.
-   */
-  let samples: Array<{ beta: number; gamma: number }> = []
-  let calibrateUntil = 0
-  /** Dernière mesure brute, pour repérer les sauts de représentation. */
-  let previous: { beta: number; gamma: number } | null = null
 
+  /**
+   * Chaque mesure se lit seule.
+   *
+   * Rien à retenir d'une frame sur l'autre — ni origine échantillonnée, ni
+   * mesure précédente pour rattraper un saut. L'origine est déclarée
+   * (`REST_BETA_DEG`) et le vecteur vertical est continu partout, y compris à
+   * la singularité de 90° qui faisait sauter l'oeil d'un quart d'écran quand on
+   * comparait des angles bruts.
+   */
   function onOrientation(event: DeviceOrientationEvent) {
     const { beta, gamma } = event
     if (beta === null || gamma === null) return
 
-    // Calibrage : on laisse d'abord l'appareil se stabiliser — les premières
-    // mesures arrivent pendant que la main bouge encore après le tap — puis on
-    // moyenne une demi-seconde de mesures pour fixer l'origine.
-    if (neutral === null) {
-      const now = Date.now()
-      if (now < settleAt) return
-      samples.push({ beta, gamma })
-      if (now < calibrateUntil) return
-      const n = samples.length
-      neutral = {
-        beta: samples.reduce((a, v) => a + v.beta, 0) / n,
-        gamma: samples.reduce((a, v) => a + v.gamma, 0) / n,
-      }
-      samples = []
-      previous = { beta, gamma }
-    }
-
-    // Saut de représentation : on décale l'origine d'autant, l'oeil ne bouge
-    // pas d'un pixel. Voir MAX_STEP_DEG.
-    if (previous) {
-      const stepBeta = beta - previous.beta
-      const stepGamma = gamma - previous.gamma
-      if (Math.abs(stepBeta) > MAX_STEP_DEG || Math.abs(stepGamma) > MAX_STEP_DEG) {
-        neutral = { beta: neutral.beta + stepBeta, gamma: neutral.gamma + stepGamma }
-      }
-    }
-    previous = { beta, gamma }
-
-    const range = RANGE_DEG * (POSTURE_RANGE_SCALE[gameStore.posture] ?? 1)
-    const dx = (gamma - neutral.gamma) / range
-    const dy = (beta - neutral.beta) / range
-    target = {
-      x: Math.min(1, Math.max(0, 0.5 + dx / 2)),
-      y: Math.min(1, Math.max(0, NEUTRAL_Y + dy / 2)),
-    }
+    const posture = gameStore.posture
+    target = aimFrom(
+      upVector(beta, gamma),
+      REST_BETA_DEG[posture] ?? 0,
+      RANGE_DEG * (POSTURE_RANGE_SCALE[posture] ?? 1),
+      NEUTRAL_Y,
+    )
   }
 
   /**
@@ -190,7 +166,7 @@ export function useGyroEye() {
 
     // En veille pendant la saisie : la position continue de suivre l'appareil,
     // mais rien n'est visé — ni nom révélé, ni épreuve ouverte, ni note jouée.
-    // Filet : la veille ne survit pas à une seconde. Si un `blur` se perd —
+    // Filet : la veille ne survit pas à une minute. Si un `blur` se perd —
     // clavier refermé par le système, champ démonté — l'oeil se rendort pour
     // toujours, et c'est indistinguable d'une panne de son.
     if (gameStore.typing && Date.now() - gameStore.typingSince > 60_000) {
@@ -231,20 +207,6 @@ export function useGyroEye() {
     raf = requestAnimationFrame(loop)
   }
 
-  /**
-   * Reprend l'inclinaison courante comme origine.
-   *
-   * Appelé à l'activation, et à chaque changement de posture : c'est le seul
-   * moment où l'on sait que le joueur vient de se réinstaller.
-   */
-  function recalibrate() {
-    neutral = null
-    samples = []
-    previous = null
-    settleAt = Date.now() + 400
-    calibrateUntil = settleAt + 500
-  }
-
   async function enable(): Promise<boolean> {
     // Ce clic est le geste dont le contexte audio a besoin : on le saisit ici
     // plutôt que d'espérer qu'un survol suffise plus tard. L'ouverture est
@@ -267,7 +229,6 @@ export function useGyroEye() {
       }
     }
 
-    recalibrate()
     window.addEventListener('deviceorientation', onOrientation, true)
     enabled.value = true
     gameStore.setEyeActive(true)
@@ -283,8 +244,8 @@ export function useGyroEye() {
     gameStore.setRevealing(null)
   }
 
-  // Passer d'assis à allongé, c'est bouger : l'origine d'avant ne vaut plus.
-  watch(() => gameStore.posture, () => { if (enabled.value) recalibrate() })
+  // La posture est relue à chaque mesure : en changer prend effet à la frame
+  // suivante, sans rien à réarmer.
 
   onUnmounted(disable)
 
