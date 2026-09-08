@@ -103,6 +103,7 @@ interface Carry {
   inventory: Array<{ id: string; label: string; from?: string }>
   decrypted: string[]
   augmentation: boolean
+  primerSeen: boolean
 }
 
 function storeCarry(carry: Carry): void {
@@ -183,6 +184,7 @@ export function useScene() {
       inventory: gameStore.inventory,
       decrypted: gameStore.decryptedObjectIds,
       augmentation: gameStore.hasAugmentation,
+      primerSeen: gameStore.primerSeen,
     })
   }
 
@@ -193,6 +195,7 @@ export function useScene() {
     if (!gameStore.inventory.length) gameStore.inventory = carry.inventory ?? []
     if (!gameStore.decryptedObjectIds.length) gameStore.decryptedObjectIds = carry.decrypted ?? []
     if (carry.augmentation) gameStore.hasAugmentation = true
+    if (carry.primerSeen) gameStore.primerSeen = true
   }
 
   /** Phase 1. Bloquant : sans texte, pas de scène. */

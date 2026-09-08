@@ -209,7 +209,8 @@
           "name": "string (nom de l'objet, en Majuscules de Titre)",
           "given_by": "string (l'id du PNJ qui le donne, ou \"trouve\" si le joueur le ramasse seul)",
           "observation": "string (3 à 4 phrases révélées après analyse : ce que l'objet EST précisément, puis un INDICE de ce à quoi il fait écho — jamais son usage —, puis ce qu'il révèle de la quête)"
-        }
+        },
+        "eye_primer": "string (2 à 3 phrases : ce qu'est l'oeil de CE joueur et ce que lire les autres lui coûte. Jamais comment s'en servir)"
       }
     },
     "error_fallbacks": {
@@ -297,6 +298,39 @@
     "locks": {
       "note": "Cartes et serrures. Chaque carte a une couleur, chaque serrure affiche la sienne : c'est ainsi que le joueur sait laquelle présenter, sans qu'on le lui dise. Inspiré des clés colorées de DOOM.",
       "instruction": "SERRURES ET CARTES — LA COULEUR EST LA CLÉ.\nToute carte d'accès a UNE COULEUR, et c'est par elle qu'on la désigne — jamais par un numéro, jamais par un code. Elle se nomme en Majuscules de Titre, couleur comprise : « la Carte Ambre », « la Carte Indigo ».\nTOUTE SERRURE, TOUT LECTEUR, TOUT TERMINAL VERROUILLÉ AFFICHE UNE COULEUR. Dis-la dans la description : une fente cerclée d'ambre, un voyant indigo, une gâche peinte. Sans elle, le joueur ne peut pas savoir quelle carte présenter, et sa collection ne sert à rien.\nLa couleur de la carte de CETTE scène est celle de l'ACCENT de sa palette : l'image et le texte disent la même chose.\nL'INDICE se donne par la conversation ou par le décor, jamais par une consigne : quelqu'un mentionne la couleur qu'il a vue sur le lecteur, une trace de peinture est restée sur le chambranle, un ancien panneau garde la couleur d'un accès supprimé.\nSi le joueur porte déjà une carte de la bonne couleur (voir CE QU'IL PORTE), la serrure d'ici peut être de CETTE couleur-là — c'est ce qui donne son sens à l'inventaire. Ne le lui dis jamais : montre la couleur, il fera le rapprochement."
+    },
+    "augmentation_primer": {
+      "note": "La fenêtre qui s'ouvre quand le joueur reçoit l'augmentation, une seule fois. Le récit est brodé à partir des champs DÉJÀ générés de l'objet — nom, description, port, ce qu'il permet — donc rien n'est régénéré et ça ne coûte pas un token. Le mode d'emploi, lui, est fixe : c'est une mécanique, pas de la fiction.",
+      "eyebrow": "Augmentation acquise",
+      "story": [
+        "{{item_name}} est à toi. {{item_description}}",
+        "Tu la portes {{item_worn}}. Elle ne remplace pas ton oeil : elle le complète. Là où ton oeil arrache le nom des gens, elle ouvre celui des choses.",
+        "{{item_why}}"
+      ],
+      "story_fallbacks": {
+        "item_worn": "à même l'oeil",
+        "item_why": "Dehors, rien ne porte de nom lisible. Avec elle, si.",
+        "item_description": "Une lentille sourde, tiède, plus lourde qu'elle n'en a l'air."
+      },
+      "howto_title": "Comment s'en servir",
+      "howto_pointer": [
+        "Choisis la loupe dans la barre d'outils, en haut de la scène. Le curseur change de forme : c'est elle que tu as en main.",
+        "Passe sur un nom d'objet brouillé, et ARRÊTE-TOI dessus. Au bout d'un instant, l'analyse s'ouvre.",
+        "Reprends l'oeil pour lire les noms des gens : les deux ne lisent pas la même chose."
+      ],
+      "howto_gyro": [
+        "Choisis la loupe dans la barre d'outils, en haut de la scène.",
+        "Incline l'appareil pour amener l'oeil sur un nom d'objet brouillé, et TIENS-LE IMMOBILE dessus. Au bout d'un instant, l'analyse s'ouvre.",
+        "Reprends l'oeil pour lire les noms des gens : les deux ne lisent pas la même chose."
+      ],
+      "footer": "Un nom lu ne se retient pas tout seul. Le jeu ne s'en souviendra pas à ta place.",
+      "cta": "J'ai compris"
+    },
+    "eye_primer": {
+      "note": "Ce qui s'affiche quand le joueur ouvre l'oeil. On lui dit ce que l'oeil EST et ce qu'il coûte, jamais comment s'en servir : le geste s'apprend en le faisant, et l'icône animée le montre mieux qu'une phrase. Le texte est généré avec la scène — quelques dizaines de tokens, pas un appel de plus.",
+      "eyebrow": "L'œil",
+      "cta": "Ouvrir l'œil",
+      "instruction": "L'ŒIL — deux à trois phrases, à la deuxième personne, présent.\nC'est ce que le joueur lit au moment d'activer sa visée. Dis ce que cet oeil EST et ce qu'il prend à celui qui s'en sert. Pas ce qu'il faut faire avec : aucune manipulation, aucun geste décrit, aucun bouton. Le joueur l'apprendra en le faisant.\nIL DÉRIVE DU JOUEUR. Sa manière de voir est celle de sa TENSION (section SIGNE) retournée en faculté : ce qui lui coûte dans sa vie est exactement ce qui lui permet de lire les autres ici. Sa façon d'agir (section NOMBRES) décide du grain — brutal, patient, oblique.\nIl ARRACHE les noms plutôt qu'il ne les donne : lire quelqu'un est une intrusion, et ça se paie. Une phrase doit le laisser sentir.\nINTERDITS : ne nomme jamais le signe, le zodiaque, un élément, un nombre, la numérologie. Aucune question au joueur, aucune promesse, aucun conseil."
     }
   },
   "scenes": [
@@ -1690,7 +1724,7 @@
         "output_schema": {
           "ending_html": "string (HTML : un <h2> puis QUATRE <p> — les trois mouvements du récit, puis la lecture. Balises <h2> <p> <em> <strong> uniquement, sans attribut)",
           "title": "string (le titre du <h2>, en clair)",
-        "farewell": "string (2 à 3 phrases, 400 caractères maximum. L'ADIEU : ce monde a été bâti pour ce joueur-là et il ne se rejoue pas. Toute bonne chose a une fin, et celle-ci lui ressemble — reprends une image de SA nuit, pas une généralité. Deuxième personne, présent, sobre. Ne parle ni d'application, ni de partie, ni de rejouer : parle de la ville qui se retire)",
+          "farewell": "string (2 à 3 phrases, 400 caractères maximum. L'ADIEU : ce monde a été bâti pour ce joueur-là et il ne se rejoue pas. Toute bonne chose a une fin, et celle-ci lui ressemble — reprends une image de SA nuit, pas une généralité. Deuxième personne, présent, sobre. Ne parle ni d'application, ni de partie, ni de rejouer : parle de la ville qui se retire)",
           "palette": {
             "dominant": {
               "hex": "#RRGGBB",

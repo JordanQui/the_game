@@ -196,6 +196,9 @@ function retryImage() {
          reste visible, et l'on y revient avec la loupe. -->
     <NarrativeText :entries="gameStore.narrativeHistory" />
 
+    <!-- À la réception de l'augmentation : ce qu'elle est, et comment s'en servir -->
+    <AugmentationPrimer v-if="gameStore.hasAugmentation && !gameStore.primerSeen" />
+
     <PsychoTest
       v-if="gameStore.pendingChallenge"
       :object-id="gameStore.pendingChallenge.id"

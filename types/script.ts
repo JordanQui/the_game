@@ -173,6 +173,20 @@ export interface ScriptDefaults {
   game_over: { note?: string; instruction: string }
   /** Cartes et serrures : la couleur dit laquelle présenter. */
   locks: { note?: string; instruction: string }
+  /** Ce qu'est l'oeil, dit au joueur quand il l'ouvre. */
+  eye_primer: { note?: string; eyebrow: string; cta: string; instruction: string }
+  /** La fenêtre qui présente l'augmentation, à la réception. */
+  augmentation_primer: {
+    note?: string
+    eyebrow: string
+    story: string[]
+    story_fallbacks: Record<string, string>
+    howto_title: string
+    howto_pointer: string[]
+    howto_gyro: string[]
+    footer: string
+    cta: string
+  }
   /** Le schéma des champs de quête, commun à toutes les scènes. */
   quest: { note?: string; structure: Record<string, string> }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */

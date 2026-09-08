@@ -35,6 +35,13 @@ export const useGameStore = defineStore('game', {
      * y compris les objets ramassés juste avant.
      */
     hasAugmentation: false,
+    /**
+     * La fenêtre qui présente l'augmentation a été vue.
+     *
+     * Elle appartient à la PARTIE, pas à la scène : on ne réexplique pas la
+     * loupe à chaque lieu traversé.
+     */
+    primerSeen: false,
     /** Échanges déjà eus avec le détenteur de l'objet, une fois informé. */
     keyItemExchanges: 0,
     /** Un autre habitué a mis le joueur sur la piste de l'objet. */
@@ -345,6 +352,10 @@ export const useGameStore = defineStore('game', {
       return added
     },
 
+    markPrimerSeen() {
+      this.primerSeen = true
+    },
+
     requestChallenge(id: string, label: string) {
       this.pendingChallenge = { id, label }
     },
@@ -457,6 +468,7 @@ export const useGameStore = defineStore('game', {
       // Une partie neuve ne garde ni faculté, ni objets, ni noms déchiffrés :
       // sans ça, le joueur suivant commençait avec l'inventaire du précédent.
       this.hasAugmentation = false
+      this.primerSeen = false
       this.inventory = []
       this.decryptedObjectIds = []
       this.activeTool = 'eye'

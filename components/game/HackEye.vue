@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGameStore } from '~/stores/game'
+import { usePlayerStore } from '~/stores/player'
 import { useGyroEye } from '~/composables/useGyroEye'
 
 /**
@@ -9,7 +10,22 @@ import { useGyroEye } from '~/composables/useGyroEye'
  * déjà ce travail et un oeil de plus serait un doublon encombrant.
  */
 const gameStore = useGameStore()
+const playerStore = usePlayerStore()
 const { needsEye, supported, enabled, denied, enable } = useGyroEye()
+
+/**
+ * On explique d'abord ce qu'est l'oeil, on l'ouvre ensuite.
+ *
+ * Le bouton de la fenêtre est lui-même un geste utilisateur : iOS accepte donc
+ * `requestPermission()` depuis là, ce qui n'aurait pas marché depuis un
+ * `onMounted` ou une frame plus tard.
+ */
+const showPrimer = ref(false)
+
+async function confirmPrimer() {
+  showPrimer.value = false
+  await enable()
+}
 
 const style = computed(() => ({
   left: `${gameStore.eyePos.x * 100}%`,
@@ -19,13 +35,20 @@ const style = computed(() => ({
 
 <template>
   <div v-if="needsEye">
+    <EyePrimer
+      v-if="showPrimer"
+      :text="playerStore.scene?.eye_primer_text"
+      @confirm="confirmPrimer"
+      @close="showPrimer = false"
+    />
+
     <!-- Avant activation : le bouton de permission, exigé par iOS. -->
     <button
       v-if="!enabled"
       class="fixed top-3 left-3 z-40 flex items-center gap-2 px-3 py-2
              font-display text-[10px] uppercase tracking-[0.18em]
              text-neon-300 bg-ink-900/90 border border-neon-600/50"
-      @click="enable"
+      @click="showPrimer = true"
     >
       <svg viewBox="0 0 24 16" class="w-5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M1 8s4-6.5 11-6.5S23 8 23 8s-4 6.5-11 6.5S1 8 1 8Z" />

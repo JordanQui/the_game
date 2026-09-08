@@ -386,6 +386,9 @@ QUÊTE
 ${s.quest.instruction}
 ${questFields}
 
+L'ŒIL
+${this.script.defaults.eye_primer.instruction}
+
 OBJET-CLÉ
 ${s.key_item.instruction}
 
@@ -739,6 +742,11 @@ ${lines}`)
       // Seule l'auberge remet l'augmentation ; ailleurs l'objet-clé est une
       // carte, une fréquence, un code — utile ici et nulle part ailleurs.
       grants_augmentation: this.scene.objective?.kind === 'acquire_augmentation',
+      // Le mode d'emploi de l'augmentation, monté avec les champs de l'objet.
+      augmentation_primer: this.script.defaults.augmentation_primer,
+      eye_primer: this.script.defaults.eye_primer,
+      // Le texte lui-même vient du modèle, avec le reste de la scène.
+      eye_primer_text: (generated as unknown as { eye_primer?: string }).eye_primer,
       // Seule cette scène-là demande le paiement ; les suivantes s'enchaînent.
       is_paywall_gate: this.scene.is_paywall_gate === true,
       // Le client s'en sert pour teindre l'habillage. La scène 1 est en
