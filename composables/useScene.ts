@@ -143,6 +143,8 @@ interface Carry {
   inventory: Array<{
     id: string; label: string; from?: string
     kind: 'key' | 'lore'; color?: string
+    /** Ce que l'analyse en dira. Recopié de la scène au ramassage. */
+    observation?: string
   }>
   decrypted: string[]
   augmentation: boolean
@@ -306,8 +308,15 @@ export function useScene() {
     // En développement, on dispose de tout ce que le jeu prévoit : sans ça,
     // tester une scène tardive demanderait de rejouer toutes les précédentes.
     // `devInventory` vaut null en production, la ligne y est donc inerte.
+    //
+    // SAUF SUR LA PREMIÈRE SCÈNE : y arriver avec l'augmentation supprime la
+    // seule boucle de jeu de l'auberge — la trouver, en apprendre l'existence,
+    // puis se la faire céder. On la testait donc en la sautant.
     if (import.meta.dev) {
-      gameStore.equipFromScript(useRuntimeConfig().public.devInventory as never)
+      const first = (useRuntimeConfig().public.sceneIndex as Array<{ id: string }>)?.[0]?.id
+      if (sceneId && sceneId !== first) {
+        gameStore.equipFromScript(useRuntimeConfig().public.devInventory as never)
+      }
     }
 
     // Rechargement de page : la scène est déjà là, on la repose telle quelle.
@@ -317,6 +326,7 @@ export function useScene() {
       // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
       // scène revenait à ses couleurs mais l'habillage restait magenta.
       interfacePalette.applyScene(stored)
+      gameStore.syncAugmentation(stored.scene_id, stored.grants_augmentation)
       playerStore.setScene(stored)
       gameStore.addNarrativeEntry('narration', stored.scene_text)
       gameStore.setPlayingSubState('awaiting_input')
@@ -343,6 +353,7 @@ export function useScene() {
       // L'habillage prend les couleurs de la scène, si elle le demande.
       interfacePalette.applyScene(res)
       storeScene(res)
+      gameStore.syncAugmentation(res.scene_id, res.grants_augmentation)
       saveCarry()
       playerStore.setScene(res)
       gameStore.addNarrativeEntry('narration', res.scene_text)

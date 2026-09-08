@@ -82,6 +82,11 @@ export interface Qualities {
    */
   failureAtTurn: number
 
+  /** Le joueur TEND un objet de son inventaire à quelqu'un. */
+  offersItem: boolean
+  /** Et cette personne attendait précisément celui-là. */
+  offersWantedItem: boolean
+
   /** Une réponse déjà écrite dans la scène couvre la saisie. */
   localAnswer: LocalAnswer | null
   /** Ni le plafond de tours ni le budget ne sont atteints. */
@@ -105,7 +110,7 @@ export type StoryletPlay =
  * Il y en avait trois : le dénouement automatique en posait deux de plus. Il a
  * disparu avec le tour 10, qui ne sauve plus le joueur mais referme la nuit.
  */
-export type StoryletEffect = 'offer_key_item'
+export type StoryletEffect = 'offer_key_item' | 'consume_given_item'
 
 export interface Storylet {
   id: string
@@ -207,6 +212,23 @@ export const DECK: Storylet[] = [
     when: remiseImminente,
     play: { kind: 'model', mode: 'handover' },
     after: ['offer_key_item'],
+  },
+  {
+    id: 'don',
+    note: "il tend l'objet qu'on attendait de lui : la langue se délie",
+    // AVANT l'oracle, pour la même raison que la remise : c'est un dénouement,
+    // et une réponse déjà écrite ne doit pas le coiffer. Après la remise, qui
+    // reste prioritaire — on ne fait pas patienter la scène qui se noue.
+    when: q => q.offersWantedItem,
+    play: { kind: 'model', mode: 'give' },
+    after: ['consume_given_item'],
+  },
+  {
+    id: 'don_refuse',
+    note: "il tend quelque chose dont personne ne veut : on le lui rend",
+    // Aucun effet : l'objet reste dans l'inventaire, c'est tout le propos.
+    when: q => q.offersItem,
+    play: { kind: 'model', mode: 'give_refused' },
   },
   {
     id: 'deja_ecrit',

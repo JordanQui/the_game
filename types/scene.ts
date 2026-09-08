@@ -31,6 +31,19 @@ export interface SceneNPC {
   appearance: string
   personality: string
   knows: string
+  /**
+   * Le morceau de ce qui attend DEHORS que ce personnage est seul à connaître.
+   * Vide dans une scène qui n'en distribue pas. Voir `npcs.knowledge`.
+   */
+  beyond?: string
+  /**
+   * Ce que ce personnage réclame de ce que le joueur PORTE DÉJÀ.
+   *
+   * Au plus un personnage par scène en a un, et jamais dans la première : on y
+   * arrive les mains nues. Lui donner l'objet ne débloque rien — ça délie une
+   * langue, et c'est la seule façon d'obtenir ce que `reward` contient.
+   */
+  wants?: { item_id: string; hint: string; reward: string } | null
   opening_line: string
   /** Data URI, ajoutée après coup par /api/image/generate. */
   portraitUrl?: string
@@ -51,8 +64,23 @@ export interface SceneNPC {
 export interface SceneKeyItem {
   /** Id du PNJ qui le détient. Choisi par le modèle. */
   npc_id: string
+  /**
+   * Son nom propre.
+   *
+   * À l'auberge, c'est une désignation soudée en PascalCase — « FocaleBraise » —
+   * dérivée de la manière d'agir du joueur et de la tension de son signe. Le
+   * récit la prononce dès l'ouverture, brouillée : le joueur la voit sans
+   * pouvoir la lire, et c'est la démonstration de ce qui lui manque.
+   */
   name: string
   description: string
+  /**
+   * Ce que le joueur comprend une fois le nom déchiffré à la loupe.
+   *
+   * Absente des scènes où l'objet-clé est une simple carte : là, le déchiffrer
+   * donne son nom, pas une leçon.
+   */
+  observation?: string
   /** Ce qu'elle permet de percevoir dehors. */
   why: string
   /** La couleur de la carte, si c'en est une. C'est par elle qu'on la reconnaît. */
@@ -101,6 +129,7 @@ export interface SceneQuest {
   hook: string
   objective: string
   stakes: string
+  /** Ce qui attend le joueur dehors. Un horizon : introuvable dans ce bar. */
   artifact: string
   antagonist_hint: string
   why_leave: string
@@ -310,10 +339,29 @@ export interface TurnContext {
   has_key_item?: boolean
   /** A-t-il parlé à l'informateur ? Le détenteur reste muet tant que non. */
   informed_about_item?: boolean
+  /**
+   * L'objet que le joueur TEND, quand le moment tiré est un don.
+   *
+   * `known` dit si son nom a été déchiffré : sinon personne ne peut le nommer,
+   * ni le joueur qui le tend ni celui qui le prend.
+   */
+  offered_item?: { id: string; name: string; known: boolean } | null
+  /**
+   * Les identifiants de ce que le joueur porte À CET INSTANT.
+   *
+   * `npc.wants` a été écrit sur l'inventaire du moment de la génération : sans
+   * cette liste, un personnage réclamerait encore l'objet qu'il vient de
+   * recevoir.
+   */
+  carried_ids?: string[]
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */
 export type TurnMode = 'ambient' | 'npc' | 'exit_nudge' | 'handover' | 'blocked_exit'
+  /** 'give' : le joueur tend l'objet qu'un personnage attendait. */
+  | 'give'
+  /** 'give_refused' : il en tend un autre, dont personne ne veut. */
+  | 'give_refused'
 
 export interface TurnRequest {
   sceneId?: string

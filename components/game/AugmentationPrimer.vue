@@ -4,11 +4,15 @@ import { useGameStore } from '~/stores/game'
 import { interpolate } from '~/utils/prompt-builder'
 
 /**
- * La fenêtre qui présente l'augmentation, à la seconde où on la reçoit.
+ * La fenêtre qui présente l'augmentation, au premier passage à la loupe.
  *
  * Le joueur vient d'obtenir un objet dont il ne sait rien : ni ce qu'il fait,
  * ni comment s'en servir. Sans ce moment, il repart avec une loupe dans la
  * barre d'outils sans savoir qu'elle existe ni qu'il faut S'ARRÊTER sur un mot.
+ *
+ * Elle s'ouvre au PREMIER passage à la loupe, pas à la remise : le détenteur
+ * vient d'en dire deux mots, et couper sa réplique par une fenêtre arrivait
+ * avant que le joueur ait quoi que ce soit à en faire.
  *
  * Le RÉCIT est brodé à partir des champs déjà générés de l'objet — il change
  * donc d'un joueur à l'autre, comme l'objet lui-même — et ne coûte aucun appel
@@ -35,6 +39,11 @@ const story = computed(() => {
     item_description: item.description || f.item_description,
     item_worn: item.worn || f.item_worn,
     item_why: item.why || f.item_why,
+    // L'acte que l'augmentation rend possible : c'est le champ le plus
+    // personnel de l'objet — il est taillé sur la manière d'agir du joueur et
+    // sur la tension de son signe — et la fenêtre est le seul endroit où il
+    // lui est dit en clair.
+    item_action: item.resolving_action || f.item_action,
   }
   return p.story.map(line => interpolate(line, values)).filter(Boolean)
 })

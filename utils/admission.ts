@@ -17,7 +17,9 @@
  *   origin.current_location .... ville actuelle
  *   trajectory.turning_points .. tournants de vie
  *   passions ................... passions, par intensité
+ *   anthem ..................... un morceau, tenu en registre — jamais ses paroles
  *   imprints ................... quatre traces à remettre en décor
+ *   nights ..................... les nuits sans sommeil, et le rêve qui revient
  *   misc_facts ................. divers
  * `identity.id` et `picture_url` ne servaient qu'à l'ancienne extraction Meta :
  * le formulaire ne les demande pas. Trois questions ont été retirées faute d'usage :
@@ -28,7 +30,7 @@
  * `imprints`.
  */
 
-import type { UserProfile, UserPassion, UserAgreement } from '~/types/user'
+import type { UserProfile, UserPassion, UserAgreement, UserNights } from '~/types/user'
 
 export interface AdmissionForm {
   /** Le prénom seul : c'est lui qu'on emploie en jeu, et lui qui porte le namank. */
@@ -42,6 +44,10 @@ export interface AdmissionForm {
   currentCity: string
   /** Thèmes retenus, DANS L'ORDRE DE CHOIX : il donne l'intensité. */
   passions: string[]
+  /** Un morceau qui compte. Le titre suffit. */
+  anthemTitle: string
+  /** Qui le joue. Facultatif : le titre seul porte déjà genre et époque. */
+  anthemArtist: string
   /** Deux lignes libres, facultatives. */
   turningPoints: string[]
   /** Quatre traces personnelles, que la scène remettra en décor. */
@@ -49,6 +55,14 @@ export interface AdmissionForm {
   refuge: string
   ally: string
   aversion: string
+  /** Ce qu'il fait les nuits où il ne dort pas. Touches, deux au plus. */
+  awakeHabits: string[]
+  /** Et plus précisément. Ligne libre. */
+  awakeNote: string
+  /** Les formes du rêve qui revient. Touches, deux au plus. */
+  dreamMotifs: string[]
+  /** Et le rêve dans ses mots, s'il veut bien. */
+  dreamNote: string
 }
 
 export function emptyAdmissionForm(): AdmissionForm {
@@ -60,11 +74,17 @@ export function emptyAdmissionForm(): AdmissionForm {
     hometown: '',
     currentCity: '',
     passions: [],
+    anthemTitle: '',
+    anthemArtist: '',
     turningPoints: ['', ''],
     keepsake: '',
     refuge: '',
     ally: '',
     aversion: '',
+    awakeHabits: [],
+    awakeNote: '',
+    dreamMotifs: [],
+    dreamNote: '',
   }
 }
 
@@ -107,6 +127,55 @@ export const PASSION_CHOICES: Array<{ theme: string; evidence: string[] }> = [
 
 /** Combien de passions au maximum. Au-delà, plus rien ne ressort. */
 export const MAX_PASSIONS = 5
+
+/**
+ * Les nuits où l'on ne dort pas.
+ *
+ * La question est posée en CONDITIONNEL, pas en état : « quel dormeur êtes-vous »
+ * n'appelle rien de la part de qui dort bien, alors que des nuits sans sommeil,
+ * tout le monde en a. Et elle appelle un GESTE plutôt qu'une humeur.
+ *
+ * Toutes les réponses se passent DEHORS, et c'est délibéré : le jeu est une
+ * nuit dans une ville: le plafond d'une chambre ne donne rien à
+ * fabriquer, un quai, un dernier bar ou un retour à pied donnent un décor, une
+ * heure et une raison d'être là. Des touches plutôt qu'une ligne libre, qui
+ * resterait vide neuf fois sur dix.
+ */
+export const AWAKE_CHOICES: string[] = [
+  'je marche sans but',
+  'je bois un verre quelque part',
+  'je traîne près de l\'eau',
+  'je fume dehors',
+  'je roule, je conduis',
+  'je cherche un endroit encore ouvert',
+  'je vais chez quelqu\'un',
+  'je rentre à pied au petit matin',
+]
+
+/** Deux au plus : au-delà, plus aucune nuit ne se distingue d'une autre. */
+export const MAX_AWAKE_HABITS = 2
+
+/**
+ * Les formes du rêve qui revient.
+ *
+ * On ne demande PAS le dernier cauchemar : un joueur sur deux ne s'en souvient
+ * pas et laisse vide. Le rêve récurrent, lui, presque tout le monde en a un —
+ * et comme il revient, il donne au générateur un motif qu'il peut reposer aux
+ * dix scènes sans que ça lasse.
+ */
+export const DREAM_CHOICES: string[] = [
+  'une chute',
+  'une poursuite',
+  'des dents qui bougent',
+  'un train raté, un examen',
+  'une maison que je ne reconnais pas',
+  'l\'eau qui monte',
+  'crier sans qu\'il sorte un son',
+  'un lieu disparu où je reviens',
+]
+
+/** Deux au plus, pour la même raison que les nuits. */
+export const MAX_DREAM_MOTIFS = 2
 
 /**
  * Intensité d'une passion, d'après son rang de sélection.
@@ -186,6 +255,31 @@ function imprints(form: AdmissionForm): UserProfile['imprints'] {
 }
 
 /**
+ * Le morceau, s'il en a donné un.
+ *
+ * Sans titre, pas de champ : un artiste seul ne dit rien qu'une passion ne
+ * dise déjà mieux.
+ */
+function anthem(form: AdmissionForm): UserProfile['anthem'] {
+  const title = clean(form.anthemTitle)
+  if (!title) return undefined
+  return { title, artist: clean(form.anthemArtist) || undefined }
+}
+
+/** Les nuits déclarées, et rien si l'étape a été traversée sans rien toucher. */
+function nights(form: AdmissionForm): UserProfile['nights'] {
+  const habits = form.awakeHabits.slice(0, MAX_AWAKE_HABITS)
+  const motifs = form.dreamMotifs.slice(0, MAX_DREAM_MOTIFS)
+  const declared: UserNights = {
+    awake_habits: habits.length ? habits : undefined,
+    awake_note: clean(form.awakeNote) || undefined,
+    dream_motifs: motifs.length ? motifs : undefined,
+    dream_note: clean(form.dreamNote) || undefined,
+  }
+  return Object.values(declared).some(Boolean) ? declared : undefined
+}
+
+/**
  * Le dossier d'admission, converti dans la forme que le jeu consomme.
  *
  * Tout champ laissé vide disparaît du profil plutôt que d'y entrer vide : le
@@ -222,7 +316,9 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
       turning_points: turningPoints(form),
     },
     passions,
+    anthem: anthem(form),
     imprints: imprints(form),
+    nights: nights(form),
     misc_facts: miscFacts(form),
   }
 }

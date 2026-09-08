@@ -38,6 +38,28 @@ export function useNarrative() {
       key_item: scene.key_item ?? null,
       has_key_item: gameStore.hasKeyItem,
       informed_about_item: gameStore.informedAboutItem,
+      // Ce qu'il porte À CET INSTANT : sans ça un personnage réclamerait encore
+      // l'objet qu'il vient de recevoir.
+      carried_ids: gameStore.inventory.map(o => o.id),
+      offered_item: offeredItem(),
+    }
+  }
+
+  /**
+   * L'objet que le joueur tend, s'il en tend un.
+   *
+   * Posé par le clic sur « Donner » et lu ici : le tour part avec l'objet, mais
+   * l'inventaire ne bouge pas tant que le personnage n'a pas dit s'il le prend.
+   */
+  function offeredItem() {
+    const pending = gameStore.pendingGive
+    if (!pending) return null
+    const item = gameStore.inventory.find(o => o.id === pending.itemId)
+    if (!item) return null
+    return {
+      id: item.id,
+      name: item.label,
+      known: gameStore.decryptedObjectIds.includes(item.id),
     }
   }
 
@@ -215,6 +237,9 @@ export function useNarrative() {
       // L'objet est TENDU, pas donné : le joueur doit le prendre lui-même. Un
       // objet qui apparaît tout seul dans l'inventaire ne se remarque pas.
       if (effect === 'offer_key_item' && !gameStore.hasKeyItem) gameStore.offerKeyItem()
+      // L'échange est définitif : l'objet quitte l'inventaire une fois la
+      // réplique jouée, jamais avant. Un tour qui échoue ne coûte rien.
+      if (effect === 'consume_given_item') gameStore.consumeGivenItem()
     }
   }
 
@@ -235,7 +260,12 @@ export function useNarrative() {
 
     // Une relance vers la sortie est narrée, jamais jouée par un PNJ.
     const narrated = mode === 'exit_nudge' || mode === 'blocked_exit'
-    const npc = narrated ? undefined : findAddressedNpc(input)
+    // Un don désigne son destinataire par le clic, pas par la phrase : c'est
+    // celui à qui le joueur parlait, et son nom n'a pas à être retapé.
+    const offeredTo = gameStore.pendingGive
+      ? playerStore.npcs.find(n => n.id === gameStore.pendingGive!.npcId)
+      : undefined
+    const npc = narrated ? undefined : (offeredTo ?? findAddressedNpc(input))
     gameStore.setActiveNpc(npc?.id ?? null)
 
     const item = playerStore.scene?.key_item
@@ -271,6 +301,9 @@ export function useNarrative() {
 
     gameStore.incrementTurn(input, text)
     applyEffects(after)
+    // Refus, ou tour qui n'était pas un don : la proposition retombe. Sans ça
+    // l'objet resterait tendu et le tour suivant repartirait en échange.
+    if (!after.includes('consume_given_item')) gameStore.clearPendingGive()
   }
 
   /**

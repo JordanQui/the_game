@@ -97,10 +97,21 @@ export interface TurnRules {
 
   /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
   key_item_context: string
+  /** Ce qu'un personnage réclame, greffé à ses répliques. Interpole `{{npc_wants_hint}}`. */
+  wants_rule?: string
+  /** Il prend l'objet et lâche ce qu'il sait. */
+  give_prompt?: string
+  /** Il n'en veut pas et le rend. */
+  give_refused_prompt?: string
   /** Répondre d'abord à ce que dit le joueur. Commune à tous les personnages. */
   reply_rule?: string
   /** Orienter vers l'objectif sans jamais le dicter. */
   steer_rule?: string
+  /**
+   * Comment un personnage lâche le morceau de dehors qu'il est seul à savoir.
+   * Interpole `{{npc_beyond}}` ; ignorée pour un PNJ sans `beyond`.
+   */
+  beyond_rule?: string
   /** Échanges avec un personnage avant qu'il livre ce qu'il sait. */
   exchanges_before_steer?: number
   /** Ce que dit l'informateur tant qu'il jauge encore le joueur. */
@@ -205,6 +216,8 @@ export interface ScriptDefaults {
   quest: { note?: string; structure: Record<string, string> }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
   sealed_object: { note?: string; instruction: string }
+  /** Ce qu'un personnage réclame de ce que le joueur porte, et ce qu'il en donne. */
+  exchange: { note?: string; instruction: string }
   /** Ce que le joueur porte en arrivant, et ce que la scène doit en faire. */
   inventory: {
     note?: string
@@ -265,6 +278,32 @@ export interface SceneExit {
  */
 export type KeyItemAcquisition = 'informant_then_holder' | 'holder' | 'found'
 
+/**
+ * Ce que la salle apprend au joueur, réparti entre ses habitants.
+ *
+ * L'auberge est le seul endroit du jeu où l'on s'assoit et où l'on parle :
+ * après elle on avance, et ce que le joueur en a compris est tout ce qu'il
+ * emporte. Chaque personnage porte UN morceau de ce qui attend dehors, dans
+ * l'ordre de la liste — mis bout à bout ils disent ce qu'il y a à faire, pris
+ * un par un aucun ne suffit. C'est ce qui oblige à parler à tout le monde.
+ */
+export interface SceneKnowledge {
+  note?: string
+  instruction: string
+  fragments: KnowledgeFragment[]
+}
+
+export interface KnowledgeFragment {
+  /** Le rang et la position du personnage : « 3 — l'habitué qui s'y est brisé ». */
+  npc: string
+  /** L'acte auquel ce morceau se rapporte. Vérifié contre `acts`. */
+  act?: string
+  /** Ce qu'il sait, et lui seul. */
+  holds: string
+  /** Comment ça sort de sa bouche : sa position face à la tension, en acte. */
+  told_as: string
+}
+
 export interface SceneScript {
   id: string
   title: string
@@ -277,7 +316,7 @@ export interface SceneScript {
   static_image?: string
   naming: { instruction: string; sources: string[] }
   decor_slots: DecorSlot[]
-  npcs: { count: number; instruction: string; source: string }
+  npcs: { count: number; instruction: string; source: string; knowledge?: SceneKnowledge }
   quest: { instruction: string; source: string; structure: Record<string, string> }
   interactables: { instruction: string; always_include: AlwaysIncludeInteractable[] }
   exits: SceneExit[]

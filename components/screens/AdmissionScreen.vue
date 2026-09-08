@@ -7,6 +7,10 @@ import {
   AGREEMENT_CHOICES,
   PASSION_CHOICES,
   MAX_PASSIONS,
+  AWAKE_CHOICES,
+  MAX_AWAKE_HABITS,
+  DREAM_CHOICES,
+  MAX_DREAM_MOTIFS,
 } from '~/utils/admission'
 
 /**
@@ -16,7 +20,7 @@ import {
  * déclare. On ne demande que ce que le jeu consomme réellement — l'inventaire
  * des champs est en tête de utils/admission.ts.
  *
- * Cinq écrans plutôt qu'une longue page : sur téléphone, une colonne de vingt
+ * Six écrans plutôt qu'une longue page : sur téléphone, une colonne de vingt
  * champs se referme avant d'être remplie. Seule la première étape est
  * obligatoire — le nom et la date fondent le signe et les nombres, tout le
  * reste enrichit sans jamais bloquer l'entrée.
@@ -32,6 +36,7 @@ const STEPS = [
   { title: 'Attaches', legend: 'Ce à quoi vous tenez, hors service.' },
   { title: 'Bascules', legend: 'Les fois où votre vie a changé de rue.' },
   { title: 'Empreintes', legend: 'Quatre détails. La nuit les remettra devant vous.' },
+  { title: 'Nuits', legend: 'Le service consigne l\'emploi de vos nuits.' },
 ]
 
 const step = ref(0)
@@ -56,6 +61,18 @@ function togglePassion(theme: string) {
 
 function rankOf(theme: string): number {
   return form.passions.indexOf(theme)
+}
+
+/**
+ * Touches à choix multiple plafonné — les nuits et les rêves.
+ *
+ * Contrairement aux passions, l'ordre ne compte pas ici : deux nuits n'ont pas
+ * d'intensité l'une par rapport à l'autre. Seul le plafond compte.
+ */
+function toggleIn(list: string[], value: string, max: number) {
+  const i = list.indexOf(value)
+  if (i >= 0) list.splice(i, 1)
+  else if (list.length < max) list.push(value)
 }
 
 function next() {
@@ -124,7 +141,7 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           <div class="neon-rule w-28 mx-auto" />
         </div>
 
-        <!-- Avancement : cinq crans, le cran courant seul est allumé -->
+        <!-- Avancement : un cran par étape, le cran courant seul est allumé -->
         <div class="flex items-center gap-1.5 mb-6">
           <span
             v-for="(s, i) in STEPS"
@@ -226,6 +243,28 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
               </button>
             </div>
             <p class="field-hint">{{ form.passions.length }} / {{ MAX_PASSIONS }} retenues</p>
+
+            <div class="h-px bg-neon-600/20" />
+
+            <!--
+              Le morceau. Élément SECONDAIRE, et tenu comme tel : il ne sera
+              jamais cité — ni ses paroles, ni son titre — et le récit ne se
+              bâtit pas dessus. Il sert de registre aux personnages, pour ce
+              qu'on entend derrière une porte. Voir describeUser().
+            -->
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block space-y-2">
+                <span class="field-label">Un morceau</span>
+                <input v-model="form.anthemTitle" type="text" class="field" placeholder="celui que vous remettez">
+              </label>
+              <label class="block space-y-2">
+                <span class="field-label">Qui le joue</span>
+                <input v-model="form.anthemArtist" type="text" class="field" placeholder="si vous savez">
+              </label>
+            </div>
+            <span class="field-hint">
+              On ne le citera pas. On s'en servira pour ce qu'on entend derrière une porte.
+            </span>
           </div>
 
           <!-- 4. TOURNANTS -->
@@ -251,7 +290,7 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
             refuge en façade, le prénom dans la bouche d'un inconnu, et ce qu'il
             ne supporte pas juste en travers de son chemin.
           -->
-          <div v-else class="relative space-y-5">
+          <div v-else-if="step === 4" class="relative space-y-5">
             <label class="block space-y-2">
               <span class="field-label">Un objet auquel vous tenez</span>
               <input v-model="form.keepsake" type="text" class="field" placeholder="celui que vous ne jetterez pas">
@@ -267,6 +306,72 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
             <label class="block space-y-2">
               <span class="field-label">Ce que vous ne supportez pas</span>
               <input v-model="form.aversion" type="text" class="field" placeholder="la nuit s'en servira">
+            </label>
+          </div>
+
+          <!--
+            6. NUITS — la seule étape qui ne consigne pas un état civil.
+            La question est posée en CONDITIONNEL : « quel dormeur êtes-vous »
+            n'appelle rien de la part de qui dort bien, alors que des nuits sans
+            sommeil, tout le monde en a. Et les réponses se passent DEHORS —
+            le jeu est une nuit dans une ville, un quai ou un dernier bar lui
+            donnent un décor, le plafond d'une chambre ne lui donne rien.
+            Le rêve, PARCE QU'IL REVIENT, est le seul motif du dossier qu'une
+            scène peut reposer sans lasser.
+          -->
+          <div v-else class="relative space-y-5">
+            <p class="text-ink-200/70 text-[12px] leading-relaxed">
+              Tout le monde en a. Ce sont celles passées dehors qui nous
+              intéressent : il n'y a pas de mauvaise réponse, seulement des
+              heures non déclarées.
+            </p>
+
+            <div class="space-y-2">
+              <span class="field-label">Les nuits où vous ne dormez pas <span class="text-steel-500">— deux au plus</span></span>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="habit in AWAKE_CHOICES"
+                  :key="habit"
+                  type="button"
+                  class="chip text-left"
+                  :class="[
+                    form.awakeHabits.includes(habit) && 'chip-on',
+                    !form.awakeHabits.includes(habit) && form.awakeHabits.length >= MAX_AWAKE_HABITS && 'opacity-35',
+                  ]"
+                  @click="toggleIn(form.awakeHabits, habit, MAX_AWAKE_HABITS)"
+                >
+                  {{ habit }}
+                </button>
+              </div>
+            </div>
+
+            <label class="block space-y-2">
+              <span class="field-label">Et plus précisément</span>
+              <input v-model="form.awakeNote" type="text" class="field" placeholder="à trois heures, vous êtes où">
+            </label>
+
+            <div class="space-y-2">
+              <span class="field-label">Le rêve qui revient <span class="text-steel-500">— deux au plus</span></span>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="motif in DREAM_CHOICES"
+                  :key="motif"
+                  type="button"
+                  class="chip text-left"
+                  :class="[
+                    form.dreamMotifs.includes(motif) && 'chip-on',
+                    !form.dreamMotifs.includes(motif) && form.dreamMotifs.length >= MAX_DREAM_MOTIFS && 'opacity-35',
+                  ]"
+                  @click="toggleIn(form.dreamMotifs, motif, MAX_DREAM_MOTIFS)"
+                >
+                  {{ motif }}
+                </button>
+              </div>
+            </div>
+
+            <label class="block space-y-2">
+              <span class="field-label">Dans vos mots <span class="text-steel-500">— si vous voulez</span></span>
+              <input v-model="form.dreamNote" type="text" class="field" placeholder="le vôtre, en une ligne">
             </label>
           </div>
 
@@ -334,7 +439,7 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
               Ce n'est pas le hasard : la ville ne laisse entrer que ceux dont
               le nom sonne juste. Le vôtre a été pesé, vérifié, accepté. Ce que
               vous avez déclaré ici, la nuit s'en servira — vos villes, vos
-              attaches, ce que vous avez quitté.
+              attaches, ce que vous avez quitté, et l'emploi de vos nuits.
             </p>
             <p>
               <strong class="text-ink-100 font-normal">Un droit de passage temporaire vous est accordé.</strong>

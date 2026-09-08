@@ -77,6 +77,28 @@ export function describeUser(user: UserProfile): string {
   if (imprints?.ally) lines.push(`Quelqu'un qui compte pour lui : ${imprints.ally}`)
   if (imprints?.aversion) lines.push(`Ce qu'il ne supporte pas : ${imprints.aversion}`)
 
+  // Le morceau est un REGISTRE, jamais une citation. Le modèle connaît les
+  // paroles des titres un peu connus mais ne doit pas les rendre : la consigne
+  // voyage collée à la donnée plutôt que perdue dans une instruction lointaine,
+  // c'est là qu'elle tient le mieux.
+  if (user.anthem) {
+    const by = user.anthem.artist ? ` de ${user.anthem.artist}` : ''
+    lines.push(
+      `Un morceau qui compte pour lui : « ${user.anthem.title} »${by} — ÉLÉMENT SECONDAIRE : `
+      + `n'en cite jamais un vers ni le titre, ne bâtis rien dessus. N'en garde que l'atmosphère, `
+      + `et de préférence dans la bouche d'un personnage : une musique derrière une porte, `
+      + `ce que quelqu'un fredonne sans qu'on l'entende bien.`)
+  }
+
+  // Les nuits sans sommeil, et le rêve. Touches et ligne libre tiennent sur une
+  // seule ligne chacun : le joueur s'y déclare à la première personne, on garde
+  // ses mots tels quels plutôt que de les retourner à la troisième.
+  const nights = user.nights
+  const awake = [nights?.awake_habits?.join(', '), nights?.awake_note].filter(Boolean).join(' — ')
+  if (awake) lines.push(`Les nuits où il ne dort pas : ${awake}`)
+  const dream = [nights?.dream_motifs?.join(', '), nights?.dream_note].filter(Boolean).join(' — ')
+  if (dream) lines.push(`Le rêve qui lui revient : ${dream}`)
+
   if (user.misc_facts?.length) lines.push(`Divers : ${user.misc_facts.join(' ; ')}`)
 
   return lines.join('\n')
@@ -127,6 +149,15 @@ export function resolveTheme(user: UserProfile, script: Script): PlayerTheme | n
 export const FOUND_ITEM_ID = 'trouve'
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
+
+/**
+ * La forme exigée du nom de l'augmentation : deux ou trois mots soudés, chacun
+ * à majuscule, lettres non accentuées uniquement — « FocaleBraise ».
+ *
+ * Elle ne vaut QUE pour l'augmentation : ailleurs l'objet-clé est une carte
+ * colorée, et « La Carte Ambre » doit rester lisible telle quelle.
+ */
+const AUGMENTATION_NAME_RE = /^[A-Z][a-z]+(?:[A-Z][a-z]+){1,2}$/
 
 /**
  * Une scène du script, defaults résolus, augmentée de son comportement.
@@ -367,6 +398,7 @@ ${themeBlock}
 ${story}
 
 ${this.describeCarried(carried)}
+${carried.length ? `\nCE QU'UN PERSONNAGE PEUT EN VOULOIR\n${this.script.defaults.exchange.instruction}\n` : ''}
 
 NOM DU LIEU
 ${s.naming.instruction}
@@ -387,12 +419,14 @@ ${this.describeObjective(theme)}
 PERSONNAGES
 ${s.npcs.instruction} Exactement ${s.npcs.count} personnages.
 ${this.describeCast()}
+${this.describeKnowledge()}
 
 ${this.script.defaults.deep_theme.instruction}
 
 QUÊTE
 ${s.quest.instruction}
 ${questFields}
+
 
 OBJET-CLÉ
 ${s.key_item.instruction}
@@ -517,6 +551,28 @@ ${list(o.posture)}`
     return `${this.script.defaults.cast.instruction}\nPositions imposées, dans cet ordre :\n${lines}`
   }
 
+  /**
+   * Ce que la salle apprend au joueur, réparti entre ses habitants.
+   *
+   * L'auberge est le seul lieu du jeu où l'on s'assoit et où l'on parle : après
+   * elle, on avance. Ce que le joueur y aura compris est tout ce qu'il emporte,
+   * et c'est pour ça que ce qui l'attend dehors se dit ICI — par les gens, un
+   * morceau chacun. Aucun ne connaît le trajet entier : celui qui saurait tout
+   * rendrait les trois autres décoratifs, et il n'y aurait plus de raison de
+   * leur parler.
+   */
+  private describeKnowledge(): string {
+    const k = this.scene.npcs.knowledge
+    if (!k?.fragments?.length) return ''
+
+    const lines = k.fragments
+      .map((f, i) => `  ${i + 1}. ${f.npc}\n     CE QU'IL SAIT : ${f.holds}\n     COMMENT ÇA SORT : ${f.told_as}`)
+      .join('\n')
+
+    return `\nCE QUE LA SALLE APPREND\n${k.instruction}\n`
+      + `Répartition, un morceau par personnage, dans l'ordre de la liste :\n${lines}\n`
+  }
+
   private describeTheme(theme: PlayerTheme): string {
     const parts: string[] = []
 
@@ -623,6 +679,20 @@ ${lines}`)
       throw new Error('Scène invalide : aucun PNJ')
     }
 
+    // Une scène qui répartit ce qu'elle apprend le fait sur TOUS ses habitants :
+    // les morceaux se recollent, et il en manque un dès qu'un personnage rend
+    // le sien vide. Le joueur parlerait alors à quelqu'un qui n'a rien à dire
+    // de dehors, sans jamais savoir que c'est le script qui a lâché.
+    if (this.scene.npcs.knowledge?.fragments?.length) {
+      const mute = generated.npcs.filter(n => !n.beyond?.trim())
+      if (mute.length) {
+        throw new Error(
+          `Scène invalide : ${mute.map(n => n.name || n.id).join(', ')} `
+          + `${mute.length > 1 ? "n'ont" : "n'a"} pas de champ "beyond" — `
+          + 'un morceau de ce qui attend dehors manque, et la salle ne le dira plus')
+      }
+    }
+
     // Un personnage que le TEXTE ne nomme pas est un personnage inatteignable.
     // Le panneau du haut n'affiche que des tirets tant qu'on ne lui a pas parlé,
     // et on ne peut lui parler qu'en tapant son nom : le récit est la seule
@@ -641,6 +711,29 @@ ${lines}`)
     const item = generated.key_item
     if (!item?.name || !item?.npc_id) {
       throw new Error('Scène invalide : key_item.name ou key_item.npc_id manquant')
+    }
+
+    // L'AUGMENTATION SEULE porte un nom soudé, et le récit doit le prononcer
+    // dès l'ouverture. C'est le premier mot que le joueur voit sans pouvoir le
+    // lire — la démonstration de ce qui lui manque. Un nom absent du texte, ou
+    // écrit en plusieurs mots, et il n'y a plus rien à brouiller : le brouillage
+    // découpe mot par mot, et l'épreuve ne s'ouvrira sur rien.
+    if (this.scene.objective?.kind === 'acquire_augmentation') {
+      if (!AUGMENTATION_NAME_RE.test(item.name)) {
+        throw new Error(
+          `Scène invalide : key_item.name "${item.name}" n'est pas un nom soudé `
+          + '(deux ou trois segments à majuscule, sans espace, sans trait d\'union, sans accent) — « FocaleBraise »')
+      }
+      if (!written.includes(fold(item.name))) {
+        throw new Error(
+          `Scène invalide : "${item.name}" n'apparaît pas dans le texte d'ouverture — `
+          + 'le joueur ne verrait jamais le nom qu\'il ne peut pas lire')
+      }
+      if (!item.observation?.trim()) {
+        throw new Error(
+          'Scène invalide : key_item.observation manquante — déchiffrer le nom de '
+          + 'l\'augmentation n\'apprendrait rien')
+      }
     }
 
     // Comment l'objet-clé s'obtient dépend de la scène, pas du moteur. L'auberge
@@ -869,6 +962,17 @@ ${lines}`)
     return `${themed}\n\n${steer}`
   }
 
+  /**
+   * Le joueur porte-t-il encore cet objet ?
+   *
+   * `wants` est écrit à la génération, sur l'inventaire d'alors. Une fois
+   * l'objet donné il n'y est plus, et le personnage continuerait à le
+   * réclamer — ce qui ferait de lui un disque rayé.
+   */
+  private stillCarried(ctx: TurnContext, itemId: string): boolean {
+    return ctx.carried_ids ? ctx.carried_ids.includes(itemId) : true
+  }
+
   /** Prompt utilisateur : ambiance, relance vers la sortie, ou réplique d'un PNJ. */
   buildTurnUserPrompt(ctx: TurnContext, input: string, npc?: SceneNPC, mode?: TurnMode): string {
     const t = this.scene.turn
@@ -884,6 +988,35 @@ ${lines}`)
     const rules = {
       reply_rule: t.reply_rule ?? '',
       steer_rule: interpolate(t.steer_rule ?? '', { quest_objective: ctx.quest.objective }),
+      // Ce que ce personnage-là sait du dehors, et lui seul. Un PNJ sans
+      // morceau assigné n'en invente pas un : la règle disparaît de son prompt.
+      beyond_rule: npc?.beyond
+        ? interpolate(t.beyond_rule ?? '', { npc_beyond: npc.beyond })
+        : '',
+      // Ce que ce personnage-là veut de ce que le joueur porte. Il se tait dès
+      // que l'objet a changé de main : `offered_item` est alors consommé et
+      // `wants` ne pointe plus sur rien que le joueur ait encore.
+      wants_rule: npc?.wants?.item_id && this.stillCarried(ctx, npc.wants.item_id)
+        ? interpolate(t.wants_rule ?? '', { npc_wants_hint: npc.wants.hint })
+        : '',
+    }
+
+    if ((mode === 'give' || mode === 'give_refused') && npc && ctx.offered_item) {
+      const template = mode === 'give' ? t.give_prompt : t.give_refused_prompt
+      return interpolate(template ?? t.npc_dialogue_prompt, {
+        ...rules,
+        npc_name: npc.name,
+        npc_archetype: npc.archetype,
+        npc_personality: npc.personality,
+        npc_knows: npc.knows,
+        player_input: input,
+        // Un objet dont le nom n'a jamais été déchiffré ne se nomme pas : ni le
+        // joueur qui le tend ni celui qui le prend ne savent comment l'appeler.
+        item_name: ctx.offered_item.known
+          ? ctx.offered_item.name
+          : "la chose qu'il porte sans en connaître le nom",
+        item_reward: npc.wants?.reward ?? '',
+      })
     }
 
     if (mode === 'handover' && npc && ctx.key_item) {

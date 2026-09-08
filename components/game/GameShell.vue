@@ -4,7 +4,7 @@ import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
-import { isTakeable } from '~/utils/interactables'
+import { analyzables, isTakeable } from '~/utils/interactables'
 import { normalize } from '~/utils/text-match'
 
 const gameStore = useGameStore()
@@ -63,8 +63,28 @@ function closeTest() {
 }
 
 function pickUp(obj: { id: string; label: string }) {
-  gameStore.pickUp(obj.id, obj.label, playerStore.scene?.place?.name, 'lore')
+  // Ce que l'analyse en dira part AVEC l'objet : la scène qui l'a écrit sera
+  // loin quand le joueur pensera enfin à le rouvrir.
+  gameStore.pickUp({
+    id: obj.id,
+    label: obj.label,
+    from: playerStore.scene?.place?.name,
+    kind: 'lore',
+    observation: observationFor(obj.id),
+  })
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
+}
+
+/**
+ * Ce que l'analyse d'une chose révèle, où qu'elle se trouve.
+ *
+ * D'abord la scène — c'est elle qui l'a écrit —, puis l'inventaire, pour tout
+ * ce que le joueur traîne depuis une scène précédente et rouvre maintenant.
+ */
+function observationFor(id: string): string | undefined {
+  const scene = playerStore.scene
+  const here = scene ? analyzables(scene).find(o => o.id === id)?.observation : undefined
+  return here || gameStore.inventory.find(o => o.id === id)?.observation
 }
 
 /**
@@ -87,11 +107,28 @@ function onSolved() {
   // Ce que l'analyse révèle : l'objet scellé le porte, et depuis peu les objets
   // qu'on ramasse dans le décor aussi. Ces textes ont été écrits à la
   // génération de la scène — les afficher ne coûte aucun appel au modèle.
-  const sealed = playerStore.scene?.sealed_object
-  const observation = sealed?.id === target.id
-    ? sealed?.observation
-    : playerStore.scene?.interactables?.find(o => o.id === target.id)?.observation
+  // Ce que l'analyse révèle vient de la MÊME liste que le brouillage du texte :
+  // l'objet scellé, les ramassables du décor, et l'augmentation elle-même, dont
+  // le nom est prononcé dès l'ouverture sans que le joueur puisse le lire. Trois
+  // recherches séparées laissaient chaque fois un chemin en arrière.
+  const observation = observationFor(target.id)
   if (observation) gameStore.addNarrativeEntry('narration', observation)
+}
+
+/**
+ * Le joueur tend un objet à celui à qui il parle.
+ *
+ * Le clic désigne l'objet et le destinataire ; la phrase n'est là que pour
+ * laisser une trace au fil, et c'est le deck qui décide de la suite — il le
+ * prend et parle, ou il le rend.
+ */
+function offerItem(itemId: string) {
+  const npc = playerStore.npcs.find(n => n.id === gameStore.activeNpcId)
+  const item = gameStore.inventory.find(o => o.id === itemId)
+  if (!npc || !item) return
+  const known = gameStore.decryptedObjectIds.includes(item.id)
+  gameStore.offerToNpc(item.id, npc.id)
+  void play(`Tu tends ${known ? item.label : 'ce que tu portes'} à ${npc.name}.`)
 }
 
 /** Le joueur prend l'objet que le détenteur lui tend. */
@@ -105,6 +142,7 @@ function collectItem() {
     name: playerStore.scene?.key_item?.name ?? '',
     from: playerStore.scene?.place?.name,
     color: playerStore.scene?.key_item?.color,
+    observation: playerStore.scene?.key_item?.observation,
   })
   gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
 }
@@ -173,7 +211,7 @@ function retryImage() {
     <ToolRail />
 
     <!-- Ce que le joueur porte : sans ça, les cartes colorées sont injouables -->
-    <InventoryRail />
+    <InventoryRail @give="offerItem" />
 
     <!-- Réglages, en surimpression en haut à droite de l'écran -->
     <SettingsPanel />
@@ -196,8 +234,9 @@ function retryImage() {
          reste visible, et l'on y revient avec la loupe. -->
     <NarrativeText :entries="gameStore.narrativeHistory" />
 
-    <!-- À la réception de l'augmentation : ce qu'elle est, et comment s'en servir -->
-    <AugmentationPrimer v-if="gameStore.hasAugmentation && !gameStore.primerSeen" />
+    <!-- Au premier passage à la loupe : ce qu'elle est, et comment s'en servir -->
+    <AugmentationPrimer v-if="gameStore.primerOpen" />
+
 
     <PsychoTest
       v-if="gameStore.pendingChallenge"
@@ -207,50 +246,28 @@ function retryImage() {
       @close="closeTest"
     />
 
-    <!-- Un objet vient d'apparaître : on le prend d'un clic, pas en le tapant -->
+    <!-- Un objet vient d'apparaître : on le prend d'un geste, pas en le tapant -->
     <Transition name="slide">
-      <div
+      <PickupPrompt
         v-if="justAppeared"
-        class="shrink-0 flex items-center gap-3 mx-4 mb-2 px-3 py-2.5 border border-neon-600/40"
-      >
-        <span class="shrink-0 text-neon-500 font-display text-sm">+</span>
-        <p class="flex-1 min-w-0 text-ink-100 text-xs leading-snug">
-          {{ justAppeared.label }}
-        </p>
-        <button
-          class="shrink-0 font-display text-[10px] uppercase tracking-[0.2em] text-neon-300
-                 border border-neon-600/60 hover:border-neon-400 hover:text-neon-200
-                 px-3 py-1.5 transition-colors"
-          @click="pickUp(justAppeared)"
-        >
-          Ramasser
-        </button>
-      </div>
+        :label="justAppeared.label"
+        action="Ramasser"
+        @confirm="pickUp(justAppeared)"
+      />
     </Transition>
 
     <!--
-      L'objet est tendu, pas donné. Un objet qui apparaît tout seul dans
-      l'inventaire ne se remarque pas : il faut un geste du joueur.
+      L'objet est TENDU, pas donné : c'est la fin de la conversation avec celui
+      qui le portait, et c'est le joueur qui referme sa main dessus.
     -->
     <Transition name="slide">
-      <div
+      <PickupPrompt
         v-if="gameStore.pendingKeyItem && playerStore.scene?.key_item"
-        class="shrink-0 flex items-center gap-3 mx-4 mb-2 px-3 py-2.5 border border-neon-500/50 bg-neon-700/10"
-      >
-        <svg viewBox="0 0 8 10" class="w-2 h-2.5 shrink-0 fill-neon-500 animate-deco-pulse" aria-hidden="true">
-          <path d="M0 0 L5 5 L0 10 L3 10 L8 5 L3 0 Z" />
-        </svg>
-        <p class="flex-1 min-w-0 text-ink-100 text-xs leading-snug">
-          {{ playerStore.scene.key_item.name }} t'est tendu.
-        </p>
-        <button
-          class="shrink-0 font-display text-[10px] uppercase tracking-[0.2em] text-neon-200 bg-neon-500/70
-                 hover:bg-neon-400 hover:text-ink-900 px-3 py-1.5 transition-colors"
-          @click="collectItem"
-        >
-          Récupérer
-        </button>
-      </div>
+        :label="`${playerStore.scene.key_item.name} t'est tendu.`"
+        action="Récupérer"
+        offered
+        @confirm="collectItem"
+      />
     </Transition>
 
     <!-- Tour en échec : la saisie reste ouverte, et on peut relancer -->

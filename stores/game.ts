@@ -52,12 +52,24 @@ export const useGameStore = defineStore('game', {
      * loupe à chaque lieu traversé.
      */
     primerSeen: false,
+    /** La fenêtre est à l'écran. Ouverte au premier clic sur la loupe. */
+    primerOpen: false,
     /** Échanges déjà eus avec le détenteur de l'objet, une fois informé. */
     keyItemExchanges: 0,
     /** Un autre habitué a mis le joueur sur la piste de l'objet. */
     informedAboutItem: false,
     /** L'objet est proposé : il reste au joueur à le récupérer. */
     pendingKeyItem: false,
+    /**
+     * L'objet que le joueur vient de tendre, et à qui.
+     *
+     * Posé par le clic sur « Donner » dans la barre d'inventaire, lu par le
+     * deck au tour suivant. Il ne quitte l'inventaire qu'une fois le tour joué :
+     * si le personnage n'en veut pas, le joueur le garde.
+     */
+    pendingGive: null as { itemId: string; npcId: string } | null,
+    /** Ce qui a changé de main. Un échange est définitif. */
+    givenItemIds: [] as string[],
     /**
      * L'outil en main.
      *
@@ -146,6 +158,15 @@ export const useGameStore = defineStore('game', {
       kind: 'key' | 'lore'
       /** Sa couleur, pour une carte. C'est par elle que le joueur la reconnaît. */
       color?: string
+      /**
+       * Ce que l'analyse révèle, recopié depuis la scène AU RAMASSAGE.
+       *
+       * Il fallait le figer là : une scène ne connaît que ses propres objets,
+       * et le joueur doit pouvoir rouvrir trois scènes plus tard une chose
+       * ramassée à l'auberge. Écrite à la génération, elle ne coûte rien à
+       * transporter.
+       */
+      observation?: string
     }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
@@ -304,6 +325,30 @@ export const useGameStore = defineStore('game', {
       this.pendingKeyItem = true
     },
 
+    /** Le joueur tend un objet à quelqu'un : le tour à venir dira ce qu'il en advient. */
+    offerToNpc(itemId: string, npcId: string) {
+      this.pendingGive = { itemId, npcId }
+    },
+
+    /**
+     * L'échange a eu lieu : l'objet change de main, définitivement.
+     *
+     * Il sort de l'inventaire mais reste déchiffré : le joueur l'a lu, et ce
+     * qu'il a compris ne se rend pas avec l'objet.
+     */
+    consumeGivenItem() {
+      const pending = this.pendingGive
+      this.pendingGive = null
+      if (!pending) return
+      this.inventory = this.inventory.filter(o => o.id !== pending.itemId)
+      if (!this.givenItemIds.includes(pending.itemId)) this.givenItemIds.push(pending.itemId)
+    },
+
+    /** Le personnage n'en a pas voulu : le joueur le garde. */
+    clearPendingGive() {
+      this.pendingGive = null
+    },
+
     setPosture(posture: 'assis' | 'allonge') {
       this.posture = posture
     },
@@ -317,6 +362,11 @@ export const useGameStore = defineStore('game', {
       if (tool === 'lens' && !this.hasAugmentation) return
       this.activeTool = tool
       this.revealing = null
+      // PREMIER passage à la loupe, et là seulement : celui qui l'a cédée en a
+      // dit deux mots, la fenêtre dit le reste. L'ouvrir à la remise coupait la
+      // conversation en deux et arrivait avant que le joueur ait quoi que ce
+      // soit à en faire.
+      if (tool === 'lens' && !this.primerSeen) this.primerOpen = true
     },
 
     setTyping(typing: boolean) {
@@ -373,14 +423,34 @@ export const useGameStore = defineStore('game', {
       let added = 0
       for (const o of kit.items) {
         const before = this.inventory.length
-        this.pickUp(o.id, o.label, o.from, o.kind, o.color || undefined)
+        this.pickUp({ id: o.id, label: o.label, from: o.from, kind: o.kind, color: o.color || undefined })
         if (this.inventory.length > before) added++
         if (o.decrypted) this.markDecrypted(o.id)
       }
       return added
     },
 
+    /**
+     * L'augmentation ne se PORTE que si on l'a ramassée là où elle se ramasse.
+     *
+     * `hasAugmentation` traverse la partie et revient du navigateur avec le
+     * reste : un joueur qui recommençait une nuit — ou qui avait touché à
+     * l'inventaire de développement — rouvrait l'auberge avec la loupe déjà en
+     * barre d'outils, donc sans la seule boucle de jeu de la scène. On la lui
+     * retire tant que l'objet-clé de CETTE scène n'est pas dans son inventaire :
+     * c'est la seule preuve qu'un personnage la lui a tendue et qu'il l'a prise.
+     */
+    syncAugmentation(sceneId: string, grantsAugmentation: boolean) {
+      if (!grantsAugmentation) return
+      if (this.inventory.some(o => o.id === `cle_${sceneId}`)) return
+      this.hasAugmentation = false
+      this.primerSeen = false
+      this.primerOpen = false
+      if (this.activeTool === 'lens') this.activeTool = 'eye'
+    },
+
     markPrimerSeen() {
+      this.primerOpen = false
       this.primerSeen = true
     },
 
@@ -400,12 +470,16 @@ export const useGameStore = defineStore('game', {
      * @param from le lieu du ramassage, pour qu'une scène suivante puisse y renvoyer.
      * @param kind `key` s'il ouvre quelque chose, `lore` s'il éclaire la quête.
      */
-    pickUp(
-      id: string, label: string, from?: string,
-      kind: 'key' | 'lore' = 'lore', color?: string,
-    ) {
-      if (this.inventory.some(o => o.id === id)) return
-      this.inventory.push({ id, label, from, kind, color })
+    pickUp(item: {
+      id: string
+      label: string
+      from?: string
+      kind?: 'key' | 'lore'
+      color?: string
+      observation?: string
+    }) {
+      if (this.inventory.some(o => o.id === item.id)) return
+      this.inventory.push({ kind: 'lore', ...item })
     },
 
     /**
@@ -419,14 +493,20 @@ export const useGameStore = defineStore('game', {
      */
     collectKeyItem(
       grantsAugmentation = false,
-      item?: { id?: string; name: string; from?: string; color?: string },
+      item?: { id?: string; name: string; from?: string; color?: string; observation?: string },
     ) {
       this.hasKeyItem = true
       this.pendingKeyItem = false
       if (grantsAugmentation) this.hasAugmentation = true
       if (item?.name) {
-        this.pickUp(
-          item.id || `cle_${this.inventory.length + 1}`, item.name, item.from, 'key', item.color)
+        this.pickUp({
+          id: item.id || `cle_${this.inventory.length + 1}`,
+          label: item.name,
+          from: item.from,
+          kind: 'key',
+          color: item.color,
+          observation: item.observation,
+        })
       }
     },
 
@@ -491,6 +571,7 @@ export const useGameStore = defineStore('game', {
       this.keyItemExchanges = 0
       this.informedAboutItem = false
       this.pendingKeyItem = false
+      this.pendingGive = null
       this.talkedToNpcIds = []
       this.npcExchanges = {}
       this.resolved = false
@@ -509,7 +590,9 @@ export const useGameStore = defineStore('game', {
       // sans ça, le joueur suivant commençait avec l'inventaire du précédent.
       this.hasAugmentation = false
       this.primerSeen = false
+      this.primerOpen = false
       this.inventory = []
+      this.givenItemIds = []
       this.decryptedObjectIds = []
       this.activeTool = 'eye'
       // Repartir de zéro efface la partie, pas la fermeture : celle-ci vit dans
@@ -530,6 +613,7 @@ export const useGameStore = defineStore('game', {
       this.keyItemExchanges = 0
       this.informedAboutItem = false
       this.pendingKeyItem = false
+      this.pendingGive = null
       this.talkedToNpcIds = []
       this.npcExchanges = {}
       this.resolved = false

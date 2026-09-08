@@ -42,19 +42,27 @@ export interface Analyzable {
  * porte qui réclame l'analyse d'un objet qu'aucun texte n'a chiffré.
  *
  * L'objet-clé en fait partie — il est brouillé dans le récit avant d'être
- * remis — mais il ne porte pas d'`observation` : le déchiffrer donne son nom,
- * pas une leçon. Ce sont les autres qui enseignent.
+ * remis. À l'auberge il porte une `observation` : son nom est prononcé dès
+ * l'ouverture et le joueur ne peut pas le lire, si bien que le déchiffrer plus
+ * tard lui apprend quelque chose. Ailleurs, où l'objet-clé est une carte, le
+ * déchiffrer donne son nom et rien d'autre.
  */
 export function analyzables(scene: {
   scene_id?: string
-  key_item?: { name?: string } | null
+  key_item?: { name?: string; observation?: string } | null
   sealed_object?: { id: string; name?: string; observation?: string } | null
   interactables?: Interactable[]
 }): Analyzable[] {
   const out: Analyzable[] = []
   // Le même id que celui que `collectKeyItem` lui donnera : déchiffré dans le
   // récit, il reste déchiffré une fois dans l'inventaire.
-  if (scene.key_item?.name) out.push({ id: `cle_${scene.scene_id}`, label: scene.key_item.name })
+  if (scene.key_item?.name) {
+    out.push({
+      id: `cle_${scene.scene_id}`,
+      label: scene.key_item.name,
+      observation: scene.key_item.observation,
+    })
+  }
   if (scene.sealed_object?.name) {
     out.push({
       id: scene.sealed_object.id,

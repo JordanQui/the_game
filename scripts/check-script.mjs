@@ -101,6 +101,45 @@ for (const s of script.scenes) {
   if (accents.length !== 1) warn.push(`"${s.id}" : ${accents.length} éléments d'accent (1 attendu)`)
 }
 
+// --- ce que la salle apprend -------------------------------------------------
+// Les morceaux se recollent : il en manque un dès qu'un personnage n'en porte
+// pas, et le joueur perd la seule occasion du jeu d'apprendre ce qui l'attend.
+const ACT_IDS = script.acts.map(a => a.id)
+for (const s of script.scenes) {
+  const k = s.npcs?.knowledge
+  if (!k) continue
+  if (!k.instruction) errors.push(`"${s.id}" : npcs.knowledge sans instruction`)
+  const frags = k.fragments ?? []
+  if (frags.length !== s.npcs.count) {
+    errors.push(`"${s.id}" : ${frags.length} morceaux de savoir pour ${s.npcs.count} personnages`)
+  }
+  frags.forEach((f, i) => {
+    if (!f.npc || !f.holds || !f.told_as) {
+      errors.push(`"${s.id}" : morceau ${i + 1} incomplet (npc, holds, told_as)`)
+    }
+    // Un morceau qui vise un acte inexistant promet un endroit où le joueur
+    // n'ira jamais.
+    if (f.act && f.act !== s.act && !ACT_IDS.includes(f.act)) {
+      errors.push(`"${s.id}" : le morceau ${i + 1} vise l'acte "${f.act}", qui n'existe pas`)
+    }
+  })
+
+  // Un morceau qu'aucun prompt ne transmet reste dans le script.
+  const gen = s.generation ?? script.defaults.generation
+  if (!gen.output_schema?.npcs?.[0]?.beyond) {
+    errors.push(`"${s.id}" : le schéma de sortie ne demande pas "beyond" aux personnages`)
+  }
+  const turn = { ...script.defaults.turn, ...(s.turn ?? {}) }
+  if (!turn.beyond_rule?.includes('{{npc_beyond}}')) {
+    errors.push(`"${s.id}" : turn.beyond_rule manquante ou sans {{npc_beyond}}`)
+  }
+  const carriers = Object.entries(turn)
+    .filter(([k, v]) => k.endsWith('_prompt') && typeof v === 'string' && v.includes('{{beyond_rule}}'))
+  if (!carriers.length) {
+    errors.push(`"${s.id}" : aucun prompt de réplique n'interpole {{beyond_rule}}`)
+  }
+}
+
 // --- positions face à la tension --------------------------------------------
 const POSTURES = Object.keys(script.onomastics.posture)
 for (const s of script.scenes) {
@@ -145,6 +184,82 @@ for (const s of script.scenes) {
 }
 if (!script.defaults.objective_derivation?.instruction?.includes('{{requirement}}')) {
   errors.push('objective_derivation n\'interpole pas {{requirement}}')
+}
+
+// --- l'augmentation, objet de la scène d'ouverture ---------------------------
+// C'est le SEUL objet à récupérer scène 1 : elle rend lisibles les noms des
+// choses qu'on croisera dans les scènes suivantes. `quest.artifact`, lui, reste
+// l'horizon derrière le sas et ne descend jamais dans le bar.
+const opening = byId.get(script.progression.start_scene)
+if (opening?.objective?.kind !== 'acquire_augmentation') {
+  errors.push(`"${script.progression.start_scene}" : l'objectif d'ouverture n'est pas d'acquérir l'augmentation`)
+}
+// Son nom propre est prononcé dans le texte et brouillé : sans la règle, le
+// modèle rend « La Lentille de Sel », que le brouillage découpe en trois blocs.
+for (const marker of ['SON NOM PROPRE', 'key_item.observation']) {
+  if (!opening?.key_item?.instruction?.includes(marker)) {
+    errors.push(`"${script.progression.start_scene}" : key_item.instruction ne pose pas "${marker}"`)
+  }
+}
+// Le porteur et l'informateur se choisissent sur le thème du joueur, pas au
+// hasard : sans ça la remise n'a aucune raison d'arriver à ce joueur-là.
+for (const source of ['NOMBRES', 'SIGNE']) {
+  if (!opening?.key_item?.instruction?.includes(source)) {
+    errors.push(`"${script.progression.start_scene}" : key_item.instruction ne dérive rien de la section ${source}`)
+  }
+}
+// Le texte d'ouverture doit le nommer et raconter d'où il vient, sinon il n'y a
+// rien à brouiller et le joueur ne voit jamais ce qui lui manque.
+if (!opening?.narrative?.structure?.some(x => x.includes('key_item.name'))) {
+  errors.push(`"${script.progression.start_scene}" : la structure du texte ne fait pas nommer l'augmentation`)
+}
+if (!script.defaults.generation?.output_schema?.key_item?.observation) {
+  errors.push('le schéma de sortie ne demande pas "key_item.observation"')
+}
+
+// --- la fenêtre d'explication ------------------------------------------------
+// Elle s'ouvre au premier passage à la loupe et n'est jamais régénérée : chaque
+// jeton de son récit doit venir d'un champ déjà produit, et avoir un repli.
+const primer = script.defaults.augmentation_primer
+if (!primer) {
+  errors.push('defaults.augmentation_primer manquant')
+} else {
+  for (const f of ['eyebrow', 'story', 'story_fallbacks', 'howto_title', 'howto_pointer', 'howto_gyro', 'footer', 'cta']) {
+    if (!primer[f]) errors.push(`defaults.augmentation_primer : champ "${f}" manquant`)
+  }
+  const tokens = new Set((primer.story ?? []).flatMap(l => [...l.matchAll(/{{(\w+)}}/g)].map(m => m[1])))
+  for (const t of tokens) {
+    // `item_name` vient toujours de la fiche : il ne peut pas être vide.
+    if (t !== 'item_name' && !(t in (primer.story_fallbacks ?? {}))) {
+      warn.push(`defaults.augmentation_primer : {{${t}}} n'a pas de repli`)
+    }
+  }
+}
+
+// --- échange d'objets --------------------------------------------------------
+// L'inventaire a deux raisons d'être : relire ce qu'on porte, et le donner. La
+// seconde ne tient qu'à cette chaîne — une règle, un champ dans le schéma, deux
+// prompts et l'accroche qui la greffe aux répliques.
+const exchange = script.defaults.exchange
+if (!exchange?.instruction) errors.push('defaults.exchange manquant : rien ne dit ce qu\'un PNJ peut réclamer')
+const npcSchema = script.defaults.generation?.output_schema?.npcs?.[0]
+for (const f of ['item_id', 'hint', 'reward']) {
+  if (!npcSchema?.wants?.[f]) errors.push(`le schéma de sortie ne demande pas "npcs[].wants.${f}"`)
+}
+for (const f of ['wants_rule', 'give_prompt', 'give_refused_prompt']) {
+  if (!script.defaults.turn?.[f]) errors.push(`defaults.turn.${f} manquant`)
+}
+if (!script.defaults.turn?.wants_rule?.includes('{{npc_wants_hint}}')) {
+  errors.push('turn.wants_rule n\'interpole pas {{npc_wants_hint}}')
+}
+if (!script.defaults.turn?.give_prompt?.includes('{{item_reward}}')) {
+  errors.push('turn.give_prompt n\'interpole pas {{item_reward}} : l\'échange ne rendrait rien')
+}
+// Sans accroche, la règle reste dans le script et le personnage ne demande rien.
+const wantsCarriers = Object.entries(script.defaults.turn ?? {})
+  .filter(([k, v]) => k.endsWith('_prompt') && typeof v === 'string' && v.includes('{{wants_rule}}'))
+if (!wantsCarriers.length) {
+  errors.push('aucun prompt de réplique n\'interpole {{wants_rule}}')
 }
 
 // --- continuité -------------------------------------------------------------

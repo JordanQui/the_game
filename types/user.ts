@@ -46,6 +46,49 @@ export interface UserImprints {
   aversion?: string
 }
 
+/**
+ * Un morceau qui compte pour le joueur.
+ *
+ * Élément SECONDAIRE, et qui doit le rester : le récit ne se bâtit jamais
+ * dessus. Il sert de REGISTRE — une musique derrière une porte, ce qu'un
+ * personnage fredonne, la façon dont un PNJ en parle comme d'un truc à lui.
+ * Jamais les paroles : le prompt interdit déjà toute reprise littérale, et un
+ * modèle sommé de restituer un texte protégé répond mal ou refuse. L'artiste
+ * est facultatif — le titre seul porte déjà un genre et une époque, ce qui
+ * suffit à choisir la musique d'un lieu.
+ */
+export interface UserAnthem {
+  title: string
+  artist?: string
+}
+
+/**
+ * L'emploi de ses nuits.
+ *
+ * La seule partie du dossier qui ne consigne pas un fait mais un imaginaire :
+ * aucun profil publicitaire ne l'a jamais su, et le joueur ne l'a jamais écrit
+ * nulle part.
+ *
+ * La question est CONDITIONNELLE, et ça change tout : on ne demande pas quel
+ * dormeur il est — un état, dont beaucoup n'ont rien à dire — mais ce qu'il
+ * fait les nuits où il ne dort pas. Tout le monde en a, y compris ceux qui
+ * dorment bien, et la réponse est un GESTE, pris DEHORS : le jeu est une nuit
+ * dans une ville, un quai ou un dernier bar lui donnent un décor, une heure et
+ * une raison d'être là ; le plafond d'une chambre ne lui donne rien. Le rêve, lui, est le seul élément du dossier
+ * qui a le droit de reparaître aux dix scènes sans lasser : puisqu'il REVIENT,
+ * c'est un motif et pas une anecdote.
+ */
+export interface UserNights {
+  /** Ce qu'il fait les nuits où il ne dort pas. Deux touches au plus. */
+  awake_habits?: string[]
+  /** Et plus précisément, dans ses mots. */
+  awake_note?: string
+  /** Les formes du rêve qui revient. Deux touches au plus. */
+  dream_motifs?: string[]
+  /** Le rêve dans ses mots, s'il a pris la peine. */
+  dream_note?: string
+}
+
 export interface UserProfile {
   identity: {
     id?: string
@@ -83,6 +126,10 @@ export interface UserProfile {
     turning_points: string[]
   }
   passions: UserPassion[]
+  /** Un morceau, tenu en registre. Voir UserAnthem : jamais de paroles. */
+  anthem?: UserAnthem
   imprints?: UserImprints
+  /** Ce qu'il fait de ses nuits, et le rêve qui revient. */
+  nights?: UserNights
   misc_facts?: string[]
 }

@@ -147,6 +147,46 @@ export function useGyroEye() {
   }
 
   /**
+   * Le rectangle RÉELLEMENT visible d'un noeud, une fois rogné par ses ancêtres.
+   *
+   * Le récit défile dans un conteneur : un nom remonté hors champ garde un
+   * rectangle parfaitement valide, simplement situé AU-DESSUS du conteneur —
+   * c'est-à-dire dans l'image. L'oeil s'y verrouillait donc sur des noms
+   * invisibles, en plein décor, et comme son repos est en haut de l'écran, ça
+   * arrivait en permanence. Le navigateur ne fait pas cette erreur au survol :
+   * il ne livre un événement que sur ce qu'il a dessiné. On refait ici le même
+   * calcul, en intersectant avec tout ancêtre qui rogne.
+   */
+  function visibleRect(node: HTMLElement) {
+    const r = node.getBoundingClientRect()
+    let { top, bottom, left, right } = r
+
+    for (let el = node.parentElement; el; el = el.parentElement) {
+      const style = getComputedStyle(el)
+      if (style.overflowX === 'visible' && style.overflowY === 'visible') continue
+
+      const box = el.getBoundingClientRect()
+      if (style.overflowY !== 'visible') {
+        top = Math.max(top, box.top)
+        bottom = Math.min(bottom, box.bottom)
+      }
+      if (style.overflowX !== 'visible') {
+        left = Math.max(left, box.left)
+        right = Math.min(right, box.right)
+      }
+    }
+
+    // Et l'écran lui-même : ce qui en dépasse n'est pas visé non plus.
+    top = Math.max(top, 0)
+    left = Math.max(left, 0)
+    bottom = Math.min(bottom, window.innerHeight)
+    right = Math.min(right, window.innerWidth)
+
+    if (right <= left || bottom <= top) return null
+    return { top, bottom, left, right }
+  }
+
+  /**
    * Ce qui se trouve sous l'oeil, selon l'outil en main.
    *
    * L'outil décide de ce qu'on peut lire : l'oeil lit les identités, la loupe
@@ -156,10 +196,14 @@ export function useGyroEye() {
   function hitTest(x: number, y: number): HTMLElement | null {
     const selector = gameStore.activeTool === 'lens' ? '[data-glitch-object]' : '[data-glitch-name]'
     for (const node of document.querySelectorAll<HTMLElement>(selector)) {
-      const r = node.getBoundingClientRect()
-      if (r.width === 0) continue
+      const r = visibleRect(node)
+      if (!r) continue
       // Marge verticale : viser une ligne de texte au gyroscope est difficile.
-      if (x >= r.left && x <= r.right && y >= r.top - 10 && y <= r.bottom + 10) return node
+      // Bornée à la moitié de ce qui reste visible, sinon on rouvrirait le
+      // problème en petit — une ligne à demi rognée par le bord du conteneur
+      // redeviendrait visable quelques pixels au-dessus, dans l'image.
+      const margin = Math.min(10, (r.bottom - r.top) / 2)
+      if (x >= r.left && x <= r.right && y >= r.top - margin && y <= r.bottom + margin) return node
     }
     return null
   }

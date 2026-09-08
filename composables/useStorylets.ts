@@ -66,6 +66,14 @@ export function useStorylets() {
     const npc = scene ? findAddressedNpc(input) : undefined
     const lesson = lessons()
 
+    // Le don ne se lit pas dans la phrase : il vient du clic sur « Donner »,
+    // qui a déjà désigné l'objet ET le destinataire. La saisie ne sert qu'à
+    // laisser une trace au fil.
+    const give = gameStore.pendingGive
+    const wanted = give
+      ? playerStore.npcs.find(n => n.id === give.npcId)?.wants?.item_id === give.itemId
+      : false
+
     // Les deux plafonds : le compte de tours mord en pratique, le budget en
     // dollars n'est qu'un filet si les prompts venaient à grossir.
     const capReached = (pacing?.hard_turn_cap ?? 0) > 0
@@ -94,6 +102,9 @@ export function useStorylets() {
       exchangesBeforeHandover: item?.exchanges_before_handover ?? 0,
 
       failureAtTurn: pacing?.failure_after_turns ?? 0,
+
+      offersItem: Boolean(give),
+      offersWantedItem: Boolean(give) && wanted,
 
       localAnswer: scene ? resolveLocally(input, scene, oracleState()) : null,
       canCallModel: !capReached && !budgetReached,

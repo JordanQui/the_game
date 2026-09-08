@@ -19,7 +19,12 @@ const seed = ref(0)
 let ticker: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
-  ticker = setInterval(() => { seed.value = (seed.value + 1) % 997 }, 110)
+  ticker = setInterval(() => {
+    // Un nom déjà rencontré ne bouge plus : inutile de le repeindre 9 fois par
+    // seconde pour rien.
+    if (known.value) return
+    seed.value = (seed.value + 1) % 997
+  }, 110)
 })
 onUnmounted(() => { if (ticker) clearInterval(ticker) })
 
@@ -29,8 +34,25 @@ onUnmounted(() => { if (ticker) clearInterval(ticker) })
  */
 const assigned = computed(() => voiceOfName(props.name, playerStore.npcs))
 
+/**
+ * Rencontré : le nom cesse définitivement de se chiffrer.
+ *
+ * C'est le pendant, dans le RÉCIT, de ce que le panneau du haut inscrit déjà :
+ * on mémorise pour aborder quelqu'un, jamais pour le réaborder. Une fois la
+ * conversation faite, le nom s'écrit en clair et en néon — il devient un mot
+ * sur lequel on peut revenir, pas une donnée à repirater.
+ *
+ * La comparaison est insensible à la casse : le découpage du texte l'est aussi,
+ * et le récit écrit le même nom en tête de phrase et au milieu.
+ */
+const known = computed(() => {
+  const npc = playerStore.npcs.find(n => n.name.toLowerCase() === props.name.toLowerCase())
+  return !!npc && gameStore.talkedToNpcIds.includes(npc.id)
+})
+
 const revealed = computed(() => gameStore.revealing === props.name)
-const shown = computed(() => (revealed.value ? props.name : scramble(props.name, seed.value)))
+const shown = computed(() =>
+  known.value || revealed.value ? props.name : scramble(props.name, seed.value))
 
 /**
  * L'arpège suit la révélation, jamais le montage du composant.
@@ -48,6 +70,9 @@ onUnmounted(() => { if (revealed.value) stopChime(props.name) })
 
 /** Sur desktop, la souris EST l'instrument : aucun mode à activer. */
 function onEnter() {
+  // Un nom déjà en clair n'a rien à révéler : l'effacement du reste du texte
+  // serait une punition sans contrepartie.
+  if (known.value) return
   // Avec la loupe en main, on analyse les objets — pas les gens.
   if (gameStore.activeTool !== 'eye') return
   gameStore.setRevealing(props.name)
@@ -61,6 +86,7 @@ function onLeave() {
  * C'est la réponse du système à une tentative sans instrument.
  */
 function onTouch() {
+  if (known.value) return
   if (!gameStore.eyeActive) gameStore.denyRead()
 }
 </script>
@@ -78,14 +104,16 @@ function onTouch() {
   <span
     class="glitch-name"
     :class="[
-      gameStore.activeTool === 'eye' ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : 'cursor-lens',
+      known
+        ? 'is-known'
+        : gameStore.activeTool === 'eye' ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : 'cursor-lens',
       revealed && 'is-revealed',
     ]"
-    :data-glitch-name="name"
+    :data-glitch-name="known ? undefined : name"
     :data-archetype="assigned.voice.key"
-    tabindex="0"
-    role="button"
-    :aria-label="revealed ? name : 'Identité chiffrée'"
+    :tabindex="known ? -1 : 0"
+    :role="known ? undefined : 'button'"
+    :aria-label="known || revealed ? name : 'Identité chiffrée'"
     @mouseenter="onEnter"
     @mouseleave="onLeave"
     @focus="onEnter"
@@ -140,6 +168,23 @@ function onTouch() {
   inset: 0;
   overflow: hidden;
   text-align: center;
+}
+
+/*
+ * Rencontré : le nom s'écrit pour de bon, en néon.
+ *
+ * Il quitte le monospace — ce n'est plus une donnée chiffrée mais quelqu'un
+ * qu'on connaît — et garde la couleur d'accent de la scène, qui est le signal
+ * de ce avec quoi le joueur peut interagir. La halo reste discret : il y a des
+ * noms partout dans le texte une fois la scène parcourue.
+ */
+.is-known {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: rgb(var(--neon-300));
+  text-shadow: 0 0 8px rgb(var(--neon-500) / 0.45);
+  cursor: default;
 }
 
 /* Déchiffré : le nom en clair, une seconde. */
