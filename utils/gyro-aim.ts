@@ -50,16 +50,22 @@ function clamp(v: number): number {
  *
  * `neutralY` n'est pas le centre : à plat, l'oeil se range EN HAUT de l'écran,
  * et tout le débattement sert à le faire descendre.
+ *
+ * @param lift remontée constante, en fraction d'écran, retranchée avant le
+ * bornage. La géométrie décrit un appareil au repos ; une posture réelle, elle,
+ * a une main, un coude et un oreiller. C'est le rattrapage de cet écart-là, et
+ * il se MESURE sur l'appareil — voir `POSTURE_LIFT_PX` dans `useGyroEye`.
  */
 export function aimFrom(
   up: Up,
   restBeta: number,
   rangeDeg: number,
   neutralY: number,
+  lift = 0,
 ): { x: number; y: number } {
   const span = Math.sin((rangeDeg * Math.PI) / 180)
   const rest = upVector(restBeta, 0)
   const dx = -(up[0] - rest[0]) / span
   const dy = (up[1] - rest[1]) / span
-  return { x: clamp(0.5 + dx / 2), y: clamp(neutralY + dy / 2) }
+  return { x: clamp(0.5 + dx / 2), y: clamp(neutralY + dy / 2 - lift) }
 }

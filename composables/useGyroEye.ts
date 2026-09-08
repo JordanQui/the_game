@@ -45,21 +45,43 @@ const NEUTRAL_Y = 0.05
  * Allongé, c'est la même chose vue de l'autre côté — tenu à plat au-dessus du
  * visage, écran vers le bas : 180°.
  *
- * LE DÉCALAGE ALLONGÉ SE DÉDUIT DE L'ASSIS, il ne se règle pas au jugé. Ce qui
- * fixe la hauteur de l'oeil, c'est sin(bêta) : il vaut zéro à 0° comme à 180°,
- * donc les deux postures se reposent au même endroit — en haut — et le même
- * geste fait descendre l'oeil dans les deux. Ce sont aussi les deux seules
- * attitudes où la gravité se lit à plein (|cos bêta| = 1), ce qui rend inutile
- * toute compensation d'assiette. Le sens de l'inclinaison, lui, est porté par
- * le vecteur vertical, qui n'a pas besoin qu'on lui dise de quel côté on est.
+ * CES DEUX NOMBRES SONT DE LA GÉOMÉTRIE, pas un réglage. Ce qui fixe la hauteur
+ * de l'oeil, c'est sin(bêta) : il vaut zéro à 0° comme à 180°, donc les deux
+ * postures se reposent au même endroit — en haut — et le même geste fait
+ * descendre l'oeil dans les deux. Ce sont aussi les deux seules attitudes où la
+ * gravité se lit à plein (|cos bêta| = 1), ce qui rend inutile toute
+ * compensation d'assiette. Le sens de l'inclinaison, lui, est porté par le
+ * vecteur vertical, qui n'a pas besoin qu'on lui dise de quel côté on est.
  *
- * Si le repos allongé est en réalité plus redressé — la tête sur un oreiller,
- * le téléphone incliné vers le visage —, c'est CE nombre qu'on baisse : 150°
- * pour une trentaine de degrés de plus.
+ * L'écart entre ce modèle et un vrai corps allongé — la tête sur un oreiller,
+ * le poignet qui casse — ne se rattrape PAS ici : il se mesure en pixels, dans
+ * `POSTURE_LIFT_PX`. Toucher à ces angles-là déplacerait aussi le sens du
+ * geste ; la remontée, elle, ne déplace que l'origine.
  */
 const REST_BETA_DEG: Record<string, number> = {
   assis: 0,
   allonge: 180,
+}
+
+/**
+ * Ce que la posture remonte l'oeil, en pixels d'écran.
+ *
+ * Mesuré sur l'appareil, et c'est la bonne façon de le régler : la géométrie
+ * donne le SENS de l'inclinaison et la forme du débattement, elle ne peut pas
+ * deviner l'attitude réelle d'un bras replié au-dessus d'un visage. Allongé, le
+ * repos n'est pas le téléphone strictement retourné à 180° — la tête est sur un
+ * oreiller, le poignet casse un peu — et l'oeil se posait 400 px trop bas.
+ *
+ * Retranché après la géométrie, donc constant : la remontée ne mange pas de
+ * débattement vers le bas, elle déplace l'origine. Une remontée de 400 px
+ * revient à une quinzaine de degrés de tangage sur un écran de téléphone —
+ * l'autre écriture du même réglage serait de baisser `REST_BETA_DEG.allonge`
+ * d'autant, mais elle se règle moins bien : personne ne voit des degrés, tout
+ * le monde voit un oeil trop bas.
+ */
+const POSTURE_LIFT_PX: Record<string, number> = {
+  assis: 0,
+  allonge: 400,
 }
 
 /**
@@ -111,11 +133,16 @@ export function useGyroEye() {
     if (beta === null || gamma === null) return
 
     const posture = gameStore.posture
+    // En fraction d'écran, et relue à chaque mesure : la hauteur change avec la
+    // rotation de l'appareil et avec le clavier, et `hitTest` vise en pixels de
+    // ce même `innerHeight` — les deux doivent parler de la même page.
+    const lift = (POSTURE_LIFT_PX[posture] ?? 0) / window.innerHeight
     target = aimFrom(
       upVector(beta, gamma),
       REST_BETA_DEG[posture] ?? 0,
       RANGE_DEG * (POSTURE_RANGE_SCALE[posture] ?? 1),
       NEUTRAL_Y,
+      lift,
     )
   }
 
