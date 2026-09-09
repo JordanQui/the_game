@@ -807,6 +807,10 @@ ${lines}`)
       scene.place.name,
       scene.key_item?.name,
       scene.sealed_object?.name,
+      // Les noms de personnes aussi : le récit les récite en capitales dans sa
+      // dernière ligne, et un nom écrit de deux façons est deux choses
+      // différentes pour tout ce qui le cherche ensuite.
+      ...(scene.npcs ?? []).map(n => n.name),
     ].filter((n): n is string => Boolean(n)))
 
     if (naming.fixed.length) {

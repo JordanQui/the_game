@@ -67,7 +67,16 @@ export function splitByNames(text: string, terms: Array<string | Term>): TextSeg
     const term = byValue.get(match[0].toLowerCase())
     segments.push({
       text: match[0],
-      name: match[0],
+      // LA FORME CANONIQUE, pas celle que le texte a écrite.
+      //
+      // La correspondance est insensible à la casse, et le récit récite
+      // volontiers les noms en capitales dans sa dernière ligne. Le fragment
+      // portait alors « KARU » là où la fiche dit « Karu » : le nom s'affichait
+      // en capitales une fois déchiffré, et surtout `voiceOfName` ne le
+      // retrouvait plus dans la distribution des voix — il tombait sur le mode
+      // de repli, et le même personnage n'avait pas la même musique selon
+      // l'endroit du texte où on le survolait.
+      name: term?.value ?? match[0],
       kind: term?.kind ?? 'name',
       id: term?.id,
       start: at,
