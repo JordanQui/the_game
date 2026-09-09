@@ -184,5 +184,26 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: process.env.VERCEL ? 'vercel' : undefined,
+    /**
+     * Sans ceci, Vercel coupe la fonction à sa limite par défaut (10 s en
+     * Hobby, 15 s en Pro) — bien en-deçà du temps que prend gpt-4o pour
+     * générer une scène (`max_tokens: 4200`, et le double si une reprise de
+     * validation est nécessaire). La fonction meurt alors en silence : le
+     * client ne reçoit ni JSON ni erreur propre, juste une connexion coupée
+     * après une longue attente, que `useScene.ts` ne peut pas distinguer
+     * d'une panne réseau.
+     *
+     * Alignée sur `SCENE_TEXT_TIMEOUT_MS` (le plus long délai que le client
+     * s'accorde déjà, côté navigateur) : au-delà, la génération est perdue
+     * de toute façon. Un réglage global plutôt que `functionRules` par
+     * route : ce dernier duplique le bundle serveur entier pour chaque
+     * route listée (voir nitrojs/nitro#4233).
+     *
+     * Ne vaut que sur le plan Vercel Pro ou plus : le plan Hobby plafonne à
+     * 10 s sans dérogation possible, quel que soit ce réglage.
+     */
+    vercel: {
+      functions: { maxDuration: 90 },
+    },
   },
 })
