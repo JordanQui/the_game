@@ -436,5 +436,8 @@ export function useScene() {
     return s.paywall.exit_keywords.some(kw => lower.includes(kw))
   }
 
-  return { scene, isLoadingText, error, quotaExhausted, loadSceneText, loadSceneImage, enterScene, hitsPaywall }
+  return {
+    scene, isLoadingText, error, quotaExhausted,
+    loadSceneText, loadSceneImage, enterScene, hitsPaywall, saveCarry,
+  }
 }

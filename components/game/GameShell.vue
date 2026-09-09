@@ -4,6 +4,7 @@ import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
+import { useScene } from '~/composables/useScene'
 import { analyzables, isTakeable } from '~/utils/interactables'
 import { normalize } from '~/utils/text-match'
 
@@ -11,6 +12,12 @@ const gameStore = useGameStore()
 const playerStore = usePlayerStore()
 const { retryLastTurn } = useNarrative()
 const { generateSceneImage } = useImageGen()
+// Ce que le joueur emporte doit survivre à un rechargement dès l'instant où
+// il change — pas seulement à l'ouverture de la scène. Sans ça, ramasser
+// l'augmentation ou déchiffrer un nom entre deux tours ne survivait pas à un
+// onglet qui se recharge : le navigateur reprenait la scène avec l'inventaire
+// d'avant, loupe comprise.
+const { saveCarry } = useScene()
 // Une saisie n'entre plus par une cascade de `if` : elle tire un moment dans
 // le deck, dont l'ordre de priorité se lit d'un bloc dans `utils/storylets.ts`.
 const { play } = useStorylets()
@@ -73,6 +80,7 @@ function pickUp(obj: { id: string; label: string }) {
     observation: observationFor(obj.id),
   })
   gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
+  saveCarry()
 }
 
 /**
@@ -113,6 +121,7 @@ function onSolved() {
   // recherches séparées laissaient chaque fois un chemin en arrière.
   const observation = observationFor(target.id)
   if (observation) gameStore.addNarrativeEntry('narration', observation)
+  saveCarry()
 }
 
 /**
@@ -145,6 +154,11 @@ function collectItem() {
     observation: playerStore.scene?.key_item?.observation,
   })
   gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
+  // L'augmentation vient d'être posée dans `hasAugmentation` : sans ce
+  // deuxième instantané, un onglet qui se recharge entre la remise et la
+  // sortie de l'auberge la reprend de la mémoire d'avant, où elle n'y était
+  // pas encore — la loupe redisparaît de la barre d'outils.
+  saveCarry()
 }
 
 function retryImage() {
