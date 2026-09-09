@@ -4,15 +4,16 @@ import { useGameStore } from '~/stores/game'
 import { interpolate } from '~/utils/prompt-builder'
 
 /**
- * La fenêtre qui présente l'augmentation, au premier passage à la loupe.
+ * La fenêtre qui présente l'augmentation, à la remise.
  *
  * Le joueur vient d'obtenir un objet dont il ne sait rien : ni ce qu'il fait,
  * ni comment s'en servir. Sans ce moment, il repart avec une loupe dans la
  * barre d'outils sans savoir qu'elle existe ni qu'il faut S'ARRÊTER sur un mot.
  *
- * Elle s'ouvre au PREMIER passage à la loupe, pas à la remise : le détenteur
- * vient d'en dire deux mots, et couper sa réplique par une fenêtre arrivait
- * avant que le joueur ait quoi que ce soit à en faire.
+ * Elle s'ouvre dès que `collectKeyItem` pose l'augmentation dans l'inventaire
+ * — c'est là que le joueur a besoin de savoir ce qu'il tient et à quoi ça
+ * sert, pas seulement s'il pense un jour à cliquer la loupe. Le premier passage
+ * à l'outil reste un filet de sécurité, au cas où.
  *
  * Le RÉCIT est brodé à partir des champs déjà générés de l'objet — il change
  * donc d'un joueur à l'autre, comme l'objet lui-même — et ne coûte aucun appel

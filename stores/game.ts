@@ -362,10 +362,9 @@ export const useGameStore = defineStore('game', {
       if (tool === 'lens' && !this.hasAugmentation) return
       this.activeTool = tool
       this.revealing = null
-      // PREMIER passage à la loupe, et là seulement : celui qui l'a cédée en a
-      // dit deux mots, la fenêtre dit le reste. L'ouvrir à la remise coupait la
-      // conversation en deux et arrivait avant que le joueur ait quoi que ce
-      // soit à en faire.
+      // Filet de sécurité : la fenêtre s'ouvre normalement dès la remise
+      // (`collectKeyItem`). Si le joueur l'a fermée sans la lire ou qu'un cas
+      // limite l'a manquée, ce premier passage à la loupe la rouvre.
       if (tool === 'lens' && !this.primerSeen) this.primerOpen = true
     },
 
@@ -497,7 +496,13 @@ export const useGameStore = defineStore('game', {
     ) {
       this.hasKeyItem = true
       this.pendingKeyItem = false
-      if (grantsAugmentation) this.hasAugmentation = true
+      if (grantsAugmentation) {
+        this.hasAugmentation = true
+        // La fenêtre s'ouvre ICI, à la remise : le joueur doit savoir ce qu'il
+        // vient de recevoir et à quoi ça sert avant de repartir dans la
+        // conversation, pas seulement s'il pense un jour à cliquer la loupe.
+        if (!this.primerSeen) this.primerOpen = true
+      }
       if (item?.name) {
         this.pickUp({
           id: item.id || `cle_${this.inventory.length + 1}`,
