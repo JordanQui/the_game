@@ -5,12 +5,7 @@ import {
   emptyAdmissionForm,
   profileFromAdmission,
   AGREEMENT_CHOICES,
-  PASSION_CHOICES,
-  MAX_PASSIONS,
-  AWAKE_CHOICES,
-  MAX_AWAKE_HABITS,
-  DREAM_CHOICES,
-  MAX_DREAM_MOTIFS,
+  PASSION_EXAMPLES,
 } from '~/utils/admission'
 
 /**
@@ -24,6 +19,13 @@ import {
  * champs se referme avant d'être remplie. Seule la première étape est
  * obligatoire — le nom et la date fondent le signe et les nombres, tout le
  * reste enrichit sans jamais bloquer l'entrée.
+ *
+ * TOUT SE TAPE, sauf l'accord grammatical. Les grilles de touches ont été
+ * retirées : une touche rend au générateur un vocabulaire qu'il a lui-même
+ * écrit, et deux joueurs qui cochent la même case traversent la même nuit. Ce
+ * que le joueur tape, personne d'autre ne l'a tapé. Les listes d'avant
+ * survivent en EXEMPLES sous les champs — elles amorcent, elles ne répondent
+ * pas.
  */
 const playerStore = usePlayerStore()
 const gameStore = useGameStore()
@@ -50,29 +52,13 @@ const canAdvance = computed(() => {
 })
 
 /**
- * L'ordre des touches fait le classement : les deux premières passions
- * choisies pèsent le plus. Voir `intensityAt` dans utils/admission.ts.
+ * Entrée passe à l'étape suivante — mais pas depuis une zone de texte, où la
+ * touche sert à écrire. Les nuits et le rêve sont les deux seuls champs
+ * multilignes du dossier.
  */
-function togglePassion(theme: string) {
-  const i = form.passions.indexOf(theme)
-  if (i >= 0) form.passions.splice(i, 1)
-  else if (form.passions.length < MAX_PASSIONS) form.passions.push(theme)
-}
-
-function rankOf(theme: string): number {
-  return form.passions.indexOf(theme)
-}
-
-/**
- * Touches à choix multiple plafonné — les nuits et les rêves.
- *
- * Contrairement aux passions, l'ordre ne compte pas ici : deux nuits n'ont pas
- * d'intensité l'une par rapport à l'autre. Seul le plafond compte.
- */
-function toggleIn(list: string[], value: string, max: number) {
-  const i = list.indexOf(value)
-  if (i >= 0) list.splice(i, 1)
-  else if (list.length < max) list.push(value)
+function onEnter(event: KeyboardEvent) {
+  if ((event.target as HTMLElement | null)?.tagName === 'TEXTAREA') return
+  next()
 }
 
 function next() {
@@ -153,7 +139,7 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
 
         <div
           class="dossier relative bg-ink-900/85 border border-neon-600/40 p-6 sm:p-7 space-y-6"
-          @keyup.enter="next"
+          @keyup.enter="onEnter"
         >
           <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
 
@@ -223,26 +209,29 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           <!-- 3. PASSIONS -->
           <div v-else-if="step === 2" class="relative space-y-4">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
-              Cinq au maximum, et l'ordre compte : les deux premières touchées
-              pèsent le plus lourd dans votre nuit.
+              Trois lignes, et l'ordre compte : la première pèse le plus lourd
+              dans votre nuit. Écrivez-les comme vous les diriez — un objet, un
+              lieu, une heure valent mieux qu'une catégorie.
             </p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="passion in PASSION_CHOICES"
-                :key="passion.theme"
-                type="button"
-                class="chip text-left"
-                :class="[
-                  rankOf(passion.theme) >= 0 && 'chip-on',
-                  rankOf(passion.theme) < 0 && form.passions.length >= MAX_PASSIONS && 'opacity-35',
-                ]"
-                @click="togglePassion(passion.theme)"
-              >
-                <span v-if="rankOf(passion.theme) >= 0" class="text-neon-200/70 mr-1.5">{{ rankOf(passion.theme) + 1 }}</span>
-                {{ passion.theme }}
-              </button>
+            <!--
+              Trois lignes libres, et plus une seule touche : « musique et
+              concerts » vaut pour un million de personnes, ce que le joueur
+              tape n'en désigne qu'une. Les anciens thèmes servent de
+              placeholders — ils amorcent, ils ne répondent pas.
+            -->
+            <div class="space-y-4">
+              <label v-for="(example, i) in PASSION_EXAMPLES" :key="i" class="block space-y-2">
+                <span class="field-label">
+                  {{ ['Ce à quoi vous tenez le plus', 'Ensuite', 'Et encore'][i] }}
+                </span>
+                <input
+                  v-model="form.passions[i]"
+                  type="text"
+                  class="field"
+                  :placeholder="example"
+                >
+              </label>
             </div>
-            <p class="field-hint">{{ form.passions.length }} / {{ MAX_PASSIONS }} retenues</p>
 
             <div class="h-px bg-neon-600/20" />
 
@@ -318,6 +307,8 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
             donnent un décor, le plafond d'une chambre ne lui donne rien.
             Le rêve, PARCE QU'IL REVIENT, est le seul motif du dossier qu'une
             scène peut reposer sans lasser.
+            Deux lignes libres, et plus de touches : ici plus qu'ailleurs, le
+            joueur est le seul à pouvoir écrire ce qu'il fait de ses nuits.
           -->
           <div v-else class="relative space-y-5">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
@@ -326,52 +317,32 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
               heures non déclarées.
             </p>
 
-            <div class="space-y-2">
-              <span class="field-label">Les nuits où vous ne dormez pas <span class="text-steel-500">— deux au plus</span></span>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="habit in AWAKE_CHOICES"
-                  :key="habit"
-                  type="button"
-                  class="chip text-left"
-                  :class="[
-                    form.awakeHabits.includes(habit) && 'chip-on',
-                    !form.awakeHabits.includes(habit) && form.awakeHabits.length >= MAX_AWAKE_HABITS && 'opacity-35',
-                  ]"
-                  @click="toggleIn(form.awakeHabits, habit, MAX_AWAKE_HABITS)"
-                >
-                  {{ habit }}
-                </button>
-              </div>
-            </div>
-
             <label class="block space-y-2">
-              <span class="field-label">Et plus précisément</span>
-              <input v-model="form.awakeNote" type="text" class="field" placeholder="à trois heures, vous êtes où">
+              <span class="field-label">Les nuits où vous ne dormez pas</span>
+              <textarea
+                v-model="form.awakeNote"
+                rows="2"
+                class="field field-multi"
+                placeholder="à trois heures, vous êtes où, et vous faites quoi"
+              />
+              <span class="field-hint">
+                Dehors, de préférence : un quai, un dernier bar, un retour à
+                pied. Un plafond de chambre ne donne rien à fabriquer à la ville.
+              </span>
             </label>
 
-            <div class="space-y-2">
-              <span class="field-label">Le rêve qui revient <span class="text-steel-500">— deux au plus</span></span>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="motif in DREAM_CHOICES"
-                  :key="motif"
-                  type="button"
-                  class="chip text-left"
-                  :class="[
-                    form.dreamMotifs.includes(motif) && 'chip-on',
-                    !form.dreamMotifs.includes(motif) && form.dreamMotifs.length >= MAX_DREAM_MOTIFS && 'opacity-35',
-                  ]"
-                  @click="toggleIn(form.dreamMotifs, motif, MAX_DREAM_MOTIFS)"
-                >
-                  {{ motif }}
-                </button>
-              </div>
-            </div>
-
             <label class="block space-y-2">
-              <span class="field-label">Dans vos mots <span class="text-steel-500">— si vous voulez</span></span>
-              <input v-model="form.dreamNote" type="text" class="field" placeholder="le vôtre, en une ligne">
+              <span class="field-label">Le rêve qui revient</span>
+              <textarea
+                v-model="form.dreamNote"
+                rows="2"
+                class="field field-multi"
+                placeholder="celui que vous refaites, pas le dernier en date"
+              />
+              <span class="field-hint">
+                Celui qui REVIENT : la nuit pourra le reposer devant vous sans
+                que ça se répète. Si aucun ne revient, laissez la ligne vide.
+              </span>
             </label>
           </div>
 
@@ -518,6 +489,20 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
 .field:focus {
   border-bottom-color: rgb(var(--neon-500));
   background: rgb(var(--ink-800));
+}
+
+/*
+  Deux champs respirent sur plusieurs lignes — les nuits et le rêve. Le
+  navigateur donne au textarea sa propre police et sa propre taille : on les
+  ramène à celles du dossier, et on interdit la poignée de redimensionnement,
+  qui casserait l'alignement du formulaire.
+*/
+.field-multi {
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  display: block;
 }
 
 /* Le calendrier natif est blanc sur blanc en thème sombre : on l'inverse. */

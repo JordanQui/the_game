@@ -59,6 +59,13 @@ function clamp(v: number): number {
  * partout, de pente constante, et identique à l'ancienne formule à 2,5 % près
  * autour de zéro — la posture assise ne bouge pas.
  *
+ * LA MONTÉE ET LA DESCENTE PEUVENT AVOIR DES GAINS DIFFÉRENTS (`riseScale`).
+ * Rien ne dit qu'un poignet parcoure autant de degrés dans les deux sens : le
+ * bras replié au-dessus du visage ramène le haut de l'appareil vers soi bien
+ * plus facilement qu'il ne le pousse. À gain égal, l'oeil remontait donc trop
+ * vite. Le facteur ne s'applique qu'au sens de la montée, et il ne déplace pas
+ * l'origine — le repos reste exactement là où la posture le déclare.
+ *
  * `neutralY` EST LA HAUTEUR DE REPOS, et elle dépend de la posture : ce n'est
  * pas la même chose de poser l'appareil à plat sur une table et de le tenir
  * au-dessus de soi. Posé, l'oeil se range EN HAUT et tout le débattement sert à
@@ -82,10 +89,16 @@ export function aimFrom(
   restBeta: number,
   rangeDeg: number,
   neutralY: number,
+  riseScale = 1,
 ): { x: number; y: number } {
   // Le tangage, en radians, mesuré depuis l'origine déclarée de la posture.
   const pitch = Math.atan2(up[1], up[2]) - (restBeta * Math.PI) / 180
-  const dy = pitch / ((rangeDeg * Math.PI) / 180)
+  const raw = pitch / ((rangeDeg * Math.PI) / 180)
+
+  // La montée et la descente n'ont pas le même gain quand la posture le demande.
+  // Un `dy` négatif fait REMONTER l'oeil : c'est celui-là, et lui seul, que
+  // `riseScale` tempère.
+  const dy = raw < 0 ? raw * riseScale : raw
 
   // Le roulis : la projection de la verticale sur la largeur de l'écran.
   const rest = upVector(restBeta, 0)

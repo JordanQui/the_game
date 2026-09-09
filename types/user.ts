@@ -74,18 +74,18 @@ export interface UserAnthem {
  * fait les nuits où il ne dort pas. Tout le monde en a, y compris ceux qui
  * dorment bien, et la réponse est un GESTE, pris DEHORS : le jeu est une nuit
  * dans une ville, un quai ou un dernier bar lui donnent un décor, une heure et
- * une raison d'être là ; le plafond d'une chambre ne lui donne rien. Le rêve, lui, est le seul élément du dossier
+ * une raison d'être là ; le plafond d'une chambre ne lui donne rien. Les deux
+ * champs sont des LIGNES LIBRES : les touches proposées ici jusqu'au
+ * 2026-09-09 rendaient au générateur le vocabulaire qu'il avait fourni, quand
+ * c'est justement de mots qui ne sont pas les siens qu'il a besoin.
+ * Le rêve, lui, est le seul élément du dossier
  * qui a le droit de reparaître aux dix scènes sans lasser : puisqu'il REVIENT,
  * c'est un motif et pas une anecdote.
  */
 export interface UserNights {
-  /** Ce qu'il fait les nuits où il ne dort pas. Deux touches au plus. */
-  awake_habits?: string[]
-  /** Et plus précisément, dans ses mots. */
+  /** Ce qu'il fait les nuits où il ne dort pas, dans ses mots. */
   awake_note?: string
-  /** Les formes du rêve qui revient. Deux touches au plus. */
-  dream_motifs?: string[]
-  /** Le rêve dans ses mots, s'il a pris la peine. */
+  /** Le rêve qui revient, dans ses mots. */
   dream_note?: string
 }
 

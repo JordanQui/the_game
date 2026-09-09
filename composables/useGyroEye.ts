@@ -86,6 +86,24 @@ const POSTURE_RANGE_SCALE: Record<string, number> = {
   allonge: 0.7,
 }
 
+/**
+ * Ce que vaut la MONTÉE de l'oeil, relativement à sa descente.
+ *
+ * Un poignet ne parcourt pas le même angle dans les deux sens. Allongé, le bras
+ * est replié au-dessus du visage : ramener le haut de l'appareil vers soi — ce
+ * qui fait remonter l'oeil — ne coûte presque rien, alors que le pousser au
+ * loin demande d'ouvrir le coude. À gain égal, l'oeil décollait donc vers le
+ * haut au moindre relâchement de la main, et la moitié supérieure de l'écran se
+ * traversait sans le vouloir.
+ *
+ * Assis, l'appareil est posé et l'oeil se repose déjà tout en haut : il n'a
+ * nulle part où monter, et le réglage y est sans effet.
+ */
+const POSTURE_RISE_SCALE: Record<string, number> = {
+  assis: 1,
+  allonge: 0.75,
+}
+
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
 
@@ -128,6 +146,7 @@ export function useGyroEye() {
       REST_BETA_DEG[posture] ?? 0,
       RANGE_DEG * (POSTURE_RANGE_SCALE[posture] ?? 1),
       POSTURE_NEUTRAL_Y[posture] ?? 0.05,
+      POSTURE_RISE_SCALE[posture] ?? 1,
     )
   }
 

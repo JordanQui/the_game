@@ -76,10 +76,8 @@
   },
 
   "nights": {
-    "awake_habits": ["je marche sans but", "je traîne près de l'eau"],
-    "awake_note": "je descends au quai et je regarde les péniches jusqu'à trois heures",
-    "dream_motifs": ["l'eau qui monte", "un lieu disparu où je reviens"],
-    "dream_note": "la maison de Saint-Malo, mais les fenêtres donnent sur le fleuve"
+    "awake_note": "je marche sans but, je descends au quai et je regarde les péniches jusqu'à trois heures",
+    "dream_note": "je reviens dans la maison de Saint-Malo, mais les fenêtres donnent sur le fleuve et l'eau monte"
   },
 
   "misc_facts": [

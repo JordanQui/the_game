@@ -28,6 +28,14 @@
  * la transposition, le prompt interdisant toute reprise littérale. Les sources
  * de décor et la couleur secondaire qui en dépendaient tirent désormais sur
  * `imprints`.
+ *
+ * TOUT SE SAISIT AU CLAVIER, sauf l'accord. Les grilles de touches — passions,
+ * nuits, rêves — ont été retirées le 2026-09-09 : une touche est un mot que le
+ * joueur n'a pas écrit, et le générateur ne peut rien transposer d'un
+ * vocabulaire qu'il a lui-même fourni. Deux joueurs qui cochent « musique et
+ * concerts » ont la même nuit ; deux joueurs qui l'écrivent, jamais. L'accord
+ * grammatical reste en touches parce qu'il n'est pas une réponse mais un
+ * réglage : trois valeurs, et le code les consomme telles quelles.
  */
 
 import type { UserProfile, UserPassion, UserAgreement, UserNights } from '~/types/user'
@@ -42,7 +50,14 @@ export interface AdmissionForm {
   agreement: UserAgreement
   hometown: string
   currentCity: string
-  /** Thèmes retenus, DANS L'ORDRE DE CHOIX : il donne l'intensité. */
+  /**
+   * Trois lignes libres, DANS L'ORDRE : la première pèse le plus.
+   *
+   * Ce fut une grille de quatorze touches. Une touche est un mot que le joueur
+   * n'a pas écrit : « musique et concerts » vaut pour un million de personnes,
+   * « les vinyles de mon père que je n'ose pas jouer » n'en désigne qu'une, et
+   * c'est de celle-là que la nuit a besoin.
+   */
   passions: string[]
   /** Un morceau qui compte. Le titre suffit. */
   anthemTitle: string
@@ -55,13 +70,9 @@ export interface AdmissionForm {
   refuge: string
   ally: string
   aversion: string
-  /** Ce qu'il fait les nuits où il ne dort pas. Touches, deux au plus. */
-  awakeHabits: string[]
-  /** Et plus précisément. Ligne libre. */
+  /** Ce qu'il fait les nuits où il ne dort pas. Ligne libre. */
   awakeNote: string
-  /** Les formes du rêve qui revient. Touches, deux au plus. */
-  dreamMotifs: string[]
-  /** Et le rêve dans ses mots, s'il veut bien. */
+  /** Le rêve qui revient, dans ses mots. Ligne libre. */
   dreamNote: string
 }
 
@@ -73,7 +84,7 @@ export function emptyAdmissionForm(): AdmissionForm {
     agreement: 'masculin',
     hometown: '',
     currentCity: '',
-    passions: [],
+    passions: ['', '', ''],
     anthemTitle: '',
     anthemArtist: '',
     turningPoints: ['', ''],
@@ -81,9 +92,7 @@ export function emptyAdmissionForm(): AdmissionForm {
     refuge: '',
     ally: '',
     aversion: '',
-    awakeHabits: [],
     awakeNote: '',
-    dreamMotifs: [],
     dreamNote: '',
   }
 }
@@ -101,88 +110,34 @@ export const AGREEMENT_CHOICES: Array<{ value: UserAgreement; label: string; exa
 ]
 
 /**
- * Les passions proposées.
+ * Les exemples affichés sous les trois lignes de passions.
  *
- * Chacune porte ses `evidence` : trois accroches concrètes que le bloc joueur
- * affiche entre parenthèses. Sans elles, une
- * passion se réduirait à deux mots et le modèle n'aurait rien à quoi accrocher
- * un décor.
+ * Ce sont des AMORCES, pas des réponses : elles montrent le grain attendu — un
+ * objet, un lieu, une habitude — là où la grille de touches d'avant proposait
+ * des rayons de supermarché. Rien ici n'entre dans le profil ; seul ce que le
+ * joueur écrit y entre.
  */
-export const PASSION_CHOICES: Array<{ theme: string; evidence: string[] }> = [
-  { theme: 'musique et concerts', evidence: ['disques', 'salles de concert', 'basses trop fortes'] },
-  { theme: 'cinéma et séries', evidence: ['salles obscures', 'film noir', 'séances de minuit'] },
-  { theme: 'littérature et bandes dessinées', evidence: ['romans', 'librairies', 'piles de côté'] },
-  { theme: 'jeux vidéo', evidence: ['arcades', 'jeux d\'aventure', 'manettes usées'] },
-  { theme: 'jeux de rôle et jeux de société', evidence: ['Donjons & Dragons', 'dés', 'parties qui durent'] },
-  { theme: 'cuisine et fermentation', evidence: ['pain au levain', 'marchés', 'bocaux'] },
-  { theme: 'voyage et grandes villes', evidence: ['trains de nuit', 'aéroports', 'plans de métro'] },
-  { theme: 'sport et endurance', evidence: ['course', 'entraînement', 'lignes d\'arrivée'] },
-  { theme: 'montagne et grands espaces', evidence: ['randonnée', 'bivouacs', 'cols'] },
-  { theme: 'mer et navigation', evidence: ['voile', 'ports', 'marées'] },
-  { theme: 'dessin, photo et images', evidence: ['carnets', 'argentique', 'expositions'] },
-  { theme: 'machines, code et bricolage', evidence: ['ateliers', 'fers à souder', 'vieux matériel'] },
-  { theme: 'histoire et vieux documents', evidence: ['archives', 'cartes anciennes', 'musées'] },
-  { theme: 'animaux et jardins', evidence: ['chats', 'plantes', 'longues promenades'] },
+export const PASSION_EXAMPLES: string[] = [
+  'les vinyles de mon père, que je n\'ose pas jouer',
+  'les séances de minuit, toujours seul',
+  'le pain que je rate depuis deux ans',
 ]
 
-/** Combien de passions au maximum. Au-delà, plus rien ne ressort. */
-export const MAX_PASSIONS = 5
-
 /**
- * Les nuits où l'on ne dort pas.
+ * Combien de lignes de passions.
  *
- * La question est posée en CONDITIONNEL, pas en état : « quel dormeur êtes-vous »
- * n'appelle rien de la part de qui dort bien, alors que des nuits sans sommeil,
- * tout le monde en a. Et elle appelle un GESTE plutôt qu'une humeur.
- *
- * Toutes les réponses se passent DEHORS, et c'est délibéré : le jeu est une
- * nuit dans une ville: le plafond d'une chambre ne donne rien à
- * fabriquer, un quai, un dernier bar ou un retour à pied donnent un décor, une
- * heure et une raison d'être là. Des touches plutôt qu'une ligne libre, qui
- * resterait vide neuf fois sur dix.
+ * Trois écrites valent mieux que cinq cochées : une ligne demande un effort,
+ * et c'est justement l'effort qui produit la matière. `intensityAt` donne la
+ * première et la deuxième pour hautes, la troisième pour moyenne.
  */
-export const AWAKE_CHOICES: string[] = [
-  'je marche sans but',
-  'je bois un verre quelque part',
-  'je traîne près de l\'eau',
-  'je fume dehors',
-  'je roule, je conduis',
-  'je cherche un endroit encore ouvert',
-  'je vais chez quelqu\'un',
-  'je rentre à pied au petit matin',
-]
-
-/** Deux au plus : au-delà, plus aucune nuit ne se distingue d'une autre. */
-export const MAX_AWAKE_HABITS = 2
+export const MAX_PASSIONS = 3
 
 /**
- * Les formes du rêve qui revient.
+ * Intensité d'une passion, d'après le rang de sa ligne.
  *
- * On ne demande PAS le dernier cauchemar : un joueur sur deux ne s'en souvient
- * pas et laisse vide. Le rêve récurrent, lui, presque tout le monde en a un —
- * et comme il revient, il donne au générateur un motif qu'il peut reposer aux
- * dix scènes sans que ça lasse.
- */
-export const DREAM_CHOICES: string[] = [
-  'une chute',
-  'une poursuite',
-  'des dents qui bougent',
-  'un train raté, un examen',
-  'une maison que je ne reconnais pas',
-  'l\'eau qui monte',
-  'crier sans qu\'il sorte un son',
-  'un lieu disparu où je reviens',
-]
-
-/** Deux au plus, pour la même raison que les nuits. */
-export const MAX_DREAM_MOTIFS = 2
-
-/**
- * Intensité d'une passion, d'après son rang de sélection.
- *
- * Le joueur ne note pas ses passions une par une — ce serait quatorze
- * questions de plus. C'est l'ORDRE dans lequel il les touche qui les classe :
- * les deux premières comptent le plus.
+ * Le joueur ne note pas ses passions une par une — ce serait trois questions
+ * de plus. C'est l'ORDRE des lignes qui les classe : les deux premières
+ * comptent le plus.
  */
 function intensityAt(rank: number): UserPassion['intensity'] {
   if (rank < 2) return 'high'
@@ -266,14 +221,24 @@ function anthem(form: AdmissionForm): UserProfile['anthem'] {
   return { title, artist: clean(form.anthemArtist) || undefined }
 }
 
-/** Les nuits déclarées, et rien si l'étape a été traversée sans rien toucher. */
+/**
+ * Les nuits déclarées, et rien si l'étape a été traversée sans rien écrire.
+ *
+ * Deux lignes libres, et plus aucune touche. La question reste posée en
+ * CONDITIONNEL — « les nuits où vous ne dormez pas », pas « quel dormeur
+ * êtes-vous » : un état n'appelle rien de la part de qui dort bien, un
+ * conditionnel parle à tout le monde. Ce que le joueur écrit se passe DEHORS,
+ * et le formulaire le lui dit : le jeu est une nuit dans une ville, un quai ou
+ * un dernier bar donnent un décor, une heure et une raison d'être là, le
+ * plafond d'une chambre ne donne rien à fabriquer.
+ *
+ * Le rêve demandé est celui qui REVIENT, jamais le dernier cauchemar : un
+ * joueur sur deux ne s'en souvient pas, et un rêve récurrent est un motif
+ * qu'une scène peut reposer aux dix tableaux sans lasser.
+ */
 function nights(form: AdmissionForm): UserProfile['nights'] {
-  const habits = form.awakeHabits.slice(0, MAX_AWAKE_HABITS)
-  const motifs = form.dreamMotifs.slice(0, MAX_DREAM_MOTIFS)
   const declared: UserNights = {
-    awake_habits: habits.length ? habits : undefined,
     awake_note: clean(form.awakeNote) || undefined,
-    dream_motifs: motifs.length ? motifs : undefined,
     dream_note: clean(form.dreamNote) || undefined,
   }
   return Object.values(declared).some(Boolean) ? declared : undefined
@@ -293,11 +258,20 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
   const hometown = clean(form.hometown)
   const city = clean(form.currentCity)
 
-  const passions: UserPassion[] = form.passions.slice(0, MAX_PASSIONS).map((theme, i) => ({
-    theme,
-    intensity: intensityAt(i),
-    evidence: PASSION_CHOICES.find(p => p.theme === theme)?.evidence ?? [],
-  }))
+  // Les lignes vides sautent, et le classement se resserre : qui n'écrit que
+  // la troisième ligne a une passion haute, pas une passion basse.
+  const passions: UserPassion[] = form.passions
+    .map(clean)
+    .filter(Boolean)
+    .slice(0, MAX_PASSIONS)
+    .map((theme, i) => ({
+      theme,
+      intensity: intensityAt(i),
+      // Les `evidence` venaient de la grille de touches : c'est le prix de la
+      // ligne libre, et il est mince. Le joueur écrit déjà en concret, et
+      // `describeUser` saute la parenthèse quand elle est vide.
+      evidence: [],
+    }))
 
   return {
     identity: {

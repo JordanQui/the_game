@@ -90,14 +90,13 @@ export function describeUser(user: UserProfile): string {
       + `ce que quelqu'un fredonne sans qu'on l'entende bien.`)
   }
 
-  // Les nuits sans sommeil, et le rêve. Touches et ligne libre tiennent sur une
-  // seule ligne chacun : le joueur s'y déclare à la première personne, on garde
-  // ses mots tels quels plutôt que de les retourner à la troisième.
+  // Les nuits sans sommeil, et le rêve. Le joueur s'y déclare à la première
+  // personne : on garde ses mots tels quels plutôt que de les retourner à la
+  // troisième, parce que c'est la seule partie du dossier qu'il a écrite en
+  // entier et que sa formulation vaut autant que son contenu.
   const nights = user.nights
-  const awake = [nights?.awake_habits?.join(', '), nights?.awake_note].filter(Boolean).join(' — ')
-  if (awake) lines.push(`Les nuits où il ne dort pas : ${awake}`)
-  const dream = [nights?.dream_motifs?.join(', '), nights?.dream_note].filter(Boolean).join(' — ')
-  if (dream) lines.push(`Le rêve qui lui revient : ${dream}`)
+  if (nights?.awake_note) lines.push(`Les nuits où il ne dort pas : ${nights.awake_note}`)
+  if (nights?.dream_note) lines.push(`Le rêve qui lui revient : ${nights.dream_note}`)
 
   if (user.misc_facts?.length) lines.push(`Divers : ${user.misc_facts.join(' ; ')}`)
 
