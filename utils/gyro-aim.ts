@@ -38,34 +38,58 @@ function clamp(v: number): number {
  *
  * LE ZÉRO EST ABSOLU : il ne se mesure pas au moment où le joueur appuie, il
  * est déclaré. `restBeta` est le tangage de la posture au repos — 0° pour un
- * téléphone posé à plat —, et c'est lui, et lui seul, qui décide de l'origine.
- * Le calibrage par échantillonnage qu'il remplace prenait pour zéro l'attitude
- * de la main à l'instant du tap : deux activations de suite ne donnaient pas la
- * même visée, et rien ne permettait au joueur de savoir laquelle il avait.
+ * appareil posé à plat, 90° pour un appareil tenu debout au-dessus de soi —, et
+ * c'est lui, et lui seul, qui décide de l'origine. Le calibrage par
+ * échantillonnage qu'il remplace prenait pour zéro l'attitude de la main à
+ * l'instant du tap : deux activations de suite ne donnaient pas la même visée,
+ * et rien ne permettait au joueur de savoir laquelle il avait.
  *
  * La bille roule vers le bas de la pente : c'est le modèle, et il vaut dans les
  * deux postures sans changer un signe. Relever le bord opposé fait descendre
  * l'oeil dans le texte — le geste naturel pour parcourir une page —, rouler
  * vers la droite l'envoie à droite.
  *
- * `neutralY` n'est pas le centre : à plat, l'oeil se range EN HAUT de l'écran,
- * et tout le débattement sert à le faire descendre.
+ * LE TANGAGE SE LIT COMME UN ANGLE, pas comme une hauteur de gravité. La version
+ * précédente comparait directement `up[1]`, c'est-à-dire sin(bêta) : elle allait
+ * bien tant que l'origine était l'appareil à plat, où le sinus est raide et
+ * monotone. Une origine à 90° la cassait net — le sinus y est à son MAXIMUM,
+ * donc de pente nulle et symétrique : pencher l'appareil dans un sens ou dans
+ * l'autre faisait monter l'oeil pareil, et il n'y avait plus aucun moyen de le
+ * faire descendre. `atan2(up[1], up[2])` rend l'angle lui-même : monotone
+ * partout, de pente constante, et identique à l'ancienne formule à 2,5 % près
+ * autour de zéro — la posture assise ne bouge pas.
  *
- * @param lift remontée constante, en fraction d'écran, retranchée avant le
- * bornage. La géométrie décrit un appareil au repos ; une posture réelle, elle,
- * a une main, un coude et un oreiller. C'est le rattrapage de cet écart-là, et
- * il se MESURE sur l'appareil — voir `POSTURE_LIFT_PX` dans `useGyroEye`.
+ * `neutralY` EST LA HAUTEUR DE REPOS, et elle dépend de la posture : ce n'est
+ * pas la même chose de poser l'appareil à plat sur une table et de le tenir
+ * au-dessus de soi. Posé, l'oeil se range EN HAUT et tout le débattement sert à
+ * le faire descendre. Tenu à bout de bras, il se range AU MILIEU : le poignet
+ * peut aller dans les deux sens, et il n'a pas de quoi traverser un écran
+ * entier dans un seul.
+ *
+ * LES DEUX AXES SE LISENT SUR LE MÊME VECTEUR, et c'est ce qui les rend valides
+ * dans les deux postures. Le geste de viser à gauche n'est pourtant pas le même
+ * geste selon qu'on est posé ou debout : à plat, on soulève le bord gauche de
+ * l'appareil — c'est gamma ; debout, on fait basculer le haut de l'écran vers
+ * l'épaule — c'est une rotation autour de la normale à l'écran, que la
+ * décomposition d'Euler range ailleurs et qui fait sauter gamma à ±90°. Les deux
+ * déplacent la verticale de la même façon dans le repère de l'appareil, donc
+ * `up[0]` les mesure toutes les deux, sans rien savoir de la posture. Raisonner
+ * sur les angles bruts, lui, aurait vu un mouvement dans un cas et un saut dans
+ * l'autre.
  */
 export function aimFrom(
   up: Up,
   restBeta: number,
   rangeDeg: number,
   neutralY: number,
-  lift = 0,
 ): { x: number; y: number } {
-  const span = Math.sin((rangeDeg * Math.PI) / 180)
+  // Le tangage, en radians, mesuré depuis l'origine déclarée de la posture.
+  const pitch = Math.atan2(up[1], up[2]) - (restBeta * Math.PI) / 180
+  const dy = pitch / ((rangeDeg * Math.PI) / 180)
+
+  // Le roulis : la projection de la verticale sur la largeur de l'écran.
   const rest = upVector(restBeta, 0)
-  const dx = -(up[0] - rest[0]) / span
-  const dy = (up[1] - rest[1]) / span
-  return { x: clamp(0.5 + dx / 2), y: clamp(neutralY + dy / 2 - lift) }
+  const dx = -(up[0] - rest[0]) / Math.sin((rangeDeg * Math.PI) / 180)
+
+  return { x: clamp(0.5 + dx / 2), y: clamp(neutralY + dy / 2) }
 }

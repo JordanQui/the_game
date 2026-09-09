@@ -23,15 +23,24 @@ import { upVector, aimFrom } from '~/utils/gyro-aim'
 const RANGE_DEG = 22
 
 /**
- * Hauteur de l'oeil au repos, en fraction d'écran.
+ * Hauteur de l'oeil au repos, par posture, en fraction d'écran.
  *
- * EN HAUT, pas au centre : téléphone posé à plat, l'oeil se range tout en haut
- * de l'écran, et l'intégralité du débattement sert à le faire descendre dans le
- * texte. Ce n'est pas zéro tout rond parce que le réticule est centré sur sa
- * position : à 0 il serait coupé en deux par le bord. Mettre 0 pour l'y coller
- * franchement.
+ * ASSIS, l'appareil est POSÉ À PLAT et l'oeil se range tout en haut : le geste
+ * naturel est de relever le bord opposé pour le faire descendre dans le texte,
+ * et tout le débattement sert à ça. Ce n'est pas zéro tout rond parce que le
+ * réticule est centré sur sa position : à 0 il serait coupé en deux par le bord.
+ *
+ * ALLONGÉ, l'appareil est TENU AU-DESSUS DE SOI, et l'oeil se range AU MILIEU.
+ * Le poignet d'un bras replié va dans les deux sens mais n'a pas de quoi
+ * traverser un écran entier dans un seul : partir du haut lui demandait de
+ * descendre une hauteur d'écran complète, ce qu'il ne peut pas faire. Du centre,
+ * il a une demi-hauteur de chaque côté — pencher le haut de l'appareil loin de
+ * soi descend, le ramener vers soi remonte.
  */
-const NEUTRAL_Y = 0.05
+const POSTURE_NEUTRAL_Y: Record<string, number> = {
+  assis: 0.05,
+  allonge: 0.5,
+}
 
 /**
  * L'attitude de repos de chaque posture, en degrés de tangage. C'EST L'ORIGINE.
@@ -42,46 +51,26 @@ const NEUTRAL_Y = 0.05
  * laquelle il venait d'obtenir.
  *
  * Assis, le repos est le téléphone POSÉ À PLAT, écran vers le ciel : 0°.
- * Allongé, c'est la même chose vue de l'autre côté — tenu à plat au-dessus du
- * visage, écran vers le bas : 180°.
+ * Allongé, c'est le téléphone TENU DEBOUT au-dessus de soi : 90°. C'est
+ * l'attitude où le bras se repose vraiment, et l'oeil doit alors être au milieu
+ * de l'écran — voir `POSTURE_NEUTRAL_Y`.
  *
- * CES DEUX NOMBRES SONT DE LA GÉOMÉTRIE, pas un réglage. Ce qui fixe la hauteur
- * de l'oeil, c'est sin(bêta) : il vaut zéro à 0° comme à 180°, donc les deux
- * postures se reposent au même endroit — en haut — et le même geste fait
- * descendre l'oeil dans les deux. Ce sont aussi les deux seules attitudes où la
- * gravité se lit à plein (|cos bêta| = 1), ce qui rend inutile toute
- * compensation d'assiette. Le sens de l'inclinaison, lui, est porté par le
- * vecteur vertical, qui n'a pas besoin qu'on lui dise de quel côté on est.
+ * LE 180° D'AVANT ÉTAIT UNE ERREUR DE MODÈLE : il décrivait l'appareil tenu à
+ * plat au-dessus du visage, écran vers le bas, attitude que personne ne tient.
+ * Comme la hauteur de l'oeil suit sin(bêta), la moindre inclinaison depuis 180°
+ * la faisait plonger — l'oeil traversait tout l'écran en trente degrés, et il
+ * fallait le remonter de 400 pixels pour qu'il soit à peu près quelque part. À
+ * 90°, l'origine est là où la main se trouve, et les 400 pixels de rattrapage
+ * n'ont plus lieu d'être.
  *
- * L'écart entre ce modèle et un vrai corps allongé — la tête sur un oreiller,
- * le poignet qui casse — ne se rattrape PAS ici : il se mesure en pixels, dans
- * `POSTURE_LIFT_PX`. Toucher à ces angles-là déplacerait aussi le sens du
- * geste ; la remontée, elle, ne déplace que l'origine.
+ * Le sens de l'inclinaison, lui, est porté par le vecteur vertical, qui n'a pas
+ * besoin qu'on lui dise de quel côté on est. Et 90° est la singularité d'Euler :
+ * elle ne pose aucun problème ici parce qu'on ne compare jamais des angles, mais
+ * seulement des vecteurs — voir `upVector`.
  */
 const REST_BETA_DEG: Record<string, number> = {
   assis: 0,
-  allonge: 180,
-}
-
-/**
- * Ce que la posture remonte l'oeil, en pixels d'écran.
- *
- * Mesuré sur l'appareil, et c'est la bonne façon de le régler : la géométrie
- * donne le SENS de l'inclinaison et la forme du débattement, elle ne peut pas
- * deviner l'attitude réelle d'un bras replié au-dessus d'un visage. Allongé, le
- * repos n'est pas le téléphone strictement retourné à 180° — la tête est sur un
- * oreiller, le poignet casse un peu — et l'oeil se posait 400 px trop bas.
- *
- * Retranché après la géométrie, donc constant : la remontée ne mange pas de
- * débattement vers le bas, elle déplace l'origine. Une remontée de 400 px
- * revient à une quinzaine de degrés de tangage sur un écran de téléphone —
- * l'autre écriture du même réglage serait de baisser `REST_BETA_DEG.allonge`
- * d'autant, mais elle se règle moins bien : personne ne voit des degrés, tout
- * le monde voit un oeil trop bas.
- */
-const POSTURE_LIFT_PX: Record<string, number> = {
-  assis: 0,
-  allonge: 400,
+  allonge: 90,
 }
 
 /**
@@ -89,7 +78,8 @@ const POSTURE_LIFT_PX: Record<string, number> = {
  *
  * Allongé, le bras porte l'appareil au-dessus du visage et ne peut plus
  * l'incliner beaucoup : il faut donc que moins de degrés suffisent à traverser
- * l'écran. C'est de l'ergonomie, pas de la géométrie.
+ * l'écran. C'est de l'ergonomie, pas de la géométrie — et la même valeur sert
+ * aux deux axes, parce que la verticale se lit pareil dans les deux.
  */
 const POSTURE_RANGE_SCALE: Record<string, number> = {
   assis: 1,
@@ -117,7 +107,7 @@ export function useGyroEye() {
   const denied = ref(false)
 
   let raf: number | null = null
-  let target = { x: 0.5, y: NEUTRAL_Y }
+  let target = { x: 0.5, y: POSTURE_NEUTRAL_Y[gameStore.posture] ?? 0.05 }
 
   /**
    * Chaque mesure se lit seule.
@@ -133,16 +123,11 @@ export function useGyroEye() {
     if (beta === null || gamma === null) return
 
     const posture = gameStore.posture
-    // En fraction d'écran, et relue à chaque mesure : la hauteur change avec la
-    // rotation de l'appareil et avec le clavier, et `hitTest` vise en pixels de
-    // ce même `innerHeight` — les deux doivent parler de la même page.
-    const lift = (POSTURE_LIFT_PX[posture] ?? 0) / window.innerHeight
     target = aimFrom(
       upVector(beta, gamma),
       REST_BETA_DEG[posture] ?? 0,
       RANGE_DEG * (POSTURE_RANGE_SCALE[posture] ?? 1),
-      NEUTRAL_Y,
-      lift,
+      POSTURE_NEUTRAL_Y[posture] ?? 0.05,
     )
   }
 
