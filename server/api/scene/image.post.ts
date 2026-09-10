@@ -49,8 +49,8 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
   }
 
   // Quota de session : seule une génération réelle est décomptée.
-  assertNotLocked(event)
-  consumeQuota(event, 'images', runtime.script.limits)
+  assertNotLocked(event, runtime.limits.lock.message)
+  consumeQuota(event, 'images', runtime.limits)
 
   const prompt = scene.buildImagePrompt({
     place_name: body.place_name,

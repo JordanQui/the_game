@@ -1,5 +1,8 @@
 import { normalize } from '~/utils/text-match'
 import type { Interactable } from '~/types/scene'
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { pack } from '~/utils/languages'
 
 /**
  * Ce qui, dans une scène, s'ACQUIERT.
@@ -14,15 +17,18 @@ import type { Interactable } from '~/types/scene'
  * béton, et la chiffrer noierait le signal sous le mobilier.
  */
 
-/** Verbes qui désignent une prise. Le reste — examiner, parler — n'en est pas une. */
-export const TAKE_VERBS = [
-  'prendre', 'ramasser', 'recuperer', 'récupérer', 'empocher', 'saisir', 'voler', 'emporter',
-]
-
-/** L'objet se ramasse-t-il ? La sortie, qui déclenche le paywall, n'est pas un objet. */
-export function isTakeable(obj: Interactable): boolean {
+/**
+ * L'objet se ramasse-t-il ? La sortie, qui déclenche le paywall, n'en est pas un.
+ *
+ * Le VERBE vient du modèle, donc dans la langue jouée : la liste à laquelle on
+ * le compare doit y être aussi. Elle était française en dur — ce qui, hors
+ * français, n'aurait rendu AUCUN objet ramassable, et le bouton « Ramasser »
+ * n'aurait jamais paru.
+ */
+export function isTakeable(obj: Interactable, lang: LangCode = DEFAULT_LANG): boolean {
   if (obj.triggers_paywall) return false
-  return TAKE_VERBS.includes(normalize(obj.verb ?? ''))
+  const verb = normalize(obj.verb ?? '')
+  return pack(lang).input.take.some(v => normalize(v) === verb)
 }
 
 /** Une chose du récit que la loupe peut ouvrir. */
@@ -52,7 +58,7 @@ export function analyzables(scene: {
   key_item?: { name?: string; observation?: string } | null
   sealed_object?: { id: string; name?: string; observation?: string } | null
   interactables?: Interactable[]
-}): Analyzable[] {
+}, lang: LangCode = DEFAULT_LANG): Analyzable[] {
   const out: Analyzable[] = []
   // Le même id que celui que `collectKeyItem` lui donnera : déchiffré dans le
   // récit, il reste déchiffré une fois dans l'inventaire.
@@ -71,13 +77,16 @@ export function analyzables(scene: {
     })
   }
   for (const obj of scene.interactables ?? []) {
-    if (!obj.label || !isTakeable(obj)) continue
+    if (!obj.label || !isTakeable(obj, lang)) continue
     out.push({ id: obj.id, label: obj.label, observation: obj.observation })
   }
   return out
 }
 
 /** Celles qui ont quelque chose à apprendre : c'est ce que la loupe sert à lire. */
-export function teaching(scene: Parameters<typeof analyzables>[0]): Analyzable[] {
-  return analyzables(scene).filter(o => o.observation?.trim())
+export function teaching(
+  scene: Parameters<typeof analyzables>[0],
+  lang: LangCode = DEFAULT_LANG,
+): Analyzable[] {
+  return analyzables(scene, lang).filter(o => o.observation?.trim())
 }

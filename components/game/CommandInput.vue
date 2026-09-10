@@ -1,12 +1,25 @@
 <script setup lang="ts">
 import { useGameStore } from '~/stores/game'
+import { usePlayerStore } from '~/stores/player'
 const props = defineProps<{ disabled?: boolean }>()
 const emit = defineEmits<{ command: [value: string] }>()
 
 const gameStore = useGameStore()
+const playerStore = usePlayerStore()
 
 const input = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
+
+/**
+ * La personne en face, quand il y en a une.
+ *
+ * Une conversation dure maintenant plus d'une phrase : sans ce repère, le
+ * joueur ne saurait pas que sa prochaine ligne part chez quelqu'un plutôt que
+ * dans le vide, et il retaperait le nom à chaque fois — ce qu'on lui demandait
+ * précisément d'arrêter de faire.
+ */
+const facing = computed(() =>
+  playerStore.npcs.find(n => n.id === gameStore.activeNpcId) ?? null)
 
 function submit() {
   const value = input.value.trim()
@@ -22,6 +35,9 @@ function submit() {
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') submit()
+  // Se détourner sans avoir à l'écrire. La phrase — « je m'éloigne » — marche
+  // aussi, mais elle coûte un tour ; la touche, elle, ne coûte rien.
+  if (e.key === 'Escape') gameStore.leaveConversation()
 }
 
 onMounted(() => {
@@ -33,6 +49,17 @@ onMounted(() => {
 <template>
   <div class="flex items-center gap-3 px-4 py-3 border-t border-neon-700/40 bg-ink-900/80">
     <span class="text-neon-500/70 font-mono text-sm shrink-0 select-none">&#62;</span>
+    <button
+      v-if="facing"
+      class="shrink-0 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider
+             text-neon-300 border border-neon-600/50 px-2 py-0.5 hover:border-neon-400
+             hover:text-neon-200 transition-colors"
+      title="Tu lui parles — clique pour te détourner (Échap)"
+      @click="gameStore.leaveConversation()"
+    >
+      <span>à {{ facing.name }}</span>
+      <span class="text-neon-600/70">&#215;</span>
+    </button>
     <input
       ref="inputRef"
       v-model="input"
@@ -41,7 +68,7 @@ onMounted(() => {
       type="text"
       :disabled="disabled"
       class="command-prompt flex-1 text-base sm:text-sm placeholder-ink-500 disabled:opacity-40"
-      placeholder="Que fais-tu ?"
+      :placeholder="facing ? `Tu réponds à ${facing.name}…` : 'Que fais-tu ?'"
       enterkeyhint="send"
       autocomplete="off"
       autocorrect="off"

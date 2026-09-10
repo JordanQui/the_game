@@ -105,6 +105,15 @@ export interface TurnRules {
   give_refused_prompt?: string
   /** Répondre d'abord à ce que dit le joueur. Commune à tous les personnages. */
   reply_rule?: string
+  /**
+   * Ce qu'un personnage fait du fil qu'il partage avec le joueur.
+   *
+   * Chaque PNJ reçoit désormais SA propre conversation en historique — pas le
+   * fil commun où sa dernière phrase était noyée entre la narration et les
+   * répliques des autres. Cette règle lui dit quoi en faire : continuer plutôt
+   * que recommencer, ne pas se répéter, et s'ouvrir à mesure.
+   */
+  thread_rule?: string
   /** Orienter vers l'objectif sans jamais le dicter. */
   steer_rule?: string
   /**

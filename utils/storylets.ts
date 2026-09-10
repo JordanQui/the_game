@@ -45,6 +45,14 @@ export interface Qualities {
 
   /** Le joueur veut parler à quelqu'un sans savoir son nom : il lui manque l'oeil. */
   addressesNobody: boolean
+  /**
+   * Une conversation est en cours et cette saisie s'y adresse.
+   *
+   * Vrai qu'il vienne de nommer quelqu'un ou qu'il poursuive un échange déjà
+   * ouvert : dans les deux cas quelqu'un attend une réponse en face de lui, et
+   * aucun moment local n'a le droit de parler à sa place.
+   */
+  talksToNpc: boolean
   /** Le joueur s'adresse au détenteur de l'objet-clé. */
   addressesHolder: boolean
 
@@ -233,7 +241,12 @@ export const DECK: Storylet[] = [
   {
     id: 'deja_ecrit',
     note: 'la scène générée contient déjà la réponse : la repayer serait payer deux fois',
-    when: q => q.localAnswer !== null,
+    // JAMAIS pendant une conversation. L'oracle sert à interroger le monde, pas
+    // les gens : tant qu'on parlait à quelqu'un, un « tu peux m'aider ? » ou un
+    // « je vois » se faisait coiffer par un récapitulatif de quête, et le
+    // personnage en face restait muet — ce qu'un joueur lit comme un PNJ qui ne
+    // répond pas à ce qu'il dit.
+    when: q => q.localAnswer !== null && !q.talksToNpc,
     play: { kind: 'local', say: 'oracle' },
   },
   {

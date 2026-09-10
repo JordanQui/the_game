@@ -1,6 +1,8 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { forgetStoredScene } from '~/composables/useScene'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { overlayValue } from '~/utils/languages'
 
 /**
  * Le passage d'une scène à la suivante.
@@ -26,9 +28,33 @@ export function useProgression() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
 
-  /** Les scènes dans l'ordre, telles que le build les a inscrites. */
+  /**
+   * Les scènes dans l'ordre, telles que le build les a inscrites.
+   *
+   * L'index est figé au build, donc en français : c'est `game/script.json` qui
+   * l'écrit. Les titres sont retraduits ici, à la lecture — l'accueil affiche
+   * « Continuer » avec le nom de la scène et celui de l'acte, et un joueur
+   * anglophone y lisait « La Route » en pleine reprise de partie.
+   */
   function scenes(): SceneRef[] {
-    return (useRuntimeConfig().public.sceneIndex ?? []) as SceneRef[]
+    const lang = playerStore.language
+    const index = (useRuntimeConfig().public.sceneIndex ?? []) as SceneRef[]
+    // Le français ne surcharge rien : l'index EST déjà sa version.
+    if (lang === DEFAULT_LANG) return index
+
+    // Les actes sont désignés par leur titre français dans l'index — il n'en
+    // porte pas l'identifiant. On remonte donc du titre à l'id une fois, plutôt
+    // qu'à chaque scène.
+    const actIdByTitle = new Map(
+      (useRuntimeConfig().public.actIndex ?? []) as Array<[string, string]>)
+
+    return index.map(scene => ({
+      ...scene,
+      title: overlayValue<string>(lang, `scene_titles.${scene.id}`) ?? scene.title,
+      act: scene.act
+        ? overlayValue<string>(lang, `act_titles.${actIdByTitle.get(scene.act) ?? ''}`) ?? scene.act
+        : null,
+    }))
   }
 
   /** La scène qui suit celle en cours, ou null si c'était la dernière. */

@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import type { UserProfile } from '~/types/user'
-import { agreementLine } from '~/utils/agreement'
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { agreementFor, translate } from '~/utils/languages'
 import type { SceneTextResponse, SceneNPC, SceneQuest, ScenePlace, ScenePalette } from '~/types/scene'
 import { entryFrom, type JournalEntry } from '~/utils/journal'
 import type { SceneBuildProgress } from '~/types/game'
@@ -27,9 +29,22 @@ export const usePlayerStore = defineStore('player', {
      * pour le dossier et pour la génération.
      */
     playerName: (state): string =>
-      state.profile?.identity.first_name || state.profile?.identity.name || 'Aventurier',
-    /** L'accord à tenir dans les tours. Null tant qu'il n'a rien déclaré. */
-    playerAgreement: (state): string | null => agreementLine(state.profile),
+      state.profile?.identity.first_name
+      || state.profile?.identity.name
+      // Sans dossier, personne n'a de prénom : le mot de repli suit la langue
+      // du dossier absent, donc celle du pack par défaut.
+      || translate(state.profile?.language, 'game.player_fallback'),
+    /** La langue déclarée au dossier. Français tant qu'aucun dossier n'est là. */
+    language: (state): LangCode => state.profile?.language ?? DEFAULT_LANG,
+    /**
+     * L'accord à tenir dans les tours, DANS LA LANGUE JOUÉE.
+     *
+     * La formulation change avec elle et pas seulement le mot : en turc ou en
+     * indonésien il n'y a pas de participe à accorder, et la ligne y porte sur
+     * la façon d'interpeller le joueur. Null tant qu'il n'a rien déclaré.
+     */
+    playerAgreement: (state): string | null =>
+      agreementFor(state.profile?.language, state.profile?.identity.agreement),
     place: (state): ScenePlace | null => state.scene?.place ?? null,
     palette: (state): ScenePalette | null => state.scene?.palette ?? null,
     npcs: (state): SceneNPC[] => state.scene?.npcs ?? [],

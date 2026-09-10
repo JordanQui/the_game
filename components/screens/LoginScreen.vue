@@ -141,7 +141,7 @@ function acceptAndEnroll() {
     />
 
     <!--
-      Skyline Art Déco à gradins, silhouette plate sur deux plans, tubes néon
+      Skyline à gradins, silhouette plate sur deux plans, tubes néon
       sur les façades. C'est le décor polygonal de Flashback, pas un dégradé.
     -->
     <div class="absolute inset-x-0 bottom-0 pointer-events-none opacity-90">

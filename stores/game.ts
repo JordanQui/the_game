@@ -27,6 +27,17 @@ export const useGameStore = defineStore('game', {
     currentSceneImageUrl: null as string | null,
     sceneImageLoading: false,
     sceneImageError: null as string | null,
+    /**
+     * Celui à qui le joueur PARLE, tant qu'il ne s'en détourne pas.
+     *
+     * Ce n'était pas un état : on le redéduisait de chaque saisie, donc une
+     * conversation durait exactement une phrase. Le personnage posait une
+     * question, la réponse du joueur ne contenait plus son nom, et elle
+     * repartait en narration d'ambiance — le jeu demandait quelque chose puis
+     * ignorait la réponse. Une conversation s'OUVRE en nommant quelqu'un et se
+     * FERME en se tournant vers autre chose ; entre les deux, tout ce qui est
+     * tapé lui est adressé.
+     */
     activeNpcId: null as string | null,
     paywallTriggered: false,
     /** Tours réellement facturés au modèle. Les réponses locales n'y entrent pas. */
@@ -181,6 +192,18 @@ export const useGameStore = defineStore('game', {
     /** La scène a été dénouée : les personnages sont venus au joueur. */
     resolved: false,
     conversationHistory: [] as Array<{ role: 'user' | 'assistant'; content: string }>,
+    /**
+     * Le fil de chaque personnage, séparément.
+     *
+     * `conversationHistory` mélange tout — narration d'ambiance, répliques de
+     * trois personnages, relances vers la porte. Un PNJ à qui l'on revient
+     * n'avait donc aucune mémoire propre : il relisait un fil où sa dernière
+     * phrase était noyée, et il recommençait. Ici chacun garde la sienne, et
+     * c'est elle qu'on lui remet quand on l'aborde à nouveau — c'est ce qui
+     * fait qu'une deuxième conversation continue la première au lieu de la
+     * rejouer.
+     */
+    npcThreads: {} as Record<string, Array<{ role: 'user' | 'assistant'; content: string }>>,
     /** Dernière commande jouée, pour pouvoir relancer un tour qui a échoué. */
     lastCommand: null as string | null,
     lastMode: null as import('~/types/scene').TurnMode | null,
@@ -293,13 +316,34 @@ export const useGameStore = defineStore('game', {
       this.activeNpcId = npcId
     },
 
-    incrementTurn(playerInput: string, aiResponse: string) {
+    /** Le joueur se détourne : ce qu'il tapera ensuite s'adresse au lieu. */
+    leaveConversation() {
+      this.activeNpcId = null
+    },
+
+    /**
+     * @param npcId le fil auquel ce tour appartient, s'il y en a un.
+     *
+     * Un tour joué avec quelqu'un s'inscrit DANS SON FIL et pas seulement dans
+     * le fil commun : c'est ce qu'on lui remettra quand le joueur reviendra
+     * lui parler.
+     */
+    incrementTurn(playerInput: string, aiResponse: string, npcId?: string | null) {
       this.turnCount++
       this.conversationHistory.push({ role: 'user', content: playerInput })
       this.conversationHistory.push({ role: 'assistant', content: aiResponse })
       if (this.conversationHistory.length > 12) {
         this.conversationHistory = this.conversationHistory.slice(-12)
       }
+
+      if (!npcId) return
+      const thread = this.npcThreads[npcId] ?? []
+      thread.push({ role: 'user', content: playerInput })
+      thread.push({ role: 'assistant', content: aiResponse })
+      // Assez pour qu'une conversation tienne, borné pour que le prompt ne
+      // grossisse pas indéfiniment : le coût d'un tour est déjà le poste qu'on
+      // surveille.
+      this.npcThreads[npcId] = thread.slice(-12)
     },
 
     recordModelTurn() {
@@ -576,6 +620,7 @@ export const useGameStore = defineStore('game', {
       this.npcExchanges = {}
       this.resolved = false
       this.conversationHistory = []
+      this.npcThreads = {}
       this.lastCommand = null
       this.lastMode = null
       this.lastEffects = []
@@ -618,6 +663,7 @@ export const useGameStore = defineStore('game', {
       this.npcExchanges = {}
       this.resolved = false
       this.conversationHistory = []
+      this.npcThreads = {}
       this.lastCommand = null
       this.lastMode = null
       this.lastEffects = []

@@ -1,4 +1,5 @@
 import { ScriptRuntime } from '~/utils/script-runtime'
+import { requestLang } from '~/server/utils/lang'
 import { closeForStalling, clearLock } from '~/server/utils/session-quota'
 
 /**
@@ -28,6 +29,6 @@ export default defineEventHandler(async (event) => {
     return { open: true as const }
   }
 
-  const runtime = await ScriptRuntime.load()
-  return closeForStalling(event, runtime.script.limits)
+  const runtime = await ScriptRuntime.load(requestLang(event))
+  return closeForStalling(event, runtime.limits)
 })

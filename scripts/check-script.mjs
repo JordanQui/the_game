@@ -262,6 +262,32 @@ if (!wantsCarriers.length) {
   errors.push('aucun prompt de réplique n\'interpole {{wants_rule}}')
 }
 
+// --- conversation -----------------------------------------------------------
+// Une réplique de personnage n'a que deux façons de tomber à côté : ignorer ce
+// que le joueur vient de dire, ou oublier ce qu'il a dit avant. Deux règles les
+// couvrent, et elles ne servent à rien si un prompt les oublie.
+const CONVERSATION_RULES = ['reply_rule', 'thread_rule']
+for (const rule of CONVERSATION_RULES) {
+  if (!script.defaults.turn?.[rule]) {
+    errors.push(`defaults.turn.${rule} manquant : les personnages répondraient à côté`)
+    continue
+  }
+  const carried = Object.entries(script.defaults.turn)
+    .filter(([k, v]) => k.endsWith('_prompt') && typeof v === 'string'
+      && v.includes(`{{${rule}}}`))
+  if (!carried.length) errors.push(`aucun prompt de réplique n'interpole {{${rule}}}`)
+}
+// Les deux vont ensemble : un prompt qui demande de répondre sans donner accès
+// au fil fait redire la même chose à chaque tour.
+const replyOnly = Object.entries(script.defaults.turn ?? {})
+  .filter(([k, v]) => k.endsWith('_prompt') && typeof v === 'string'
+    && v.includes('{{reply_rule}}') && !v.includes('{{thread_rule}}')
+    // Le don et le refus sont des réactions d'un seul temps : rien à continuer.
+    && !k.startsWith('give'))
+for (const [k] of replyOnly) {
+  warn.push(`turn.${k} interpole {{reply_rule}} sans {{thread_rule}} : ce personnage répondra sans mémoire`)
+}
+
 // --- continuité -------------------------------------------------------------
 const c = script.defaults.continuity
 if (!c?.prompt?.includes('{{journal}}')) errors.push('continuity.prompt n\'interpole pas {{journal}}')

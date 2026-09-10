@@ -78,7 +78,7 @@ const SEO_DESCRIPTION
 
 /** Les réseaux tolèrent plus long : on y ajoute ce que le jeu fait vraiment. */
 const SOCIAL_DESCRIPTION
-  = "Une nuit dans une mégapole Art Déco, écrite pour vous seul. Vous déclarez "
+  = "Une nuit dans une mégapole battue par la pluie, écrite pour vous seul. Vous déclarez "
   + "qui vous êtes au bureau des admissions ; la ville, ses habitants et sa quête "
   + "en naissent, illustrés scène après scène. On y joue en tapant ce qu'on veut "
   + `faire. Conçu par ${CREATOR}.`
@@ -121,7 +121,7 @@ export default defineNuxtConfig({
         { property: 'og:image:height', content: '630' },
         {
           property: 'og:image:alt',
-          content: `${SITE_NAME} — skyline Art Déco au néon rose sur fond de nuit`,
+          content: `${SITE_NAME} — skyline à gradins au néon rose sur fond de nuit`,
         },
 
         { name: 'twitter:card', content: 'summary_large_image' },

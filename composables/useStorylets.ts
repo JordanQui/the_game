@@ -6,6 +6,7 @@ import { useNarrative } from '~/composables/useNarrative'
 import { usePaywall } from '~/composables/usePaywall'
 import { useSceneCommands } from '~/composables/useSceneCommands'
 import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
+import { translate } from '~/utils/languages'
 import { teaching } from '~/utils/interactables'
 import { matchesKeyword } from '~/utils/text-match'
 
@@ -23,7 +24,7 @@ import { matchesKeyword } from '~/utils/text-match'
 export function useStorylets() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
-  const { runTurn, findAddressedNpc, addressesNobody, answerLocally } = useNarrative()
+  const { runTurn, interlocutor, addressesNobody, answerLocally } = useNarrative()
   const { openExit } = usePaywall()
   const { isCommand, run: runSceneCommand } = useSceneCommands()
 
@@ -35,7 +36,7 @@ export function useStorylets() {
    */
   function lessons() {
     const scene = playerStore.scene
-    const objects = scene ? teaching(scene) : []
+    const objects = scene ? teaching(scene, playerStore.language) : []
     return {
       available: objects.length > 0,
       read: objects.some(o => gameStore.decryptedObjectIds.includes(o.id)),
@@ -63,7 +64,9 @@ export function useStorylets() {
     const scene = playerStore.scene
     const item = scene?.key_item ?? null
     const pacing = scene?.pacing
-    const npc = scene ? findAddressedNpc(input) : undefined
+    // Celui à qui la saisie s'adresse : nommé à l'instant, ou déjà en face de
+    // lui depuis le tour d'avant. Le deck n'a jamais à savoir lequel des deux.
+    const npc = scene ? interlocutor(input) : undefined
     const lesson = lessons()
 
     // Le don ne se lit pas dans la phrase : il vient du clic sur « Donner »,
@@ -86,10 +89,13 @@ export function useStorylets() {
 
       turn: gameStore.turnCount,
 
+      // Les mots-clés viennent de la scène servie, donc du pack de langue :
+      // le client et le serveur testent la MÊME liste.
       mentionsExit: scene ? matchesKeyword(input, scene.paywall.exit_keywords) : false,
       exitOpensAtTurn: scene?.paywall.min_turns_before_trigger ?? 0,
 
       addressesNobody: scene ? addressesNobody(input) : false,
+      talksToNpc: Boolean(npc),
       addressesHolder: Boolean(npc && item && npc.id === item.npc_id),
 
       sceneHasKeyItem: Boolean(item),
@@ -106,7 +112,7 @@ export function useStorylets() {
       offersItem: Boolean(give),
       offersWantedItem: Boolean(give) && wanted,
 
-      localAnswer: scene ? resolveLocally(input, scene, oracleState()) : null,
+      localAnswer: scene ? resolveLocally(input, scene, oracleState(), playerStore.language) : null,
       canCallModel: !capReached && !budgetReached,
     }
   }
@@ -114,18 +120,18 @@ export function useStorylets() {
   /** Le texte d'une réponse qui ne passe pas par le modèle. */
   function localText(say: 'oracle' | 'nobody' | 'unused_lens' | 'exhausted', q: Qualities): string {
     const scene = playerStore.scene
+    const lang = playerStore.language
+    const t = (key: string, vars?: Record<string, string>) => translate(lang, key, vars)
+
     if (say === 'oracle') return q.localAnswer?.text ?? ''
-    if (say === 'nobody') {
-      return "Tu ne connais pas encore son nom. L'oeil, en haut à gauche, lit les identités."
-    }
+    if (say === 'nobody') return t('oracle.no_name')
     if (say === 'unused_lens') {
-      const tool = scene?.key_item?.name ?? "ce qu'on vient de te remettre"
-      return `Tu tiens ${tool} et tu ne t'en es pas encore servi. `
-        + 'La loupe, dans la barre d\'outils, ouvre les noms brouillés du récit — '
-        + 'il y a ici quelque chose à lire avant de pousser la porte.'
+      return t('oracle.unused_lens', {
+        tool: scene?.key_item?.name ?? t('oracle.unused_lens_tool'),
+      })
     }
     const notice = scene?.pacing?.autonomous_notice ?? ''
-    return scene ? `${notice}\n\n${buildGuidance(scene, oracleState())}` : notice
+    return scene ? `${notice}\n\n${buildGuidance(scene, oracleState(), lang)}` : notice
   }
 
   /**
@@ -175,6 +181,11 @@ export function useStorylets() {
     }
 
     gameStore.addNarrativeEntry('player_command', input)
+
+    // Tout ce qui n'est pas une réplique referme la conversation en cours : on
+    // ne reste pas en tête-à-tête avec quelqu'un pendant qu'on pousse la porte
+    // ou qu'on lit le récapitulatif de sa quête.
+    if (moment.play.kind !== 'model') gameStore.leaveConversation()
 
     if (moment.play.kind === 'exit') {
       const gate = playerStore.scene?.paywall.gate_text

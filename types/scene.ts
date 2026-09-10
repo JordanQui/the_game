@@ -201,6 +201,15 @@ export interface ScenePaywall {
 export interface SceneTextResponse extends GeneratedScene {
   scene_id: string
   scene_title: string
+  /**
+   * Le nom de la sortie de cette scène, dans la langue jouée.
+   *
+   * Le client le montrait en piochant `paywall.exit_keywords[0]`, ce qui
+   * marchait tant que ce premier mot-clé était « le sas ». Depuis que les
+   * mots-clés viennent du pack de langue, le premier est un verbe générique :
+   * il fallait donc que le libellé voyage pour lui-même.
+   */
+  exit_label: string
   script_version: string
   /** Prompt assemblé côté serveur. Renvoyé pour information/debug uniquement :
    *  /api/scene/image le reconstruit et n'accepte jamais un prompt du client. */
@@ -367,6 +376,14 @@ export interface TurnRequest {
   sceneId?: string
   context: TurnContext
   input: string
+  /**
+   * La langue de la partie.
+   *
+   * Jointe par le client parce que le tour n'envoie pas de profil : sans elle
+   * le serveur retomberait sur le cookie, ce qui suffit presque toujours mais
+   * pas quand deux onglets jouent deux langues. Le corps fait foi.
+   */
+  lang?: string
   /** Nombre de tours déjà joués. Décide de l'orientation vers la sortie. */
   turnCount?: number
   mode?: TurnMode

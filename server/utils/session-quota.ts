@@ -318,12 +318,15 @@ export function closeForStalling(event: H3Event, limits: LimitsConfig): LockPass
  * 423 et non 429 : ce n'est pas un quota atteint, c'est un accès suspendu. Le
  * client s'en sert pour montrer l'écran d'attente plutôt qu'une erreur.
  */
-export function assertNotLocked(event: H3Event): void {
+export function assertNotLocked(event: H3Event, message?: string): void {
   const lock = readLock(event)
   if (!lock) return
   throw createError({
     statusCode: 423,
-    statusMessage: 'La ville se recharge.',
+    // Le message vient du pack de langue quand l'appelant en a un sous la
+    // main. Le repli français reste pour les routes qui n'affichent rien —
+    // le paiement, qui a son propre écran d'erreur.
+    statusMessage: message ?? 'La ville se recharge.',
     // Le texte voyage avec le refus : un client qui découvre la fermeture ici
     // — autre onglet, cookie posé entre-temps — a de quoi montrer le bon écran
     // sans redemander quoi que ce soit.

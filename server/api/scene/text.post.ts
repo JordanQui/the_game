@@ -9,6 +9,7 @@ import {
   assertNotLocked, consumeQuota, lockOut, rememberPosition, forgetPosition,
 } from '~/server/utils/session-quota'
 import { mockKey, readMock, writeMock, wantsFresh, scriptFingerprint } from '~/server/utils/dev-mocks'
+import { requestLang } from '~/server/utils/lang'
 
 /**
  * Phase 1 du pipeline : le texte.
@@ -31,10 +32,13 @@ export default defineEventHandler(async (event) => {
     carried?: CarriedItem[]
   }>(event) ?? {}
 
-  const runtime = await ScriptRuntime.load()
+  // La langue vient du dossier quand il est là, du cookie sinon : c'est elle
+  // qui décide de tout ce que cette route fabrique, prompts compris.
+  const lang = requestLang(event, body.user)
+  const runtime = await ScriptRuntime.load(lang)
   // Quota de session : arrête l'abus par rechargement avant tout appel payant.
-  const limits = runtime.script.limits
-  assertNotLocked(event)
+  const limits = runtime.limits
+  assertNotLocked(event, limits.lock.message)
   consumeQuota(event, 'scenes', limits)
 
   const scene = runtime.scene(body.sceneId)
@@ -59,7 +63,9 @@ export default defineEventHandler(async (event) => {
 
   // En développement, on rejoue la dernière scène enregistrée plutôt que de
   // repayer la même génération à chaque relance. `?fresh=1` la renouvelle.
-  const key = mockKey(scene.id, `${user.identity.name}|${user.identity.birthday ?? ''}|${body.journal?.length ?? 0}|${body.carried?.length ?? 0}`, scriptFingerprint(runtime.script))
+  // La langue entre dans la clé : deux langues ne partagent pas une scène en
+  // cache, sinon le rechargement d'après en servirait une dans l'autre langue.
+  const key = mockKey(scene.id, `${lang}|${user.identity.name}|${user.identity.birthday ?? ''}|${body.journal?.length ?? 0}|${body.carried?.length ?? 0}`, scriptFingerprint(runtime.script))
   if (import.meta.dev && !wantsFresh(event)) {
     const cached = await readMock<SceneTextResponse>('scene', key)
     if (cached) {
@@ -82,7 +88,9 @@ export default defineEventHandler(async (event) => {
   /** Les deux messages de la demande. La reprise repart de là. */
   type Message = { role: 'system' | 'user' | 'assistant'; content: string }
   const messages: Message[] = [
-    { role: 'system', content: gen.system_prompt },
+    // `scene.systemPrompt` et non `gen.system_prompt` : c'est lui qui remplit
+    // le {{language}} du script et qui y colle la directive de sortie.
+    { role: 'system', content: scene.systemPrompt },
     {
       role: 'user',
       content: isEnding

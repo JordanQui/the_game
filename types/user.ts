@@ -1,6 +1,8 @@
 // Forme normalisée du profil joueur. Produite par utils/admission.ts à partir
 // du formulaire d'admission ; game/user.json en tient le dossier type.
 
+import type { LangCode } from '~/types/i18n'
+
 export type PassionIntensity = 'high' | 'medium' | 'low'
 
 export interface UserPassion {
@@ -109,6 +111,19 @@ export interface UserProfile {
     /** Comment accorder ce qu'on lui adresse. */
     agreement?: UserAgreement
   }
+  /**
+   * La langue dans laquelle cette nuit s'écrit.
+   *
+   * DÉCLARÉE, jamais devinée à ce stade : le sélecteur du formulaire propose
+   * bien la langue du navigateur, mais c'est le joueur qui tranche, et son
+   * choix voyage avec le dossier. Sans ce champ, le serveur retomberait sur le
+   * cookie — qui suffit pour l'habillage, mais pas pour une partie reprise sur
+   * un autre appareil, où le dossier arrive seul.
+   *
+   * Optionnelle parce que le dossier type de game/user.json est antérieur au
+   * multilangue : son absence vaut français.
+   */
+  language?: LangCode
   origin: {
     hometown?: UserPlace
     current_location?: UserPlace

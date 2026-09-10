@@ -23,7 +23,9 @@ import { enforceAccentVisibility } from '~/utils/palette'
 import { enforceNameCaps, fold } from '~/utils/naming'
 import { sanitizeHtml } from '~/utils/sanitize-html'
 import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
-import { agreementLine } from '~/utils/agreement'
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { agreementFor, overlayValue, pack } from '~/utils/languages'
 import { zodiacKey } from '~/utils/zodiac'
 import { numerologyOf } from '~/utils/numerology'
 
@@ -38,7 +40,14 @@ export function loadUserFixture(): Promise<UserProfile> {
   return Promise.resolve(userFixture)
 }
 
-/** Aplatit le profil en un bloc lisible par le modèle. */
+/**
+ * Aplatit le profil en un bloc lisible par le modèle.
+ *
+ * Reste EN FRANÇAIS quelle que soit la langue jouée : c'est une consigne, pas
+ * du texte de jeu, et elle voisine avec tout le reste du prompt, français lui
+ * aussi. Seule la ligne d'accord change de langue — elle est faite d'exemples
+ * que le modèle doit reproduire tels quels.
+ */
 export function describeUser(user: UserProfile): string {
   const lines: string[] = []
 
@@ -46,7 +55,7 @@ export function describeUser(user: UserProfile): string {
   // Le prénom à part : c'est par lui que les personnages l'appellent.
   if (user.identity.first_name) lines.push(`Prénom, celui qu'on lui donne : ${user.identity.first_name}`)
   if (user.identity.age) lines.push(`Âge : ${user.identity.age} ans`)
-  const agreement = agreementLine(user)
+  const agreement = agreementFor(user.language, user.identity.agreement)
   if (agreement) lines.push(`Accord : ${agreement}`)
 
   const { hometown, current_location } = user.origin
@@ -165,15 +174,105 @@ const AUGMENTATION_NAME_RE = /^[A-Z][a-z]+(?:[A-Z][a-z]+){1,2}$/
 export class SceneRuntime {
   constructor(
     readonly scene: ResolvedScene,
-    private readonly script: Script
+    private readonly script: Script,
+    /**
+     * La langue de cette partie.
+     *
+     * Portée par la scène et non passée à chaque appel : tout ce que cette
+     * classe fabrique en dépend — les prompts, les libellés, les replis — et un
+     * paramètre de plus sur douze méthodes se serait oublié quelque part.
+     */
+    readonly lang: LangCode = DEFAULT_LANG,
   ) {}
 
+  /** Le pack de la langue jouée. */
+  private get pack() { return pack(this.lang) }
+
+  /**
+   * Le bloc qui impose la langue de sortie, en tête de chaque prompt.
+   *
+   * Il est écrit DANS la langue visée, au milieu de consignes françaises. Ce
+   * contraste est délibéré : c'est le signal le plus net qu'on puisse donner à
+   * un modèle sur la langue attendue, plus net qu'une consigne française qui
+   * la nommerait. Il rappelle aussi la façon d'interpeller le joueur, que
+   * toutes les langues ne tranchent pas au même endroit.
+   */
+  private get languageBlock(): string {
+    const g = this.pack.generation
+    return `LANGUE DE SORTIE — ${g.name_fr}\n${g.directive}\n${g.address}`
+  }
+
+  /** Les variables de langue, communes à toutes les interpolations. */
+  private get langVars(): Record<string, string> {
+    return {
+      language: this.pack.generation.name_fr,
+      // « Français parlé, sec » devient « anglais parlé, sec » : la consigne
+      // reste française, seul le nom de la langue bouge.
+      language_spoken: `${this.pack.generation.name_fr} parlé`,
+    }
+  }
+
+  /**
+   * Le prompt système de la génération, langue imposée.
+   *
+   * Le script le porte encore avec un `{{language}}` : c'est ici qu'il se
+   * remplit, et nulle part ailleurs — l'endpoint le lisait cru.
+   */
+  get systemPrompt(): string {
+    return `${interpolate(this.scene.generation.system_prompt, this.langVars)}\n\n${this.languageBlock}`
+  }
+
+  /**
+   * Le lexique imposé, dans la langue jouée.
+   *
+   * Chaque langue a son mot de sortie — sas, airlock, esclusa, Schleuse — et
+   * ses propres faux amis médiévaux. Le pack français laisse le champ vide :
+   * `game/script.json` porte déjà sa version, et la dupliquer ferait deux
+   * vérités.
+   */
+  private get vocabulary(): string {
+    return this.pack.generation.vocabulary || this.scene.narrative.vocabulary
+  }
+
+  /**
+   * Une valeur d'affichage, surchargée par la langue quand elle l'est.
+   *
+   * Le script reste la source ; le pack ne fait que passer devant. Le français
+   * ne surcharge rien, et retombe donc toujours ici sur `game/script.json`.
+   */
+  private localized<T>(path: string, fallback: T): T {
+    return overlayValue<T>(this.lang, path) ?? fallback
+  }
+
+  /**
+   * La règle de nommage, plus ce que la langue en fait.
+   *
+   * `caps_note` est la DERNIÈRE chose que le modèle lit sur le sujet, et c'est
+   * voulu : en allemand elle contredit la règle générale, puisque tous les
+   * noms communs y portent déjà une majuscule.
+   */
+  private get namingStyle(): string {
+    return `${this.scene.narrative.naming_style}\n${this.pack.generation.caps_note}`
+  }
+
   get id() { return this.scene.id }
-  get title() { return this.scene.title }
+  /**
+   * Le titre affiché de la scène, dans la langue jouée.
+   *
+   * Il part aussi dans les prompts (`{{scene_title}}`) : servir « Le Comptoir »
+   * à une génération anglaise donnerait au modèle une amorce dans la mauvaise
+   * langue, juste là où il choisit son ton.
+   */
+  get title() {
+    return overlayValue<string>(this.lang, `scene_titles.${this.scene.id}`) ?? this.scene.title
+  }
   get generation() { return this.scene.generation }
   get artDirection() { return this.scene.art_direction }
   get turn() { return this.scene.turn }
-  get fallbacks() { return this.scene.error_fallbacks }
+  /** Les replis d'erreur, surchargés par le pack de langue. */
+  get fallbacks() {
+    return { ...this.scene.error_fallbacks, ...overlayValue<Record<string, string>>(this.lang, 'error_fallbacks') }
+  }
   /** Illustration figée de la scène, ou null si elle doit être générée. */
   get staticImage() { return this.scene.static_image ?? null }
   /** `ending` : cette scène clôt la partie et ne suit pas le schéma des autres. */
@@ -232,7 +331,9 @@ export class SceneRuntime {
       .map(slot => `  - ${slot.id} (poids visuel : ${slot.visual_weight}) : ${slot.role}`)
       .join('\n')
 
-    return `PROFIL DU JOUEUR
+    return `${this.languageBlock}
+
+PROFIL DU JOUEUR
 ${describeUser(user)}
 ${this.describeResolution(theme)}
 
@@ -346,13 +447,13 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     return {
       kind: 'ending' as const,
       scene_id: this.scene.id,
-      scene_title: generated.title || this.scene.title,
+      scene_title: generated.title || this.title,
       ending_html: html,
       palette,
       decor: generated.decor ?? [],
       interface_palette: 'from_scene' as const,
       image_prompt: this.buildImagePrompt({
-        place_name: placeName || this.scene.title,
+        place_name: placeName || this.title,
         palette,
         decor: generated.decor ?? [],
       }),
@@ -391,7 +492,9 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
       ? interpolate(c.prompt, { journal: renderJournal(journal, c.max_entries) })
       : c.empty
 
-    return `PROFIL DU JOUEUR
+    return `${this.languageBlock}
+
+PROFIL DU JOUEUR
 ${describeUser(user)}
 ${themeBlock}
 ${story}
@@ -400,7 +503,8 @@ ${this.describeCarried(carried)}
 ${carried.length ? `\nCE QU'UN PERSONNAGE PEUT EN VOULOIR\n${this.script.defaults.exchange.instruction}\n` : ''}
 
 NOM DU LIEU
-${s.naming.instruction}
+${interpolate(s.naming.instruction, this.langVars)}
+${this.pack.generation.naming_form}
 
 PALETTE
 ${s.palette_derivation.instruction}
@@ -437,9 +541,9 @@ ${s.sealed_object
   : ''}
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
-${s.narrative.vocabulary}
-${s.narrative.naming_style}
-La sortie de ce lieu se nomme exactement : ${s.exits[0]?.label ?? 'le sas'}.
+${this.vocabulary}
+${this.namingStyle}
+La sortie de ce lieu se nomme exactement : ${this.exitLabel}.
 ${s.narrative.opening}
 ${s.narrative.stakes_rule ?? ''}
 Structure imposée :
@@ -810,7 +914,7 @@ ${lines}`)
       // dernière ligne, et un nom écrit de deux façons est deux choses
       // différentes pour tout ce qui le cherche ensuite.
       ...(scene.npcs ?? []).map(n => n.name),
-    ].filter((n): n is string => Boolean(n)))
+    ].filter((n): n is string => Boolean(n)), this.lang)
 
     if (naming.fixed.length) {
       console.warn(`[scene/${this.scene.id}] majuscules recalées : ${naming.fixed.join(' · ')}`)
@@ -833,7 +937,8 @@ ${lines}`)
       scene_text: naming.text,
       interactables,
       scene_id: this.scene.id,
-      scene_title: this.scene.title,
+      scene_title: this.title,
+      exit_label: this.exitLabel,
       script_version: this.script.version,
       image_prompt: this.buildImagePrompt({
         place_name: scene.place.name,
@@ -845,10 +950,13 @@ ${lines}`)
       // carte, une fréquence, un code — utile ici et nulle part ailleurs.
       grants_augmentation: this.scene.objective?.kind === 'acquire_augmentation',
       // Le mode d'emploi de l'augmentation, monté avec les champs de l'objet.
-      augmentation_primer: this.script.defaults.augmentation_primer,
+      augmentation_primer: {
+        ...this.script.defaults.augmentation_primer,
+        ...this.localized('augmentation_primer', {}),
+      },
       // L'oeil est une commande de l'interface : son texte est fixe, et il
       // n'entre jamais dans le prompt de la scène. Voir `defaults.eye_primer`.
-      eye_primer: this.script.defaults.eye_primer,
+      eye_primer: { ...this.script.defaults.eye_primer, ...this.localized('eye_primer', {}) },
       // Seule cette scène-là demande le paiement ; les suivantes s'enchaînent.
       is_paywall_gate: this.scene.is_paywall_gate === true,
       // Le client s'en sert pour teindre l'habillage. La scène 1 est en
@@ -869,25 +977,37 @@ ${lines}`)
         contrast_vs_secondary: Number(audit.contrast_vs_secondary.toFixed(2)),
         base_contrast: Number(audit.base_contrast.toFixed(2)),
       },
-      paywall: {
-        gate_text: interpolate(this.script.paywall.gate_text, vars),
-        cta: interpolate(this.script.paywall.cta, vars),
-        sub_cta: interpolate(this.script.paywall.sub_cta, vars),
-        amount_cents: this.script.paywall.amount_cents,
-        currency: this.script.paywall.currency,
-        exit_keywords: exit.keywords,
-        min_turns_before_trigger: exit.min_turns_before_trigger,
-        // Les variables de quête sont interpolées ici : le client n'a jamais
-        // à connaître la syntaxe des gabarits.
-        pitch: {
-          eyebrow: this.script.paywall.pitch.eyebrow,
-          points: this.script.paywall.pitch.points.map(pt => ({
-            label: pt.label,
-            text: interpolate(pt.text, vars),
-          })),
-          closing: interpolate(this.script.paywall.pitch.closing, vars),
-        },
-      },
+      paywall: (() => {
+        // Le paywall est du texte AFFICHÉ : il suit la langue du joueur, pas
+        // celle du script. Le montant et la devise, eux, n'en changent pas —
+        // le paiement est en euros où qu'on joue.
+        const pw = {
+          ...this.script.paywall,
+          ...this.localized<Partial<typeof this.script.paywall>>('paywall', {}),
+        }
+        return {
+          gate_text: interpolate(pw.gate_text, vars),
+          cta: interpolate(pw.cta, vars),
+          sub_cta: interpolate(pw.sub_cta, vars),
+          amount_cents: this.script.paywall.amount_cents,
+          currency: this.script.paywall.currency,
+          // Ce que le client teste pour savoir si le joueur parle de sortir.
+          // La MÊME liste que le serveur : deux listes se seraient
+          // désynchronisées, et la porte se serait ouverte d'un côté seulement.
+          exit_keywords: this.exitKeywords,
+          min_turns_before_trigger: exit.min_turns_before_trigger,
+          // Les variables de quête sont interpolées ici : le client n'a jamais
+          // à connaître la syntaxe des gabarits.
+          pitch: {
+            eyebrow: pw.pitch.eyebrow,
+            points: pw.pitch.points.map(pt => ({
+              label: pt.label,
+              text: interpolate(pt.text, vars),
+            })),
+            closing: interpolate(pw.pitch.closing, vars),
+          },
+        }
+      })(),
     }
   }
 
@@ -905,7 +1025,8 @@ ${lines}`)
       : 'personne'
 
     const base = interpolate(t.system_prompt_template, {
-      scene_title: this.scene.title,
+      ...this.langVars,
+      scene_title: this.title,
       player_name: ctx.player_name,
       place_name: ctx.place.name,
       place_reputation: ctx.place.reputation,
@@ -914,9 +1035,9 @@ ${lines}`)
       quest_stakes: ctx.quest.stakes,
       quest_artifact: ctx.quest.artifact,
       npc_list: npcList,
-      narrative_instruction: `${this.scene.narrative.instruction}\n${this.scene.narrative.vocabulary}\n${this.scene.narrative.naming_style}`,
+      narrative_instruction: `${this.scene.narrative.instruction}\n${this.vocabulary}\n${this.namingStyle}`,
       max_words: String(t.max_words),
-      exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+      exit_label: this.exitLabel,
     })
 
     const agreed = ctx.player_agreement
@@ -931,7 +1052,7 @@ ${lines}`)
           item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
           item_handover_hint: ctx.key_item.handover_hint || "qu'on l'écoute vraiment",
           item_holder: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
-          exit_label: this.scene.exits[0]?.label ?? 'la sortie',
+          exit_label: this.exitLabel,
         })}`
       : agreed
 
@@ -939,7 +1060,11 @@ ${lines}`)
       ? `${withItem}\n\n${interpolate(this.script.zodiac.turn_instruction, { tension: ctx.theme.sign.tension })}`
       : withItem
 
-    if (turnCount < t.steer_after_turns) return themed
+    // La langue ferme le prompt système : c'est la dernière consigne lue, et
+    // celle qu'un modèle applique le plus fidèlement.
+    const spoken = `${themed}\n\n${this.languageBlock}`
+
+    if (turnCount < t.steer_after_turns) return spoken
 
     // Tant que l'objet manque, pousser vers le sas enverrait le joueur sur une
     // issue fermée : on l'oriente d'abord vers celui qui le détient.
@@ -962,7 +1087,7 @@ ${lines}`)
       })
     }
 
-    return `${themed}\n\n${steer}`
+    return `${spoken}\n\n${steer}`
   }
 
   /**
@@ -989,7 +1114,12 @@ ${lines}`)
      * dévisagent et enchaînent. Répondre d'abord, orienter ensuite.
      */
     const rules = {
+      ...this.langVars,
       reply_rule: t.reply_rule ?? '',
+      // Ce qui rend la conversation cumulative : le fil du personnage lui est
+      // remis à part (voir `npcThreads`), et cette règle lui dit quoi en faire
+      // — continuer, ne pas se répéter, en lâcher plus à mesure.
+      thread_rule: t.thread_rule ?? '',
       steer_rule: interpolate(t.steer_rule ?? '', { quest_objective: ctx.quest.objective }),
       // Ce que ce personnage-là sait du dehors, et lui seul. Un PNJ sans
       // morceau assigné n'en invente pas un : la règle disparaît de son prompt.
@@ -1131,16 +1261,51 @@ ${lines}`)
     })
   }
 
+  /**
+   * Le libellé de la sortie de cette scène, dans la langue jouée.
+   *
+   * Il part au modèle — « la seule issue de ce lieu est … » — et il revient au
+   * joueur, qui le tapera. Les deux doivent donc dire le même mot, et c'est
+   * pour ça qu'il n'est résolu qu'ici.
+   */
+  get exitLabel(): string {
+    return overlayValue<string>(this.lang, `exit_labels.${this.scene.id}`)
+      ?? this.scene.exits[0]?.label
+      ?? this.pack.ui['game.exit_opens']
+  }
+
+  /**
+   * Les mots par lesquels ce joueur-là ouvre la porte.
+   *
+   * Deux sources réunies. La liste du pack donne les verbes de la langue —
+   * « go out », « salir », « wyjść ». Les mots du LIBELLÉ s'y ajoutent, parce
+   * qu'une scène nomme sa sortie (« Le Funiculaire ») et qu'un joueur tape ce
+   * qu'il lit : sans eux, seuls les verbes génériques auraient marché, et la
+   * sortie nommée aurait été un leurre.
+   *
+   * Les `exits[].keywords` du script ne sont plus lus : ils étaient français,
+   * et identiques d'une scène à l'autre. Le pack les remplace en douze langues.
+   */
+  private get exitKeywords(): string[] {
+    const fromLabel = this.exitLabel
+      .split(/[^\p{L}]+/u)
+      .filter(w => w.length > 3)
+      .map(w => w.toLowerCase())
+    return [...this.pack.input.exit, ...fromLabel]
+  }
+
   /** Le joueur parle-t-il de sortir, quel que soit le nombre de tours joués ? */
   mentionsExit(input: string): boolean {
-    return this.scene.exits.some(exit => matchesKeyword(input, exit.keywords))
+    if (!this.scene.exits.length) return false
+    return matchesKeyword(input, this.exitKeywords)
   }
 
   /** La commande du joueur déclenche-t-elle une sortie ? */
   matchExit(input: string, turnCount: number): SceneExit | null {
+    const keywords = this.exitKeywords
     for (const exit of this.scene.exits) {
       if (turnCount < exit.min_turns_before_trigger) continue
-      if (matchesKeyword(input, exit.keywords)) return exit
+      if (matchesKeyword(input, keywords)) return exit
     }
     return null
   }
@@ -1150,16 +1315,67 @@ ${lines}`)
 export class ScriptRuntime {
   private readonly resolved = new Map<string, SceneRuntime>()
 
-  constructor(readonly script: Script) {}
+  constructor(readonly script: Script, readonly lang: LangCode = DEFAULT_LANG) {}
 
-  static async load(): Promise<ScriptRuntime> {
+  /**
+   * Le script, dans une langue.
+   *
+   * La langue est prise ICI et transmise à chaque scène, plutôt qu'ajoutée en
+   * paramètre aux dix méthodes qui en ont besoin : le cache de scènes résolues
+   * vit dans l'instance, donc une instance par langue et aucun mélange
+   * possible. Les appelants qui n'affichent rien — le paiement, l'économie —
+   * peuvent l'omettre et retombent sur le français.
+   */
+  static async load(lang: LangCode = DEFAULT_LANG): Promise<ScriptRuntime> {
     if (!script.scenes?.length) throw new Error('script.json ne contient aucune scène')
-    return new ScriptRuntime(script)
+    return new ScriptRuntime(script, lang)
   }
 
   get version() { return this.script.version }
   get sceneIds() { return this.script.scenes.map(s => s.id) }
-  get paywall() { return this.script.paywall }
+
+  /** Le paywall, texte d'affichage surchargé par la langue jouée. */
+  get paywall() {
+    return {
+      ...this.script.paywall,
+      ...(overlayValue<Partial<Script['paywall']>>(this.lang, 'paywall') ?? {}),
+      // Jamais surchargés : le paiement est en euros où qu'on joue.
+      amount_cents: this.script.paywall.amount_cents,
+      currency: this.script.paywall.currency,
+    }
+  }
+
+  /**
+   * Les actes, titres traduits.
+   *
+   * L'accueil les affiche sous le bouton « Continuer » — « La Route »,
+   * « Les Hauteurs ». Un joueur anglophone y lisait du français en pleine
+   * reprise de partie.
+   */
+  get acts() {
+    return this.script.acts.map(act => ({
+      ...act,
+      title: overlayValue<string>(this.lang, `act_titles.${act.id}`) ?? act.title,
+    }))
+  }
+
+  /**
+   * Les messages de quota et de fermeture, dans la langue du joueur.
+   *
+   * Ils partent en `statusMessage` d'une erreur HTTP, donc sans passer par un
+   * composant : c'est le seul texte du jeu que le serveur écrit lui-même, et
+   * il n'a que ce chemin-là pour être traduit.
+   */
+  get limits() {
+    const over = overlayValue<Record<string, any>>(this.lang, 'limits') ?? {}
+    const l = this.script.limits
+    return {
+      ...l,
+      messages: { ...l.messages, ...over.messages },
+      lock: { ...l.lock, ...over.lock },
+      paid: { ...l.paid, messages: { ...l.paid.messages, ...over.paid?.messages } },
+    }
+  }
 
   /** Une scène par id. Sans argument, la scène de départ. */
   scene(id?: string): SceneRuntime {
@@ -1172,7 +1388,7 @@ export class ScriptRuntime {
       throw new Error(`Scène inconnue : "${sceneId}" (disponibles : ${this.sceneIds.join(', ')})`)
     }
 
-    const runtime = new SceneRuntime(this.resolveDefaults(raw), this.script)
+    const runtime = new SceneRuntime(this.resolveDefaults(raw), this.script, this.lang)
     this.resolved.set(sceneId, runtime)
     return runtime
   }

@@ -41,7 +41,7 @@ const jsonLd = {
         "Un jeu de rôle textuel en français. Le joueur déclare qui il est dans un "
         + "formulaire d'admission, et la ville qu'il traverse — ses lieux, ses habitants, "
         + "sa quête — est bâtie sur ses réponses. Dix scènes illustrées, une par lieu, "
-        + "dans une mégapole Art Déco battue par la pluie. On y joue en tapant ce qu'on "
+        + "dans une mégapole verticale battue par la pluie. On y joue en tapant ce qu'on "
         + 'veut faire, et la nuit ne se rejoue pas.',
       genre: ['Jeu de rôle', 'Fiction interactive', 'Aventure textuelle'],
       gamePlatform: 'Navigateur web',

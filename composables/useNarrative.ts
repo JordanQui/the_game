@@ -2,7 +2,8 @@ import type { SceneNPC, TurnContext, TurnMode, TurnUsage } from '~/types/scene'
 import type { StoryletEffect } from '~/utils/storylets'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
-import { normalize } from '~/utils/text-match'
+import { normalize, matchesKeyword } from '~/utils/text-match'
+import { pack } from '~/utils/languages'
 
 /** Durée totale au-delà de laquelle on considère le tour perdu. */
 const TURN_TIMEOUT_MS = 60_000
@@ -76,12 +77,10 @@ export function useNarrative() {
   }
 
   /**
-   * Trouve le personnage interpellé.
+   * Le personnage NOMMÉ dans la saisie, s'il y en a un.
    *
-   * Le prénom d'abord, puis le rôle : « je parle au barman » doit fonctionner
-   * autant que « parler à Leo ». Sans ça, une commande adressée à quelqu'un
-   * partait en narration d'ambiance et aucun personnage ne répondait jamais —
-   * la chaîne informateur puis détenteur ne pouvait pas s'ouvrir.
+   * C'est par là qu'une conversation s'ouvre — jamais par là qu'elle se
+   * poursuit : voir `interlocutor`, juste en dessous.
    */
   function findAddressedNpc(input: string): SceneNPC | undefined {
     const text = normalize(input)
@@ -95,15 +94,82 @@ export function useNarrative() {
     )
   }
 
-  /** Verbes par lesquels on s'adresse à quelqu'un. */
-  const ADDRESS_VERBS = ['parle', 'parler', 'demande', 'demander', 'interroge', 'interroger',
-    'aborde', 'aborder', 'dis', 'dire', 'salue', 'saluer', 'questionne', 'questionner']
+  /**
+   * Les trois listes qui lisent la saisie, dans la langue de la partie.
+   *
+   * Elles étaient écrites en dur, en français. Hors français elles ne
+   * reconnaissaient rien : personne ne pouvait s'adresser à quelqu'un sans le
+   * nommer, ni mettre fin à une conversation, ni se détourner vers le décor.
+   *
+   * Reconnues comme MOTS ENTIERS, jamais comme fragments : « va » cherché en
+   * sous-chaîne se trouvait dans « ça va », et un joueur qui demandait des
+   * nouvelles à quelqu'un se retrouvait à fixer le comptoir.
+   */
+  const verbs = computed(() => {
+    const input = pack(playerStore.language).input
+    return {
+      address: input.address,
+      leave: input.leave,
+      // Manipuler, examiner, ramasser : tout ce qui vise une chose et non
+      // quelqu'un. Les trois listes sont reunies parce que `turnsAway` ne fait
+      // pas la difference - s'emparer d'un objet detourne autant que l'ouvrir.
+      world: [...input.world, ...input.look, ...input.take],
+    }
+  })
+
+  /** Un élément du décor est-il nommé dans la saisie ? */
+  function namesDecor(text: string): boolean {
+    return (playerStore.scene?.decor ?? []).some(dec => {
+      const words = normalize(dec.name ?? '')
+        .split(' ')
+        .filter(w => w.length > 3)
+      return words.some(w => text.includes(w))
+    })
+  }
+
+  /**
+   * Le joueur se détourne-t-il de son interlocuteur ?
+   *
+   * Trois façons, et pas une de plus : le dire, viser la sortie, ou porter la
+   * main sur quelque chose du décor. Tout le reste — une question sèche, un
+   * « oui », un « pourquoi ? », un pronom — reste adressé à la personne en
+   * face, puisque c'est à elle qu'on parlait.
+   */
+  function turnsAway(input: string): boolean {
+    const text = normalize(input)
+    if (verbs.value.leave.some(phrase => text.includes(normalize(phrase)))) return true
+
+    const exits = playerStore.scene?.paywall.exit_keywords ?? []
+    if (exits.length && matchesKeyword(input, exits)) return true
+
+    return matchesKeyword(input, verbs.value.world) && namesDecor(text)
+  }
+
+  /**
+   * À QUI cette saisie s'adresse.
+   *
+   * Le nom l'emporte toujours — c'est ainsi qu'on ouvre une conversation, et
+   * ainsi qu'on passe d'une personne à l'autre ; l'oeil bionique garde donc
+   * tout son rôle. Mais une fois la conversation ouverte, elle DURE : ce qui
+   * est tapé ensuite va à la même personne tant que le joueur ne s'en détourne
+   * pas. Sans ça, un personnage posait une question et la réponse du joueur
+   * partait en narration d'ambiance ; on lui répondait à côté, toujours.
+   */
+  function interlocutor(input: string): SceneNPC | undefined {
+    const named = findAddressedNpc(input)
+    if (named) return named
+
+    const active = playerStore.npcs.find(n => n.id === gameStore.activeNpcId)
+    if (!active) return undefined
+
+    return turnsAway(input) ? undefined : active
+  }
 
   /** Le joueur s'adresse à quelqu'un sans le nommer : il lui manque l'outil. */
   function addressesNobody(input: string): boolean {
     const text = normalize(input)
-    if (findAddressedNpc(input)) return false
-    return ADDRESS_VERBS.some(v => text.includes(v))
+    if (interlocutor(input)) return false
+    return verbs.value.address.some(v => text.includes(normalize(v)))
   }
 
   async function streamTurn(input: string, npc?: SceneNPC, mode?: TurnMode): Promise<string> {
@@ -135,12 +201,19 @@ export function useNarrative() {
         signal: controller.signal,
         body: JSON.stringify({
           sceneId: playerStore.scene?.scene_id,
+          // La langue part avec le tour : le corps fait foi cote serveur, le
+          // cookie n'est que son repli.
+          lang: playerStore.language,
           context,
           input,
           npcId: npc?.id,
           mode,
           turnCount: gameStore.turnCount,
-          history: gameStore.conversationHistory,
+          // Le fil de CE personnage quand on parle à quelqu'un, le fil commun
+          // sinon. Lui remettre la narration d'ambiance et les répliques des
+          // autres noyait sa propre dernière phrase : il ne se souvenait pas
+          // de ce qu'il venait de demander, donc il le redemandait.
+          history: npc ? gameStore.npcThreads[npc.id] ?? [] : gameStore.conversationHistory,
         }),
       })
 
@@ -265,7 +338,9 @@ export function useNarrative() {
     const offeredTo = gameStore.pendingGive
       ? playerStore.npcs.find(n => n.id === gameStore.pendingGive!.npcId)
       : undefined
-    const npc = narrated ? undefined : (offeredTo ?? findAddressedNpc(input))
+    const npc = narrated ? undefined : (offeredTo ?? interlocutor(input))
+    // Ouvre, maintient ou ferme la conversation — c'est la même ligne pour les
+    // trois : `interlocutor` a déjà décidé si elle survit à cette saisie.
     gameStore.setActiveNpc(npc?.id ?? null)
 
     const item = playerStore.scene?.key_item
@@ -299,7 +374,7 @@ export function useNarrative() {
     const text = await streamTurn(input, npc, mode)
     if (!text) return
 
-    gameStore.incrementTurn(input, text)
+    gameStore.incrementTurn(input, text, npc?.id)
     applyEffects(after)
     // Refus, ou tour qui n'était pas un don : la proposition retombe. Sans ça
     // l'objet resterait tendu et le tour suivant repartirait en échange.
@@ -326,5 +401,5 @@ export function useNarrative() {
     await runTurn(input, gameStore.lastMode ?? undefined, gameStore.lastEffects)
   }
 
-  return { runTurn, retryLastTurn, answerLocally, streamTurn, findAddressedNpc, addressesNobody }
+  return { runTurn, retryLastTurn, answerLocally, streamTurn, interlocutor, addressesNobody }
 }

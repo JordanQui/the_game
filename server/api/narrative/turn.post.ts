@@ -4,6 +4,8 @@ import { ScriptRuntime } from '~/utils/script-runtime'
 import { buildConversationHistory } from '~/utils/prompt-builder'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import { assertNotLocked, consumeQuota } from '~/server/utils/session-quota'
+import { requestLang } from '~/server/utils/lang'
+import { resolveLang } from '~/utils/languages'
 
 /**
  * Un tour de jeu, en streaming SSE.
@@ -19,10 +21,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Champs requis : input, context.place, context.quest' })
   }
 
-  const runtime = await ScriptRuntime.load()
+  // Le tour n'envoie pas de profil : la langue vient du corps quand le client
+  // la joint, du cookie sinon. Les deux disent la même chose — le client écrit
+  // le cookie au moment où le joueur choisit.
+  const lang = body.lang ? resolveLang(body.lang) : requestLang(event)
+  const runtime = await ScriptRuntime.load(lang)
   // Quota de session : arrête l'abus par rechargement avant tout appel payant.
-  const limits = runtime.script.limits
-  assertNotLocked(event)
+  const limits = runtime.limits
+  assertNotLocked(event, limits.lock.message)
   consumeQuota(event, 'turns', limits)
 
   const scene = runtime.scene(body.sceneId)

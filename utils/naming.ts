@@ -1,3 +1,7 @@
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { pack } from '~/utils/languages'
+
 /**
  * La Majuscule de Titre, rendue vraie.
  *
@@ -20,8 +24,36 @@
  */
 const MIN_LENGTH = 3
 
-/** L'article que traîne un nom déclaré. On le laisse en minuscules dans le texte. */
-const LEADING_ARTICLE = /^(?:[ld]['’]\s*|(?:le|la|les|un|une|des|du|de|au|aux)\s+)/i
+/**
+ * L'article que traîne un nom déclaré. On le laisse en minuscules dans le texte.
+ *
+ * Il dépend de la langue : « le Tourniquet » se cherche par « Tourniquet »,
+ * « the Turnstile » par « Turnstile », et le russe ou le polonais n'ont rien à
+ * retirer du tout. Le motif est donc bâti à partir du pack, et mis en cache par
+ * langue — le compiler à chaque nom d'une scène n'apporterait rien.
+ */
+const ARTICLE_RE = new Map<string, RegExp>()
+
+function leadingArticle(lang: LangCode): RegExp {
+  const cached = ARTICLE_RE.get(lang)
+  if (cached) return cached
+
+  const articles = pack(lang).input.articles
+  // Aucun article dans cette langue : un motif qui ne matche jamais, plutôt
+  // qu'un `(?:)` vide qui matcherait la chaîne nulle partout.
+  const re = articles.length
+    ? new RegExp(
+        // Les articles élidés — « l' », « d' » — collent au mot suivant ;
+        // les autres exigent une espace, sinon « le » mangerait « lecteur ».
+        `^(?:${articles.map((a) => {
+          const body = escapeRe(a).replace(/'/g, "['’]")
+          return a.endsWith("'") ? `${body}\\s*` : `${body}\\s+`
+        }).join('|')})`,
+        'i')
+    : /(?!)/
+  ARTICLE_RE.set(lang, re)
+  return re
+}
 
 /** Voyelles et leurs variantes : le modèle accentue de façon inconstante. */
 const ACCENTED: Record<string, string> = {
@@ -49,8 +81,8 @@ function escapeRe(s: string): string {
 }
 
 /** Le nom sans son article : « le Tourniquet » se cherche par « Tourniquet ». */
-function stripArticle(name: string): string {
-  return name.trim().replace(LEADING_ARTICLE, '').trim()
+function stripArticle(name: string, lang: LangCode): string {
+  return name.trim().replace(leadingArticle(lang), '').trim()
 }
 
 /**
@@ -88,11 +120,15 @@ export interface NamingAudit {
  * Les noms les plus longs passent d'abord : sans ça « Carte d'Accès » corrigée
  * la première laisserait « Ambre » en minuscules dans « Carte d'Accès Ambre ».
  */
-export function enforceNameCaps(text: string, names: string[]): NamingAudit {
+export function enforceNameCaps(
+  text: string,
+  names: string[],
+  lang: LangCode = DEFAULT_LANG,
+): NamingAudit {
   const fixed: string[] = []
   const missing: string[] = []
 
-  const canonical = [...new Set(names.map(stripArticle))]
+  const canonical = [...new Set(names.map(n => stripArticle(n, lang)))]
     .filter(n => n.length >= MIN_LENGTH)
     .sort((a, b) => b.length - a.length)
 

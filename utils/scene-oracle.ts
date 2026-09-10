@@ -1,5 +1,8 @@
 import type { SceneTextResponse } from '~/types/scene'
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
 import { normalize } from '~/utils/text-match'
+import { pack, translate } from '~/utils/languages'
 import { teaching } from '~/utils/interactables'
 
 /**
@@ -30,28 +33,23 @@ export interface LocalAnswer {
   npcName?: string
 }
 
-/** Formulations par lesquelles un joueur demande quoi faire. */
-const GUIDANCE_KEYWORDS = [
-  'que faire', 'quoi faire', 'que dois je faire', 'je fais quoi', 'aide', 'aide moi',
-  'help', 'indice', 'je suis perdu', 'je sais pas', 'je ne sais pas', 'objectif',
-  'ma quete', 'la quete', 'rappelle', 'resume', 'ou en suis je',
-]
-
-/** Verbes d'observation : ils ne demandent jamais rien de neuf au modèle. */
-const LOOK_KEYWORDS = [
-  'examiner', 'examine', 'observer', 'observe', 'regarder', 'regarde', 'inspecter',
-  'inspecte', 'voir', 'vois', 'fouiller', 'fouille', 'lire', 'lis',
-]
-
 function containsAny(haystack: string, needles: string[]): boolean {
   return needles.some(n => haystack.includes(normalize(n)))
 }
 
-/** Le nom d'un élément apparaît-il dans la commande ? */
-function namedIn(input: string, name: string): boolean {
+/**
+ * Le nom d'un élément apparaît-il dans la commande ?
+ *
+ * Les mots vides viennent du pack : ils étaient français en dur, et « dans »
+ * ou « avec » ne filtrent rien dans une phrase anglaise — c'est « with » et
+ * « from » qu'il faut y écarter, sans quoi un nom composé les prendrait pour
+ * des mots pleins et matcherait n'importe quelle commande qui les contient.
+ */
+function namedIn(input: string, name: string, lang: LangCode): boolean {
+  const stopwords = pack(lang).input.stopwords.map(normalize)
   const words = normalize(name)
     .split(' ')
-    .filter(w => w.length > 3 && !['dans', 'avec', 'pour', 'leur', 'sous', 'cette'].includes(w))
+    .filter(w => w.length > 3 && !stopwords.includes(w))
   if (!words.length) return false
   return words.some(w => input.includes(w))
 }
@@ -62,37 +60,44 @@ function namedIn(input: string, name: string): boolean {
  */
 export function buildGuidance(
   scene: SceneTextResponse,
-  state: OracleState
+  state: OracleState,
+  lang: LangCode = DEFAULT_LANG,
 ): string {
+  const t = (key: string, vars?: Record<string, string>) => translate(lang, key, vars)
   const lines: string[] = []
-  lines.push(`Quête : ${scene.quest.title} — ${scene.quest.objective}`)
+  lines.push(t('oracle.quest', { title: scene.quest.title, objective: scene.quest.objective }))
 
   const item = scene.key_item
   if (item && !state.hasKeyItem) {
     const holder = scene.npcs.find(n => n.id === item.npc_id)
     const others = scene.npcs.filter(n => !state.talkedToNpcIds.includes(n.id))
-    lines.push("Il te manque quelque chose : personne ne sort d'ici sans.")
+    lines.push(t('oracle.missing'))
     if (others.length) {
-      lines.push(`Tu n'as pas encore parlé à : ${others.map(n => n.name).join(', ')}.`)
+      lines.push(t('oracle.not_talked', { names: others.map(n => n.name).join(', ') }))
     } else if (holder) {
-      lines.push(`${holder.name} en sait plus qu'il n'en dit.`)
+      lines.push(t('oracle.holder_knows', { name: holder.name }))
     }
   } else if (item) {
-    lines.push(`Tu tiens ${item.name}. ${item.why}`)
+    lines.push(t('oracle.holding', { item: item.name, why: item.why }))
     // Le tenir ne suffit pas là où on vient de le recevoir : la porte attend
     // qu'on s'en soit servi. Ne pas le dire ici enverrait le joueur vers un sas
     // qui le refuserait — voir le moment `sortie_sans_analyse`.
-    if (scene.grants_augmentation && !state.hasAnalysed && teaching(scene).length) {
-      lines.push(
-        "Sers-t'en avant de sortir : la loupe ouvre les noms brouillés du récit, "
-        + "et ce qu'ils disent vaut le détour.")
+    if (scene.grants_augmentation && !state.hasAnalysed && teaching(scene, lang).length) {
+      lines.push(t('oracle.use_lens'))
     } else {
-      lines.push(`Il ne te reste qu'à franchir ${scene.paywall.exit_keywords[0] ?? 'le sas'}.`)
+      // Le libellé de la sortie plutôt que le premier mot-clé : depuis que les
+      // mots-clés viennent du pack, le premier est un verbe générique
+      // (« sortir », « exit ») et non le nom de la porte de CETTE scène.
+      lines.push(t('oracle.just_exit', {
+        exit: scene.exit_label || scene.paywall.exit_keywords[0] || '',
+      }))
     }
   }
 
   if (scene.npcs.length) {
-    lines.push(`Ici ce soir : ${scene.npcs.map(n => `${n.name} (${n.archetype})`).join(' · ')}`)
+    lines.push(t('oracle.present', {
+      npcs: scene.npcs.map(n => `${n.name} (${n.archetype})`).join(' · '),
+    }))
   }
   return lines.join('\n')
 }
@@ -106,18 +111,23 @@ export function buildGuidance(
 export function resolveLocally(
   input: string,
   scene: SceneTextResponse,
-  state: OracleState
+  state: OracleState,
+  lang: LangCode = DEFAULT_LANG,
 ): LocalAnswer | null {
   const text = normalize(input)
+  // Les formulations viennent du pack : « what do I do » ne ressemble en rien
+  // à « je fais quoi », et une liste française n'aurait rien reconnu ailleurs —
+  // chaque « aide ? » serait alors reparti en génération, donc facturé.
+  const { guidance, look } = pack(lang).input
 
   // « Je fais quoi ? » — la réponse est entièrement dans la scène déjà générée.
-  if (containsAny(text, GUIDANCE_KEYWORDS)) {
-    return { text: buildGuidance(scene, state), kind: 'guidance' }
+  if (containsAny(text, guidance)) {
+    return { text: buildGuidance(scene, state, lang), kind: 'guidance' }
   }
 
   // Observation d'un élément de décor : sa description est déjà écrite.
-  if (containsAny(text, LOOK_KEYWORDS)) {
-    const element = scene.decor.find(dec => dec.name && namedIn(text, dec.name))
+  if (containsAny(text, look)) {
+    const element = scene.decor.find(dec => dec.name && namedIn(text, dec.name, lang))
     if (element?.description) {
       return { text: element.description, kind: 'decor' }
     }
@@ -125,8 +135,8 @@ export function resolveLocally(
 
   // Un personnage déjà interrogé qui redit ce qu'il sait : aucune nouveauté à
   // générer. Le premier échange, lui, passe par le modèle.
-  const npc = scene.npcs.find(n => namedIn(text, n.name))
-  if (npc && state.talkedToNpcIds.includes(npc.id) && containsAny(text, GUIDANCE_KEYWORDS)) {
+  const npc = scene.npcs.find(n => namedIn(text, n.name, lang))
+  if (npc && state.talkedToNpcIds.includes(npc.id) && containsAny(text, guidance)) {
     return { text: npc.knows, kind: 'npc_known', npcName: npc.name }
   }
 

@@ -1,5 +1,7 @@
 import { ScriptRuntime } from '~/utils/script-runtime'
 import { interpolate } from '~/utils/prompt-builder'
+import { requestLang } from '~/server/utils/lang'
+import { translate } from '~/utils/languages'
 
 /**
  * Le paywall sans scène chargée.
@@ -9,16 +11,17 @@ import { interpolate } from '~/utils/prompt-builder'
  * sert les textes du script avec des tournures neutres. Aucune génération,
  * aucun coût.
  */
-export default defineEventHandler(async () => {
-  const runtime = await ScriptRuntime.load()
+export default defineEventHandler(async (event) => {
+  const runtime = await ScriptRuntime.load(requestLang(event))
   const p = runtime.paywall
 
   // Sans quête générée, on remplace les variables par des tournures qui se
   // tiennent debout toutes seules.
+  const lang = requestLang(event)
   const vars = {
-    quest_title: 'votre aventure',
-    quest_artifact: 'ce que vous cherchez',
-    place_name: 'le comptoir',
+    quest_title: translate(lang, 'paywall.fallback_quest'),
+    quest_artifact: translate(lang, 'paywall.fallback_artifact'),
+    place_name: translate(lang, 'paywall.fallback_place'),
   }
 
   // Les tournures de repli sont en minuscule : elles conviennent en milieu de
