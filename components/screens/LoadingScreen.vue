@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 defineProps<{ message?: string }>()
 </script>
 
@@ -15,7 +17,7 @@ defineProps<{ message?: string }>()
     </div>
 
     <p class="font-display text-[11px] uppercase tracking-[0.32em] text-neon-400/85 text-center">
-      {{ message ?? 'Le destin tisse son fil' }}
+      {{ message ?? t('game.loading_default') }}
     </p>
   </div>
 </template>

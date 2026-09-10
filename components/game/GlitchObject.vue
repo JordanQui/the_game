@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { GLYPHS } from '~/utils/psychotest'
 
@@ -112,7 +114,7 @@ function onActivate() {
     ]"
     :tabindex="decrypted ? -1 : 0"
     :role="decrypted ? undefined : 'button'"
-    :aria-label="decrypted ? label : 'Objet scellé — analyse requise'"
+    :aria-label="decrypted ? label : t('game.sealed_object')"
     :data-glitch-object="decrypted ? undefined : id"
     :data-glitch-label="decrypted ? undefined : label"
     @mouseenter="onEnter"

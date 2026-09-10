@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 
@@ -66,7 +68,7 @@ function activate(o: { id: string; label: string; known: boolean; observation?: 
 <template>
   <div v-if="items.length" class="shrink-0 flex items-center gap-1.5 px-4 pb-1.5 flex-wrap">
     <span class="text-steel-400 text-[10px] uppercase tracking-[0.22em] font-display mr-0.5">
-      Sur toi
+      {{ t('game.inventory') }}
     </span>
 
     <span
@@ -124,10 +126,10 @@ function activate(o: { id: string; label: string; known: boolean; observation?: 
         v-if="facing"
         class="shrink-0 border-l border-current/25 px-1.5 py-1 text-[10px] uppercase
                tracking-[0.14em] font-display text-steel-400 hover:text-neon-300 transition-colors"
-        :title="`Donner à ${facing.name}`"
+        :title="t('game.give_to', { name: facing.name })"
         @click="emit('give', o.id)"
       >
-        Donner
+        {{ t('game.give') }}
       </button>
     </span>
   </div>

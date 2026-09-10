@@ -1,4 +1,5 @@
 import type { SceneTextResponse } from '~/types/scene'
+import type { LangCode } from '~/types/i18n'
 import type { UserProfile } from '~/types/user'
 import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { useGameStore } from '~/stores/game'
@@ -86,7 +87,7 @@ function currentFingerprint(): string {
  * appartient à un onglet. Le cookie disait « l'étage », l'onglet gardait
  * « l'auberge », et le joueur repartait du comptoir sans rien comprendre.
  */
-function readStoredScene(expectedId?: string): SceneTextResponse | null {
+function readStoredScene(expectedId?: string, lang?: LangCode): SceneTextResponse | null {
   try {
     const raw = memory()?.getItem(SCENE_KEY)
     if (!raw) return null
@@ -115,15 +116,25 @@ function readStoredScene(expectedId?: string): SceneTextResponse | null {
       forgetStoredScene()
       return null
     }
+
+    // La LANGUE a changé depuis. Une scène est écrite entière dans une langue —
+    // récit, personnages, objets, libellé de sortie — et rien dans son contenu
+    // ne permet de la reconnaître après coup. Sans ce contrôle, choisir une
+    // autre langue puis recharger reservait la scène d'avant, dans l'ancienne :
+    // le joueur voyait l'habillage changer et le jeu, lui, ne pas suivre.
+    if (lang && stored.lang && stored.lang !== lang) {
+      forgetStoredScene()
+      return null
+    }
     return stored
   } catch {
     return null
   }
 }
 
-function storeScene(scene: SceneTextResponse): void {
+function storeScene(scene: SceneTextResponse, lang: LangCode): void {
   try {
-    memory()?.setItem(SCENE_KEY, JSON.stringify({ ...scene, build_id: currentBuild() }))
+    memory()?.setItem(SCENE_KEY, JSON.stringify({ ...scene, build_id: currentBuild(), lang }))
   } catch {
     // Stockage plein ou refusé : on régénérera, c'est tout.
   }
@@ -320,7 +331,7 @@ export function useScene() {
     }
 
     // Rechargement de page : la scène est déjà là, on la repose telle quelle.
-    const stored = wantsFresh() ? null : readStoredScene(sceneId)
+    const stored = wantsFresh() ? null : readStoredScene(sceneId, playerStore.language)
     if (stored) {
       scene.value = stored
       // Un rechargement de page repart d'une racine CSS neuve : sans ceci, la
@@ -352,7 +363,7 @@ export function useScene() {
       scene.value = res
       // L'habillage prend les couleurs de la scène, si elle le demande.
       interfacePalette.applyScene(res)
-      storeScene(res)
+      storeScene(res, playerStore.language)
       gameStore.syncAugmentation(res.scene_id, res.grants_augmentation)
       saveCarry()
       playerStore.setScene(res)

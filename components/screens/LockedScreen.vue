@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 
 /**
@@ -45,8 +47,10 @@ const remaining = computed(() => {
   const ms = Math.max(0, until - now.value)
   const hours = Math.floor(ms / 3600_000)
   const minutes = Math.floor((ms % 3600_000) / 60_000)
-  if (hours >= 1) return `${hours} h ${String(minutes).padStart(2, '0')}`
-  return `${minutes} min`
+  if (hours >= 1) {
+    return t('locked.remaining_hours', { hours, minutes: String(minutes).padStart(2, '0') })
+  }
+  return t('locked.remaining_minutes', { minutes })
 })
 </script>
 
@@ -54,7 +58,7 @@ const remaining = computed(() => {
   <div class="min-h-[100dvh] flex items-center justify-center px-6 py-12 bg-ink-900">
     <div class="w-full max-w-md space-y-8 text-center">
       <p class="text-neon-400/80 font-display uppercase text-[10px] tracking-[0.32em]">
-        {{ definitive ? 'Fin de la nuit' : 'Recalibrage' }}
+        {{ definitive ? t('locked.eyebrow_end') : t('locked.eyebrow_recalibrating') }}
       </p>
 
       <div class="neon-rule w-20 mx-auto" />
@@ -80,10 +84,10 @@ const remaining = computed(() => {
         v-if="!definitive"
         class="text-steel-400 font-display uppercase text-[11px] tracking-[0.18em]"
       >
-        Réouverture dans {{ remaining }}
+        {{ t('locked.reopen_in', { remaining }) }}
       </p>
       <p v-else class="text-steel-400 font-display uppercase text-[11px] tracking-[0.18em]">
-        Toute bonne chose a une fin
+        {{ t('locked.the_end') }}
       </p>
 
       <button
@@ -91,7 +95,7 @@ const remaining = computed(() => {
         class="text-steel-400/60 underline text-[11px] tracking-wide"
         @click="reopen"
       >
-        Lever le verrou (développement)
+        {{ t('locked.dev_unlock') }}
       </button>
     </div>
   </div>

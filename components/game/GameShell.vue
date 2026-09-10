@@ -1,10 +1,13 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
 import { analyzables, isTakeable } from '~/utils/interactables'
+import { pack } from '~/utils/languages'
 import { normalize } from '~/utils/text-match'
 
 const gameStore = useGameStore()
@@ -20,6 +23,14 @@ const { play } = useStorylets()
  * par là que passe la progression. Il peut toujours replier pour lire.
  */
 const showNpcs = ref(true)
+
+/** Les articles à retirer d'un nom, normalisés une fois pour toutes. */
+const articles = computed(() => pack(playerStore.language).input.articles
+  .map(a => normalize(a))
+  .filter(Boolean)
+  // Les plus longs d'abord : « de la » avant « de », sinon « de » gagne et
+  // laisse « la » collé au nom.
+  .sort((a, b) => b.length - a.length))
 
 /**
  * L'objet qui vient d'arriver dans la conversation, et qu'on peut prendre.
@@ -46,10 +57,15 @@ const justAppeared = computed(() => {
   return scene.interactables.find((obj) => {
     // Même règle que pour le chiffrement du texte : ce qui se ramasse et ce qui
     // se déchiffre sont la même liste.
-    if (!isTakeable(obj)) return false
+    if (!isTakeable(obj, playerStore.language)) return false
     if (gameStore.inventory.some(o => o.id === obj.id)) return false
 
-    const label = normalize(obj.label).replace(/^(l['’]|le |la |les |un |une |des )/, '')
+    // L'article se retire avec la liste de la langue jouée : « le Sas » se
+    // cherche par « sas », « the Airlock » par « airlock », et le russe n'a
+    // rien à retirer. La liste française en dur ne trouvait rien ailleurs.
+    const label = articles.value.reduce(
+      (name, article) => name.startsWith(article) ? name.slice(article.length).trim() : name,
+      normalize(obj.label))
     if (label.length < 3) return false
     if (excluded.some(n => label.includes(n) || n.includes(label))) return false
 
@@ -72,7 +88,7 @@ function pickUp(obj: { id: string; label: string }) {
     kind: 'lore',
     observation: observationFor(obj.id),
   })
-  gameStore.addNarrativeEntry('system', `Tu ramasses ${obj.label}.`)
+  gameStore.addNarrativeEntry('system', t('game.pickup', { label: obj.label }))
 }
 
 /**
@@ -251,7 +267,8 @@ function retryImage() {
       <PickupPrompt
         v-if="justAppeared"
         :label="justAppeared.label"
-        action="Ramasser"
+        :action="t('game.action_pickup')"
+        :slide-label="t('game.slide_pickup')"
         @confirm="pickUp(justAppeared)"
       />
     </Transition>
@@ -263,8 +280,9 @@ function retryImage() {
     <Transition name="slide">
       <PickupPrompt
         v-if="gameStore.pendingKeyItem && playerStore.scene?.key_item"
-        :label="`${playerStore.scene.key_item.name} t'est tendu.`"
-        action="Récupérer"
+        :label="t('game.offered_to_you', { item: playerStore.scene.key_item.name })"
+        :action="t('game.action_collect')"
+        :slide-label="t('game.slide_collect')"
         offered
         @confirm="collectItem"
       />
@@ -283,11 +301,11 @@ function retryImage() {
           class="shrink-0 text-neon-400 hover:text-neon-300 text-xs uppercase tracking-wider border border-neon-700/60 px-3 py-1.5 transition-colors"
           @click="retryLastTurn"
         >
-          Réessayer
+          {{ t('common.retry') }}
         </button>
         <button
           class="shrink-0 text-ink-400 hover:text-parchment/60 text-lg leading-none px-1 transition-colors"
-          aria-label="Ignorer"
+          :aria-label="t('common.ignore')"
           @click="gameStore.clearTurnError()"
         >
           ×

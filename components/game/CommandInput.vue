@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 const props = defineProps<{ disabled?: boolean }>()
@@ -54,10 +56,10 @@ onMounted(() => {
       class="shrink-0 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider
              text-neon-300 border border-neon-600/50 px-2 py-0.5 hover:border-neon-400
              hover:text-neon-200 transition-colors"
-      title="Tu lui parles — clique pour te détourner (Échap)"
+      :title="t('game.facing_hint')"
       @click="gameStore.leaveConversation()"
     >
-      <span>à {{ facing.name }}</span>
+      <span>{{ t('game.facing', { name: facing.name }) }}</span>
       <span class="text-neon-600/70">&#215;</span>
     </button>
     <input
@@ -68,7 +70,7 @@ onMounted(() => {
       type="text"
       :disabled="disabled"
       class="command-prompt flex-1 text-base sm:text-sm placeholder-ink-500 disabled:opacity-40"
-      :placeholder="facing ? `Tu réponds à ${facing.name}…` : 'Que fais-tu ?'"
+      :placeholder="facing ? t('game.replying_to', { name: facing.name }) : t('game.input_ph')"
       enterkeyhint="send"
       autocomplete="off"
       autocorrect="off"

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { usePlayerStore } from '~/stores/player'
 import { puzzleFor } from '~/utils/psychotest'
 
@@ -56,10 +58,10 @@ function choose(index: number) {
 
       <div class="space-y-2 text-center">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display">
-          Analyse en cours
+          {{ t('game.analysis') }}
         </p>
         <p class="text-steel-400 text-[11px] leading-relaxed">
-          Trouve le signe qui vient après.
+          {{ t('game.psycho_prompt') }}
         </p>
       </div>
 

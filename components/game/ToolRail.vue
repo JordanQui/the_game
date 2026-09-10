@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 
@@ -22,8 +24,8 @@ const lensLabel = computed(() => playerStore.scene?.key_item?.name ?? 'Analyse')
       class="p-1.5 -my-0.5 transition-colors"
       :class="gameStore.activeTool === 'eye' ? 'text-neon-400' : 'text-steel-400 hover:text-neon-600'"
       :aria-pressed="gameStore.activeTool === 'eye'"
-      aria-label="Œil : déchiffrer les identités"
-      title="Œil — déchiffrer les identités"
+      :aria-label="t('game.eye_tooltip')"
+      :title="t('game.eye_label')"
       @click="gameStore.setTool('eye')"
     >
       <svg viewBox="0 0 24 16" class="w-6 h-4" fill="none" stroke="currentColor" stroke-width="1.4">

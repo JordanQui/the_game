@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { LANG_CODES } from '~/types/i18n'
+import { pack, translate } from '~/utils/languages'
+
 /**
  * Ce que le jeu dit de lui aux moteurs et aux réseaux.
  *
@@ -13,6 +16,7 @@
 // porte le domaine public. Sans lui, une préproduction s'annoncerait sous son
 // nom interne.
 const { origin } = useRequestURL({ xForwardedHost: true })
+const { lang } = useLang()
 const price = useRuntimeConfig().public.paywallPrice as { amount: number; currency: string }
 
 const NAME = 'La Nuit du Bout du Monde'
@@ -36,7 +40,9 @@ const jsonLd = {
       '@id': `${origin}/#jeu`,
       name: NAME,
       url: `${origin}/`,
-      inLanguage: 'fr',
+      // Les douze langues jouables, pas seulement celle de cette visite : la
+      // page est la même pour tout le monde, c'est le jeu qui change de langue.
+      inLanguage: LANG_CODES,
       description:
         "Un jeu de rôle textuel en français. Le joueur déclare qui il est dans un "
         + "formulaire d'admission, et la ville qu'il traverse — ses lieux, ses habitants, "
@@ -71,6 +77,19 @@ const jsonLd = {
 }
 
 useHead({
+  /**
+   * Le titre de l'onglet suit la langue jouée.
+   *
+   * `nuxt.config.ts` en pose un par défaut, en français : c'est celui que voit
+   * un robot d'indexation, qui n'a pas de cookie et arrive donc sur la version
+   * canonique. Un VISITEUR, lui, en a un — ou un en-tête `Accept-Language` —
+   * et mérite de retrouver son onglet dans sa langue.
+   */
+  title: computed(() => translate(lang.value, 'seo.title')),
+  // La balise `lang` suit le joueur : elle décide de la coupure des mots, de
+  // la voix de synthèse et de ce qu'un lecteur d'écran prononce. La laisser à
+  // « fr » aurait fait lire un texte anglais avec un accent français.
+  htmlAttrs: { lang: computed(() => pack(lang.value).tag) },
   link: [{ rel: 'canonical', href: `${origin}/` }],
   meta: [
     { property: 'og:url', content: `${origin}/` },

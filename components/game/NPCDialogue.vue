@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import type { SceneNPC } from '~/types/scene'
 
 defineProps<{ npc: SceneNPC; talked?: boolean }>()
@@ -38,14 +40,14 @@ defineProps<{ npc: SceneNPC; talked?: boolean }>()
         <span
           v-else
           class="font-mono text-[0.95em] text-steel-500 select-none"
-          title="Identité inconnue — parle-lui d'abord"
+          :title="t('game.unknown_identity')"
         >— — — —</span>
 
         <!-- Puce pleine : tu lui as déjà parlé -->
         <span
           class="w-1.5 h-1.5 shrink-0"
           :class="talked ? 'bg-neon-500' : 'bg-steel-600'"
-          :title="talked ? 'Déjà interrogé' : 'Pas encore interrogé'"
+          :title="talked ? t('game.already_asked') : t('game.not_asked_yet')"
         />
       </p>
       <p class="text-ink-300 text-xs">{{ npc.archetype }}</p>

@@ -11,13 +11,22 @@
  * doigt. Au bas d'un écran tenu à une main, un bouton se touche par accident ;
  * il faut traverser pour prendre, comme on décroche un appel.
  */
-withDefaults(defineProps<{
+defineProps<{
   label: string
-  /** Ce que le geste confirme. Court : il tient sur la glissière. */
-  action?: string
+  /** Ce que le geste confirme, sur le bouton. Court. */
+  action: string
+  /**
+   * Ce que dit la glissière, EN ENTIER.
+   *
+   * Elle disait « Glisse pour » + le verbe du bouton mis en minuscules. La
+   * recette ne survit pas au voyage : l'allemand capitalise ses noms, le turc
+   * et le vietnamien ne placent pas le verbe au même endroit. Chaque langue
+   * écrit donc la phrase entière, et le composant se contente de l'afficher.
+   */
+  slideLabel: string
   /** L'objet est TENDU par quelqu'un, pas trouvé : le bandeau s'allume. */
   offered?: boolean
-}>(), { action: 'Ramasser', offered: false })
+}>()
 
 defineEmits<{ confirm: [] }>()
 
@@ -62,7 +71,7 @@ const usesTouch = computed(() =>
 
     <SlideToConfirm
       v-if="usesTouch"
-      :label="`Glisse pour ${action.toLowerCase()}`"
+      :label="slideLabel"
       @confirm="$emit('confirm')"
     />
   </div>

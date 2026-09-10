@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useNameChime } from '~/composables/useNameChime'
@@ -113,7 +115,7 @@ function onTouch() {
     :data-archetype="assigned.voice.key"
     :tabindex="known ? -1 : 0"
     :role="known ? undefined : 'button'"
-    :aria-label="known || revealed ? name : 'Identité chiffrée'"
+    :aria-label="known || revealed ? name : t('game.encrypted_identity')"
     @mouseenter="onEnter"
     @mouseleave="onLeave"
     @focus="onEnter"

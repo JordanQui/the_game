@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 const props = defineProps<{
   src: string | null
   loading?: boolean
@@ -49,7 +51,7 @@ const message = computed(() => {
         class="relative z-10 text-neon-500/80 hover:text-neon-300 text-[11px] uppercase tracking-wider border border-neon-700/50 px-3 py-1 transition-colors"
         @click="$emit('retry')"
       >
-        Réessayer
+        {{ t('common.retry') }}
       </button>
     </div>
 
@@ -57,7 +59,7 @@ const message = computed(() => {
       <img
         v-if="src"
         :src="src"
-        alt="Illustration de la scène"
+        :alt="t('game.scene_alt')"
         class="w-full h-full object-cover object-center"
       />
     </Transition>

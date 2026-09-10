@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
-import {
-  emptyAdmissionForm,
-  profileFromAdmission,
-  AGREEMENT_CHOICES,
-  PASSION_EXAMPLES,
-} from '~/utils/admission'
+import { emptyAdmissionForm, profileFromAdmission } from '~/utils/admission'
+import type { UserAgreement } from '~/types/user'
+import type { LangCode } from '~/types/i18n'
 
 /**
  * Le formulaire d'admission.
@@ -20,26 +17,64 @@ import {
  * obligatoire — le nom et la date fondent le signe et les nombres, tout le
  * reste enrichit sans jamais bloquer l'entrée.
  *
- * TOUT SE TAPE, sauf l'accord grammatical. Les grilles de touches ont été
- * retirées : une touche rend au générateur un vocabulaire qu'il a lui-même
- * écrit, et deux joueurs qui cochent la même case traversent la même nuit. Ce
- * que le joueur tape, personne d'autre ne l'a tapé. Les listes d'avant
+ * TOUT SE TAPE, sauf l'accord grammatical et la langue. Les grilles de touches
+ * ont été retirées : une touche rend au générateur un vocabulaire qu'il a
+ * lui-même écrit, et deux joueurs qui cochent la même case traversent la même
+ * nuit. Ce que le joueur tape, personne d'autre ne l'a tapé. Les listes d'avant
  * survivent en EXEMPLES sous les champs — elles amorcent, elles ne répondent
  * pas.
+ *
+ * LA LANGUE EST EN TÊTE, hors des étapes, et elle agit tout de suite : la
+ * choisir retourne le formulaire lui-même. On ne fait pas remplir vingt lignes
+ * dans une langue pour jouer dans une autre, et il faut que le joueur voie
+ * immédiatement ce qu'il vient de choisir — c'est la seule démonstration
+ * honnête de ce qui l'attend.
  */
 const playerStore = usePlayerStore()
 const gameStore = useGameStore()
+const { lang, setLang, t, languages } = useLang()
 
-const form = reactive(emptyAdmissionForm())
+const form = reactive(emptyAdmissionForm(lang.value))
 
-const STEPS = [
-  { title: 'Identité', legend: 'Le bureau consigne qui se présente.' },
-  { title: 'Origine', legend: 'D\'où vous venez, où vous dormez.' },
-  { title: 'Attaches', legend: 'Ce à quoi vous tenez, hors service.' },
-  { title: 'Bascules', legend: 'Les fois où votre vie a changé de rue.' },
-  { title: 'Empreintes', legend: 'Quatre détails. La nuit les remettra devant vous.' },
-  { title: 'Nuits', legend: 'Le service consigne l\'emploi de vos nuits.' },
-]
+/**
+ * Le cookie et le dossier disent la même chose, toujours.
+ *
+ * Le cookie habille l'écran (et le rendu serveur), le dossier décide de la
+ * génération. Les écrire séparément aurait fini par les faire diverger : un
+ * joueur qui change de langue puis dépose son dossier aurait joué dans l'une
+ * et lu l'interface dans l'autre.
+ */
+function chooseLang(code: LangCode) {
+  form.language = code
+  setLang(code)
+}
+
+/** Les six étapes, titres et légendes pris au pack de langue. */
+const STEPS = computed(() => [1, 2, 3, 4, 5, 6].map(n => ({
+  title: t(`admission.step${n}_title`),
+  legend: t(`admission.step${n}_legend`),
+})))
+
+/**
+ * L'accord, proposé en trois touches.
+ *
+ * Ce n'est pas une question d'identité : c'est une question de grammaire — le
+ * jeu narre à la deuxième personne et doit savoir accorder. L'exemple change
+ * complètement d'une langue à l'autre : « tu es entrée » en français, une
+ * forme d'adresse en turc, un pronom en anglais. C'est le pack qui le dit.
+ */
+const AGREEMENTS: UserAgreement[] = ['masculin', 'feminin', 'neutre']
+const agreementChoices = computed(() => AGREEMENTS.map(value => ({
+  value,
+  label: t(`admission.agreement_${value}`),
+  example: t(`admission.agreement_ex_${value}`),
+})))
+
+/** Les amorces des trois lignes de passions. Elles n'entrent jamais au dossier. */
+const passionFields = computed(() => [1, 2, 3].map(n => ({
+  label: t(`admission.passion${n}`),
+  placeholder: t(`admission.passion_ph${n}`),
+})))
 
 const step = ref(0)
 /** `form` tant qu'on remplit, `verdict` une fois le dossier déposé. */
@@ -63,7 +98,7 @@ function onEnter(event: KeyboardEvent) {
 
 function next() {
   if (!canAdvance.value) return
-  if (step.value < STEPS.length - 1) step.value++
+  if (step.value < STEPS.value.length - 1) step.value++
   else submit()
 }
 
@@ -102,8 +137,8 @@ const fileNumber = computed(() => {
   return String(4200 + (seed % 5700)).padStart(4, '0')
 })
 
-const displayName = computed(() => fullName.value || 'Sans-nom')
-const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous la pluie')
+const displayName = computed(() => fullName.value || t('admission.unnamed'))
+const displayCity = computed(() => form.currentCity.trim() || t('admission.somewhere'))
 </script>
 
 <template>
@@ -119,13 +154,30 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
       <template v-if="phase === 'form'">
         <div class="text-center space-y-3 mb-8">
           <p class="text-steel-400 text-[10px] uppercase tracking-[0.4em] font-display">
-            Bureau des entrées — secteur 7
+            {{ t('admission.eyebrow') }}
           </p>
           <h1 class="neon-text font-display uppercase text-2xl sm:text-[1.9rem] tracking-[0.06em] leading-tight">
-            Formulaire<br>d'admission
+            {{ t('admission.title_line1') }}<br>{{ t('admission.title_line2') }}
           </h1>
           <div class="neon-rule w-28 mx-auto" />
         </div>
+
+        <!--
+          LA LANGUE, hors des étapes et au-dessus d'elles. Elle ne fait pas
+          partie du dossier qu'on remplit : elle décide de la langue dans
+          laquelle on le remplit, et la choisir retourne l'écran à l'instant.
+        -->
+        <label class="block space-y-2 mb-6">
+          <span class="field-label">{{ t('lang.label') }}</span>
+          <select
+            class="field field-select"
+            :value="form.language"
+            @change="chooseLang(($event.target as HTMLSelectElement).value as LangCode)"
+          >
+            <option v-for="l in languages" :key="l.code" :value="l.code">{{ l.endonym }}</option>
+          </select>
+          <span class="field-hint">{{ t('lang.hint') }}</span>
+        </label>
 
         <!-- Avancement : un cran par étape, le cran courant seul est allumé -->
         <div class="flex items-center gap-1.5 mb-6">
@@ -145,7 +197,7 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
 
           <div class="relative space-y-1">
             <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display">
-              Étape {{ step + 1 }} / {{ STEPS.length }} — {{ STEPS[step].title }}
+              {{ t('admission.step', { current: step + 1, total: STEPS.length, title: STEPS[step].title }) }}
             </p>
             <p class="text-steel-400 text-[11px] leading-relaxed">{{ STEPS[step].legend }}</p>
           </div>
@@ -158,26 +210,26 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           <div v-if="step === 0" class="relative space-y-5">
             <div class="grid grid-cols-2 gap-3">
               <label class="block space-y-2">
-                <span class="field-label">Prénom</span>
-                <input v-model="form.firstName" type="text" class="field" placeholder="celui qu'on vous crie" autocomplete="given-name">
+                <span class="field-label">{{ t('admission.first_name') }}</span>
+                <input v-model="form.firstName" type="text" class="field" :placeholder="t('admission.first_name_ph')" autocomplete="given-name">
               </label>
               <label class="block space-y-2">
-                <span class="field-label">Nom</span>
-                <input v-model="form.lastName" type="text" class="field" placeholder="celui qu'on vous a laissé" autocomplete="family-name">
+                <span class="field-label">{{ t('admission.last_name') }}</span>
+                <input v-model="form.lastName" type="text" class="field" :placeholder="t('admission.last_name_ph')" autocomplete="family-name">
               </label>
             </div>
 
             <label class="block space-y-2">
-              <span class="field-label">Date de naissance</span>
+              <span class="field-label">{{ t('admission.birthday') }}</span>
               <input v-model="form.birthday" type="date" class="field" max="2020-12-31">
-              <span class="field-hint">Le bureau vérifie le jour, l'heure ne l'intéresse pas.</span>
+              <span class="field-hint">{{ t('admission.birthday_hint') }}</span>
             </label>
 
             <div class="space-y-2">
-              <span class="field-label">Accord</span>
+              <span class="field-label">{{ t('admission.agreement') }}</span>
               <div class="flex flex-wrap gap-2">
                 <button
-                  v-for="choice in AGREEMENT_CHOICES"
+                  v-for="choice in agreementChoices"
                   :key="choice.value"
                   type="button"
                   class="chip"
@@ -188,7 +240,9 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
                 </button>
               </div>
               <span class="field-hint">
-                On vous écrira « {{ AGREEMENT_CHOICES.find(c => c.value === form.agreement)?.example }} ».
+                {{ t('admission.agreement_hint', {
+                  example: agreementChoices.find(c => c.value === form.agreement)?.example ?? '',
+                }) }}
               </span>
             </div>
           </div>
@@ -196,22 +250,20 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           <!-- 2. ORIGINE -->
           <div v-else-if="step === 1" class="relative space-y-5">
             <label class="block space-y-2">
-              <span class="field-label">Ville d'origine</span>
-              <input v-model="form.hometown" type="text" class="field" placeholder="celle où vous êtes né">
+              <span class="field-label">{{ t('admission.hometown') }}</span>
+              <input v-model="form.hometown" type="text" class="field" :placeholder="t('admission.hometown_ph')">
             </label>
             <label class="block space-y-2">
-              <span class="field-label">Ville actuelle</span>
-              <input v-model="form.currentCity" type="text" class="field" placeholder="celle où vous rentrez le soir">
-              <span class="field-hint">La ville de la nuit s'y accrochera : rues, pluie, habitudes.</span>
+              <span class="field-label">{{ t('admission.current_city') }}</span>
+              <input v-model="form.currentCity" type="text" class="field" :placeholder="t('admission.current_city_ph')">
+              <span class="field-hint">{{ t('admission.current_city_hint') }}</span>
             </label>
           </div>
 
           <!-- 3. PASSIONS -->
           <div v-else-if="step === 2" class="relative space-y-4">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
-              Trois lignes, et l'ordre compte : la première pèse le plus lourd
-              dans votre nuit. Écrivez-les comme vous les diriez — un objet, un
-              lieu, une heure valent mieux qu'une catégorie.
+              {{ t('admission.passions_intro') }}
             </p>
             <!--
               Trois lignes libres, et plus une seule touche : « musique et
@@ -220,15 +272,13 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
               placeholders — ils amorcent, ils ne répondent pas.
             -->
             <div class="space-y-4">
-              <label v-for="(example, i) in PASSION_EXAMPLES" :key="i" class="block space-y-2">
-                <span class="field-label">
-                  {{ ['Ce à quoi vous tenez le plus', 'Ensuite', 'Et encore'][i] }}
-                </span>
+              <label v-for="(field, i) in passionFields" :key="i" class="block space-y-2">
+                <span class="field-label">{{ field.label }}</span>
                 <input
                   v-model="form.passions[i]"
                   type="text"
                   class="field"
-                  :placeholder="example"
+                  :placeholder="field.placeholder"
                 >
               </label>
             </div>
@@ -243,33 +293,29 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
             -->
             <div class="grid grid-cols-2 gap-3">
               <label class="block space-y-2">
-                <span class="field-label">Un morceau</span>
-                <input v-model="form.anthemTitle" type="text" class="field" placeholder="celui que vous remettez">
+                <span class="field-label">{{ t('admission.anthem_title') }}</span>
+                <input v-model="form.anthemTitle" type="text" class="field" :placeholder="t('admission.anthem_title_ph')">
               </label>
               <label class="block space-y-2">
-                <span class="field-label">Qui le joue</span>
-                <input v-model="form.anthemArtist" type="text" class="field" placeholder="si vous savez">
+                <span class="field-label">{{ t('admission.anthem_artist') }}</span>
+                <input v-model="form.anthemArtist" type="text" class="field" :placeholder="t('admission.anthem_artist_ph')">
               </label>
             </div>
-            <span class="field-hint">
-              On ne le citera pas. On s'en servira pour ce qu'on entend derrière une porte.
-            </span>
+            <span class="field-hint">{{ t('admission.anthem_hint') }}</span>
           </div>
 
           <!-- 4. TOURNANTS -->
           <div v-else-if="step === 3" class="relative space-y-5">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
-              Facultatif, mais c'est ce qui donne à la nuit de quoi vous
-              reconnaître. Une ligne suffit : un départ, une rupture, un métier
-              lâché, une ville quittée.
+              {{ t('admission.turning_intro') }}
             </p>
             <label class="block space-y-2">
-              <span class="field-label">Première bascule</span>
-              <input v-model="form.turningPoints[0]" type="text" class="field" placeholder="ce qui a tout déplacé">
+              <span class="field-label">{{ t('admission.turning1') }}</span>
+              <input v-model="form.turningPoints[0]" type="text" class="field" :placeholder="t('admission.turning1_ph')">
             </label>
             <label class="block space-y-2">
-              <span class="field-label">Seconde bascule</span>
-              <input v-model="form.turningPoints[1]" type="text" class="field" placeholder="et celle d'après">
+              <span class="field-label">{{ t('admission.turning2') }}</span>
+              <input v-model="form.turningPoints[1]" type="text" class="field" :placeholder="t('admission.turning2_ph')">
             </label>
           </div>
 
@@ -281,20 +327,22 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           -->
           <div v-else-if="step === 4" class="relative space-y-5">
             <label class="block space-y-2">
-              <span class="field-label">Un objet auquel vous tenez</span>
-              <input v-model="form.keepsake" type="text" class="field" placeholder="celui que vous ne jetterez pas">
+              <span class="field-label">{{ t('admission.keepsake') }}</span>
+              <input v-model="form.keepsake" type="text" class="field" :placeholder="t('admission.keepsake_ph')">
             </label>
             <label class="block space-y-2">
-              <span class="field-label">Où vous allez quand ça ne va pas</span>
-              <input v-model="form.refuge" type="text" class="field" placeholder="un bar, un quai, une chambre">
+              <span class="field-label">{{ t('admission.refuge') }}</span>
+              <input v-model="form.refuge" type="text" class="field" :placeholder="t('admission.refuge_ph')">
             </label>
             <label class="block space-y-2">
-              <span class="field-label">Quelqu'un qui compte <span class="text-steel-500">— prénom seul</span></span>
-              <input v-model="form.ally" type="text" class="field" placeholder="on ne vous demandera rien de plus">
+              <span class="field-label">
+                {{ t('admission.ally') }} <span class="text-steel-500">{{ t('admission.ally_note') }}</span>
+              </span>
+              <input v-model="form.ally" type="text" class="field" :placeholder="t('admission.ally_ph')">
             </label>
             <label class="block space-y-2">
-              <span class="field-label">Ce que vous ne supportez pas</span>
-              <input v-model="form.aversion" type="text" class="field" placeholder="la nuit s'en servira">
+              <span class="field-label">{{ t('admission.aversion') }}</span>
+              <input v-model="form.aversion" type="text" class="field" :placeholder="t('admission.aversion_ph')">
             </label>
           </div>
 
@@ -312,37 +360,29 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           -->
           <div v-else class="relative space-y-5">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
-              Tout le monde en a. Ce sont celles passées dehors qui nous
-              intéressent : il n'y a pas de mauvaise réponse, seulement des
-              heures non déclarées.
+              {{ t('admission.nights_intro') }}
             </p>
 
             <label class="block space-y-2">
-              <span class="field-label">Les nuits où vous ne dormez pas</span>
+              <span class="field-label">{{ t('admission.awake') }}</span>
               <textarea
                 v-model="form.awakeNote"
                 rows="2"
                 class="field field-multi"
-                placeholder="à trois heures, vous êtes où, et vous faites quoi"
+                :placeholder="t('admission.awake_ph')"
               />
-              <span class="field-hint">
-                Dehors, de préférence : un quai, un dernier bar, un retour à
-                pied. Un plafond de chambre ne donne rien à fabriquer à la ville.
-              </span>
+              <span class="field-hint">{{ t('admission.awake_hint') }}</span>
             </label>
 
             <label class="block space-y-2">
-              <span class="field-label">Le rêve qui revient</span>
+              <span class="field-label">{{ t('admission.dream') }}</span>
               <textarea
                 v-model="form.dreamNote"
                 rows="2"
                 class="field field-multi"
-                placeholder="celui que vous refaites, pas le dernier en date"
+                :placeholder="t('admission.dream_ph')"
               />
-              <span class="field-hint">
-                Celui qui REVIENT : la nuit pourra le reposer devant vous sans
-                que ça se répète. Si aucun ne revient, laissez la ligne vide.
-              </span>
+              <span class="field-hint">{{ t('admission.dream_hint') }}</span>
             </label>
           </div>
 
@@ -354,15 +394,15 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
                      hover:text-ink-200 transition-colors py-2"
               @click="step === 0 ? cancel() : back()"
             >
-              {{ step === 0 ? 'Retour' : 'Précédent' }}
+              {{ step === 0 ? t('common.back') : t('common.previous') }}
             </button>
             <GlowButton :disabled="!canAdvance" @click="next">
-              {{ step === STEPS.length - 1 ? 'Déposer le dossier' : 'Suivant' }}
+              {{ step === STEPS.length - 1 ? t('admission.submit') : t('common.next') }}
             </GlowButton>
           </div>
 
           <p v-if="step === 0 && !canAdvance" class="relative field-hint text-center">
-            Prénom et date de naissance sont exigés. Le reste, non.
+            {{ t('admission.required_hint') }}
           </p>
         </div>
       </template>
@@ -376,10 +416,10 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
       <template v-else>
         <div class="text-center space-y-3 mb-8">
           <p class="text-steel-400 text-[10px] uppercase tracking-[0.4em] font-display">
-            Commission de nuit — dossier n° {{ fileNumber }}
+            {{ t('verdict.eyebrow', { number: fileNumber }) }}
           </p>
           <h1 class="neon-text animate-neon-buzz font-display uppercase text-[2.4rem] tracking-[0.1em] leading-none">
-            Admis
+            {{ t('verdict.title') }}
           </h1>
           <div class="neon-rule w-28 mx-auto" />
         </div>
@@ -388,47 +428,37 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
           <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
 
           <div class="relative grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5">
-            <span class="field-label pt-0.5">Nom</span>
+            <span class="field-label pt-0.5">{{ t('verdict.field_name') }}</span>
             <span class="text-ink-100 text-[13px]">{{ displayName }}</span>
-            <span class="field-label pt-0.5">Domicile</span>
+            <span class="field-label pt-0.5">{{ t('verdict.field_home') }}</span>
             <span class="text-ink-100 text-[13px]">{{ displayCity }}</span>
-            <span class="field-label pt-0.5">Statut</span>
-            <span class="text-neon-400 text-[13px] font-display uppercase tracking-[0.2em]">Retenu</span>
-            <span class="field-label pt-0.5">Validité</span>
-            <span class="text-ink-100 text-[13px]">Une nuit, jusqu'au lever du jour</span>
+            <span class="field-label pt-0.5">{{ t('verdict.field_status') }}</span>
+            <span class="text-neon-400 text-[13px] font-display uppercase tracking-[0.2em]">{{ t('verdict.status_value') }}</span>
+            <span class="field-label pt-0.5">{{ t('verdict.field_validity') }}</span>
+            <span class="text-ink-100 text-[13px]">{{ t('verdict.validity_value') }}</span>
           </div>
 
           <div class="relative h-px bg-neon-600/25" />
 
           <div class="relative space-y-4 text-ink-200/85 text-[13px] leading-relaxed">
+            <p>{{ t('verdict.p1') }}</p>
+            <p>{{ t('verdict.p2') }}</p>
             <p>
-              Votre dossier est passé devant la commission de nuit. Onze mille
-              candidatures cette semaine ; quatorze retenues. La vôtre en fait
-              partie.
-            </p>
-            <p>
-              Ce n'est pas le hasard : la ville ne laisse entrer que ceux dont
-              le nom sonne juste. Le vôtre a été pesé, vérifié, accepté. Ce que
-              vous avez déclaré ici, la nuit s'en servira — vos villes, vos
-              attaches, ce que vous avez quitté, et l'emploi de vos nuits.
-            </p>
-            <p>
-              <strong class="text-ink-100 font-normal">Un droit de passage temporaire vous est accordé.</strong>
-              Présentez-vous à l'auberge du Bout du Monde. On vous y attend
-              déjà, et la pluie ne va pas s'arrêter.
+              <strong class="text-ink-100 font-normal">{{ t('verdict.p3_strong') }}</strong>
+              {{ t('verdict.p3_rest') }}
             </p>
           </div>
 
           <div class="relative h-px bg-neon-600/25" />
 
           <div class="relative flex flex-col items-center gap-4">
-            <GlowButton class="w-full" @click="enterCity">Entrer dans la nuit</GlowButton>
+            <GlowButton class="w-full" @click="enterCity">{{ t('verdict.enter') }}</GlowButton>
             <button
               class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400
                      hover:text-ink-200 transition-colors"
               @click="phase = 'form'"
             >
-              Corriger le dossier
+              {{ t('verdict.correct') }}
             </button>
           </div>
         </div>
@@ -497,6 +527,29 @@ const displayCity = computed(() => form.currentCity.trim() || 'quelque part sous
   ramène à celles du dossier, et on interdit la poignée de redimensionnement,
   qui casserait l'alignement du formulaire.
 */
+/*
+  Le sélecteur de langue. Le menu natif garde sa police et sa flèche système :
+  on ramène la première à celle du dossier, et on remplace la seconde par un
+  chevron dessiné, pour que le champ ne détonne pas au milieu des autres.
+*/
+.field-select {
+  font: inherit;
+  font-size: 13px;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0 L5 6 L10 0 Z' fill='%23718096'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 9px;
+}
+
+/* Le menu déroulé est rendu par le système : il lui faut un fond opaque. */
+.field-select option {
+  background: rgb(var(--ink-900));
+  color: rgb(var(--ink-100));
+}
+
 .field-multi {
   font: inherit;
   font-size: 13px;

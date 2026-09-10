@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
 import { useInterfacePalette } from '~/composables/useInterfacePalette'
@@ -76,7 +78,7 @@ onMounted(async () => {
       <!-- eslint-disable-next-line vue/no-v-html -->
       <article v-else-if="ending" class="prose" v-html="ending.ending_html" />
       <p v-else class="text-ink-200/70 font-mono text-sm animate-pulse">
-        Le jour se lève sur la ville...
+        {{ t('game.dawn') }}
       </p>
     </div>
   </div>

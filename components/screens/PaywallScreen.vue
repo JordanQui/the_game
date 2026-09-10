@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { usePaywall } from '~/composables/usePaywall'
 import { usePaymentStore } from '~/stores/payment'
 import { usePlayerStore } from '~/stores/player'
@@ -100,10 +102,10 @@ onMounted(async () => {
       <div class="relative bg-ink-900 border border-neon-600/40 p-4 space-y-4">
         <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
         <p class="relative text-neon-400/70 text-[10px] uppercase tracking-[0.28em] font-display text-center">
-          Paiement sécurisé
+          {{ t('paywall.secure') }}
         </p>
         <div v-if="isInitializing" class="h-12 flex items-center justify-center">
-          <p class="text-steel-400 text-xs">Chargement du formulaire...</p>
+          <p class="text-steel-400 text-xs">{{ t('paywall.loading') }}</p>
         </div>
         <div id="card-container" class="relative" />
 
@@ -119,7 +121,7 @@ onMounted(async () => {
           class="w-full"
           @click="submitPayment"
         >
-          {{ paywall?.cta ?? 'Continuer' }}
+          {{ paywall?.cta ?? t('common.continue') }}
         </GlowButton>
       </div>
 

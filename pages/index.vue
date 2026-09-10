@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { usePaymentStore } from '~/stores/payment'
@@ -72,13 +74,13 @@ onMounted(async () => {
       <div v-else-if="gameStore.currentScreen === 'payment_success'" key="success" class="min-h-[100dvh] flex items-center justify-center text-center px-6">
         <div class="space-y-6 max-w-sm">
           <p class="neon-text font-display uppercase text-2xl sm:text-3xl tracking-[0.05em]">
-            Le sas s'ouvre
+            {{ t('game.exit_opens') }}
           </p>
           <div class="neon-rule w-24 mx-auto" />
           <p class="text-ink-200/80 text-sm leading-relaxed">
             {{ playerStore.quest?.title }} ne fait que commencer.
           </p>
-          <GlowButton @click="continueAfterPayment">Continuer l'aventure</GlowButton>
+          <GlowButton @click="continueAfterPayment">{{ t('game.continue_adventure') }}</GlowButton>
         </div>
       </div>
       <LoadingScreen v-else key="init" />

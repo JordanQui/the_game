@@ -4,10 +4,21 @@ import { usePlayerStore } from '~/stores/player'
 import { useProgression } from '~/composables/useProgression'
 import { forgetRun, rememberedProfile } from '~/composables/useScene'
 import type { UserProfile } from '~/types/user'
+import type { LangCode } from '~/types/i18n'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
 const progression = useProgression()
+const { lang, setLang, t, languages } = useLang()
+
+/**
+ * Le selecteur de langue est ICI AUSSI, et pas seulement dans le formulaire.
+ *
+ * L'accueil est la premiere chose que quiconque voit : y arriver en francais
+ * sans pouvoir en sortir, c'est perdre le joueur avant la premiere ligne. Le
+ * choix fait ici est ecrit dans le cookie, que le formulaire reprendra comme
+ * valeur de depart.
+ */
 
 /**
  * La nuit en cours, s'il y en a une.
@@ -68,6 +79,22 @@ function startFresh() {
 /** Combien de jours le navigateur retient la partie. Dit tel quel au joueur. */
 const memoryDays = useRuntimeConfig().public.memoryDays as number
 
+/**
+ * Le nombre d'etapes du formulaire, annonce avant d'y entrer.
+ *
+ * L'ecran promettait « Cinq etapes » alors que le formulaire en compte six.
+ * Une seule source desormais, et la promesse tient.
+ */
+const ADMISSION_STEPS = 6
+
+/** Les quatre points de l'avertissement, dans la langue courante. */
+const disclaimerPoints = computed(() => [
+  t('login.disclaimer_1'),
+  t('login.disclaimer_2'),
+  t('login.disclaimer_3', { days: memoryDays }),
+  t('login.disclaimer_4'),
+])
+
 const showDisclaimer = ref(false)
 const isLoadingDemo = ref(false)
 
@@ -95,7 +122,8 @@ async function startWithSampleDossier() {
   startFresh()
   try {
     const profile = await $fetch<UserProfile>('/api/user/demo')
-    playerStore.setProfile(profile)
+    // Le dossier type est écrit en français : la langue choisie ici prime.
+    playerStore.setProfile({ ...profile, language: lang.value })
   } catch {
     // Le serveur retombera de toute façon sur game/user.json.
   } finally {
@@ -116,7 +144,15 @@ function goOutAgain() {
   const dossier = knownDossier.value
   if (!dossier) return
   startFresh()
-  playerStore.setProfile(dossier)
+  /**
+   * Le dossier garde tout, SAUF la langue.
+   *
+   * Elle est le seul champ qu'on puisse changer sans rouvrir le formulaire —
+   * le sélecteur est juste en dessous. Reprendre celle du dossier ferait donc
+   * repartir dans l'ancienne langue quelqu'un qui vient d'en choisir une
+   * autre, et le choix qu'il vient de faire n'aurait servi qu'à l'habillage.
+   */
+  playerStore.setProfile({ ...dossier, language: lang.value })
   gameStore.setScreen('scene_build_loading')
 }
 
@@ -192,11 +228,11 @@ function acceptAndEnroll() {
 
       <div class="w-full space-y-5">
         <p class="text-steel-400 text-[10px] uppercase tracking-[0.45em] font-display">
-          Un jeu de rôle textuel
+          {{ t('login.eyebrow') }}
         </p>
 
         <h1 class="neon-text animate-neon-buzz font-display uppercase leading-[0.95] tracking-[0.05em] text-[2.1rem] sm:text-[2.9rem]">
-          La Nuit du<br>Bout du Monde
+          {{ t('login.title_line1') }}<br>{{ t('login.title_line2') }}
         </h1>
 
         <div class="neon-rule w-40 mx-auto" />
@@ -209,8 +245,8 @@ function acceptAndEnroll() {
         l'autre.
       -->
       <p class="text-ink-200/75 text-sm leading-relaxed max-w-xs">
-        Une aventure personnalisée<br>
-        vers une résolution qui vous appartient.
+        {{ t('login.tagline_line1') }}<br>
+        {{ t('login.tagline_line2') }}
       </p>
 
       <!--
@@ -219,10 +255,10 @@ function acceptAndEnroll() {
       -->
       <div v-if="resumeScene" class="w-full space-y-4 flex flex-col items-center">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
-          <template v-if="rememberedFirstName">{{ rememberedFirstName }}, votre nuit continue</template>
-          <template v-else>Votre nuit est en cours</template>
+          <template v-if="rememberedFirstName">{{ t('login.resume_named', { name: rememberedFirstName }) }}</template>
+          <template v-else>{{ t('login.resume_anon') }}</template>
         </p>
-        <GlowButton class="w-full" @click="continueGame">Continuer</GlowButton>
+        <GlowButton class="w-full" @click="continueGame">{{ t('common.continue') }}</GlowButton>
         <p class="text-ink-200/70 text-[11px] leading-relaxed">
           {{ resumeScene.title }}
           <span v-if="resumeScene.act" class="text-steel-400"> — {{ resumeScene.act }}</span>
@@ -230,7 +266,7 @@ function acceptAndEnroll() {
 
         <div class="flex items-center gap-4 w-full pt-3">
           <span class="h-px flex-1 bg-steel-600/40" />
-          <span class="font-display text-[9px] uppercase tracking-[0.3em] text-steel-400">ou</span>
+          <span class="font-display text-[9px] uppercase tracking-[0.3em] text-steel-400">{{ t('common.or') }}</span>
           <span class="h-px flex-1 bg-steel-600/40" />
         </div>
       </div>
@@ -243,19 +279,18 @@ function acceptAndEnroll() {
       -->
       <div v-if="knownDossier" class="w-full space-y-4 flex flex-col items-center">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
-          Le bureau a déjà votre dossier
+          {{ t('login.dossier_known') }}
         </p>
-        <GlowButton class="w-full" @click="goOutAgain">Sortir de chez vous</GlowButton>
+        <GlowButton class="w-full" @click="goOutAgain">{{ t('login.dossier_cta') }}</GlowButton>
         <p class="text-ink-200/70 text-[11px] leading-relaxed">
-          Au nom de <span class="text-ink-100">{{ rememberedName }}</span> — rien à remplir,
-          la ville vous attend.
+          {{ t('login.dossier_named', { name: rememberedName ?? '' }) }}
         </p>
         <button
           class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400
                  hover:text-ink-200 transition-colors pt-1"
           @click="openDisclaimer"
         >
-          Remplir un nouveau dossier
+          {{ t('login.dossier_new') }}
         </button>
       </div>
 
@@ -266,10 +301,10 @@ function acceptAndEnroll() {
       -->
       <div v-else class="w-full space-y-4 flex flex-col items-center">
         <GlowButton class="w-full leading-relaxed" @click="openDisclaimer">
-          Remplissez le formulaire d'admission
+          {{ t('login.enroll_cta') }}
         </GlowButton>
         <p class="text-steel-400 text-[10px] uppercase tracking-[0.2em] font-display">
-          Cinq étapes — ni compte, ni mot de passe
+          {{ t('login.enroll_note', { steps: ADMISSION_STEPS }) }}
         </p>
       </div>
 
@@ -280,8 +315,33 @@ function acceptAndEnroll() {
         :disabled="isLoadingDemo"
         @click="startWithSampleDossier"
       >
-        {{ isLoadingDemo ? 'Ouverture du sas' : 'Entrer avec un dossier type' }}
+        {{ isLoadingDemo ? t('login.demo_loading') : t('login.demo_cta') }}
       </button>
+
+      <!--
+        LA LANGUE, sur le tout premier écran.
+        Elle ne peut pas attendre le formulaire : quelqu'un qui ne lit pas le
+        français doit pouvoir sortir du français avant d'avoir à remplir quoi
+        que ce soit. Le menu affiche le nom de la langue DANS cette langue —
+        « Deutsch », « Русский » — parce que c'est le seul libellé qu'un
+        visiteur reconnaîtra à coup sûr, quelle que soit la langue affichée.
+        Le choix part dans le cookie, et le formulaire s'ouvrira dessus.
+      -->
+      <label class="flex items-center gap-2 pt-1">
+        <span class="sr-only">{{ t('lang.label') }}</span>
+        <svg viewBox="0 0 20 20" class="w-3.5 h-3.5 shrink-0 text-steel-500" fill="none"
+             stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+          <circle cx="10" cy="10" r="8" />
+          <path d="M2 10h16M10 2c2.5 2.6 2.5 12.8 0 16M10 2C7.5 4.6 7.5 14.8 10 18" />
+        </svg>
+        <select
+          class="lang-select"
+          :value="lang"
+          @change="setLang(($event.target as HTMLSelectElement).value as LangCode)"
+        >
+          <option v-for="l in languages" :key="l.code" :value="l.code">{{ l.endonym }}</option>
+        </select>
+      </label>
     </div>
 
     <!-- Balayage cathodique, tout au-dessus -->
@@ -302,22 +362,17 @@ function acceptAndEnroll() {
 
           <div class="space-y-3 text-center">
             <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
-              Avant de commencer
+              {{ t('login.disclaimer_eyebrow') }}
             </p>
             <h2 class="font-display uppercase text-ink-100 text-lg tracking-[0.08em]">
-              Vos données, votre histoire
+              {{ t('login.disclaimer_title') }}
             </h2>
             <div class="neon-rule w-24 mx-auto" />
           </div>
 
           <ul class="space-y-5 text-left">
             <li
-              v-for="(point, i) in [
-                'Le formulaire d\'admission sert uniquement à générer votre aventure personnalisée — personnages, lieux, quête. Aucun compte, aucun réseau social, aucun tiers.',
-                'Vos réponses ne sont enregistrées sur aucun serveur : nous ne les stockons, ne les partageons et ne les revendons pas.',
-                `Elles restent sur cet appareil, dans votre navigateur, le temps de votre aventure — ${memoryDays} jours — pour que vous puissiez la reprendre où vous l'avez laissée.`,
-                'Repartir de zéro ci-dessous, ou effacer les données du site, les efface avec elle.',
-              ]"
+              v-for="(point, i) in disclaimerPoints"
               :key="i"
               class="flex items-start gap-3.5"
             >
@@ -332,12 +387,12 @@ function acceptAndEnroll() {
           <div class="h-px bg-neon-600/30" />
 
           <div class="space-y-4 flex flex-col items-center">
-            <GlowButton class="w-full" @click="acceptAndEnroll">Continuer</GlowButton>
+            <GlowButton class="w-full" @click="acceptAndEnroll">{{ t('common.continue') }}</GlowButton>
             <button
               class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400 hover:text-ink-200 transition-colors"
               @click="showDisclaimer = false"
             >
-              Annuler
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>
@@ -347,6 +402,42 @@ function acceptAndEnroll() {
 </template>
 
 <style scoped>
+/*
+  Le menu de langue : la même sobriété que le reste de l'accueil — pas de
+  cadre, un filet sous le mot, et le chevron dessiné plutôt que celui du
+  système, qui casserait la ligne.
+*/
+.lang-select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgb(var(--steel-600) / 0.7);
+  color: rgb(var(--ink-300));
+  font-family: Futura, 'Avenir Next', 'Century Gothic', 'Trebuchet MS', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  padding: 0.25rem 1.25rem 0.3rem 0.1rem;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.2s ease, border-color 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0 L5 6 L10 0 Z' fill='%23718096'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.1rem center;
+  background-size: 8px;
+}
+
+.lang-select:hover,
+.lang-select:focus {
+  color: rgb(var(--neon-300));
+  border-bottom-color: rgb(var(--neon-600) / 0.7);
+}
+
+/* Le menu déroulé est rendu par le système : il lui faut un fond opaque. */
+.lang-select option {
+  background: rgb(var(--ink-900));
+  color: rgb(var(--ink-100));
+}
+
 .modal-enter-active, .modal-leave-active { transition: opacity 0.25s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 </style>

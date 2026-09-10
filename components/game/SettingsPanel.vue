@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { useGameStore } from '~/stores/game'
 
 /**
@@ -10,10 +12,18 @@ import { useGameStore } from '~/stores/game'
  */
 const gameStore = useGameStore()
 
-const POSTURES = [
-  { key: 'assis' as const, label: 'Assis', detail: 'Appareil incliné vers soi' },
-  { key: 'allonge' as const, label: 'Allongé', detail: 'Appareil à plat au-dessus du visage' },
-]
+const POSTURES = computed(() => [
+  {
+    key: 'assis' as const,
+    label: t('settings.posture_sitting'),
+    detail: t('settings.posture_sitting_detail'),
+  },
+  {
+    key: 'allonge' as const,
+    label: t('settings.posture_lying'),
+    detail: t('settings.posture_lying_detail'),
+  },
+])
 </script>
 
 <template>
@@ -22,8 +32,8 @@ const POSTURES = [
       class="p-2 bg-ink-900/85 border border-steel-600/50 transition-colors"
       :class="gameStore.settingsOpen ? 'text-neon-400' : 'text-steel-400 hover:text-neon-600'"
       :aria-expanded="gameStore.settingsOpen"
-      aria-label="Réglages"
-      title="Réglages"
+      :aria-label="t('common.settings')"
+      :title="t('common.settings')"
       @click="gameStore.toggleSettings()"
     >
       <!-- Roue crantée : denture calculée, pas des rayons de soleil -->
@@ -40,10 +50,10 @@ const POSTURES = [
         style="box-shadow: 0 18px 44px rgba(0,0,0,.8)"
       >
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.28em] font-display">
-          Position de lecture
+          {{ t('game.reading_position') }}
         </p>
         <p class="text-steel-400 text-[11px] leading-relaxed">
-          Cale la visée sur la façon dont tu tiens l'appareil.
+          {{ t('game.reading_position_hint') }}
         </p>
 
         <div class="space-y-1.5">

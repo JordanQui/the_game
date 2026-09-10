@@ -20,7 +20,10 @@ import { overlayValue } from '~/utils/languages'
 export interface SceneRef {
   id: string
   title: string
+  /** Le titre de l'acte, déjà résolu et prêt à afficher. Null hors des actes. */
   act: string | null
+  /** Son identifiant, qui sert à retrouver la traduction du titre. */
+  actId?: string | null
   kind: string
 }
 
@@ -42,18 +45,12 @@ export function useProgression() {
     // Le français ne surcharge rien : l'index EST déjà sa version.
     if (lang === DEFAULT_LANG) return index
 
-    // Les actes sont désignés par leur titre français dans l'index — il n'en
-    // porte pas l'identifiant. On remonte donc du titre à l'id une fois, plutôt
-    // qu'à chaque scène.
-    const actIdByTitle = new Map(
-      (useRuntimeConfig().public.actIndex ?? []) as Array<[string, string]>)
-
     return index.map(scene => ({
       ...scene,
       title: overlayValue<string>(lang, `scene_titles.${scene.id}`) ?? scene.title,
-      act: scene.act
-        ? overlayValue<string>(lang, `act_titles.${actIdByTitle.get(scene.act) ?? ''}`) ?? scene.act
-        : null,
+      act: scene.actId
+        ? overlayValue<string>(lang, `act_titles.${scene.actId}`) ?? scene.act
+        : scene.act,
     }))
   }
 

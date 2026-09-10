@@ -57,7 +57,19 @@ const memoryDays = script.limits.paid.window_days
 
 const sceneIndex = script.progression.order.map((id: string) => {
   const scene = script.scenes.find((s: { id: string }) => s.id === id)
-  return { id, title: scene?.title ?? id, act: scene?.act ?? null, kind: scene?.kind ?? 'scene' }
+  // `scene.act` est un IDENTIFIANT — « route », « hauteurs ». L'accueil
+  // l'affichait tel quel sous le bouton « Continuer » : on résout ici le titre
+  // qui va avec, et on garde l'identifiant pour que le pack de langue puisse
+  // le traduire à la lecture. L'auberge porte l'acte « ouverture », qui n'a pas
+  // d'entrée : elle ne montre alors aucun acte, ce qui vaut mieux qu'un mot nu.
+  const act = script.acts.find((a: { id: string }) => a.id === scene?.act)
+  return {
+    id,
+    title: scene?.title ?? id,
+    actId: scene?.act ?? null,
+    act: act?.title ?? null,
+    kind: scene?.kind ?? 'scene',
+  }
 })
 
 /**

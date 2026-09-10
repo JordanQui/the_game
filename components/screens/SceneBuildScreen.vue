@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useLang()
+
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
 import { useScene } from '~/composables/useScene'
@@ -111,7 +113,7 @@ onUnmounted(() => { if (interval) clearInterval(interval) })
 
       <div v-if="error" class="space-y-4 pt-2 flex flex-col items-center">
         <p class="text-red-400/80 text-xs">{{ error }}</p>
-        <GlowButton class="w-full" @click="build">Réessayer</GlowButton>
+        <GlowButton class="w-full" @click="build">{{ t('common.retry') }}</GlowButton>
       </div>
     </div>
   </div>

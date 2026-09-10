@@ -249,6 +249,14 @@ export interface SceneTextResponse extends GeneratedScene {
   script_fingerprint?: string
   /** Build ayant servi la scène. Une scène d'un autre build est jetée. */
   build_id?: string
+  /**
+   * La langue dans laquelle cette scène a été écrite.
+   *
+   * Elle ne sert qu'à la mémoire du navigateur : rien dans le contenu d'une
+   * scène ne dit dans quelle langue elle l'a été, et sans cette marque un
+   * changement de langue reservait l'ancienne au rechargement suivant.
+   */
+  lang?: string
   /** Thème intime du joueur. Les PNJ s'en nourrissent sans jamais le nommer. */
   theme: PlayerTheme | null
   /** Objet sans lequel le sas reste fermé. */

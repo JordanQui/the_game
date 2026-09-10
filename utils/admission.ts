@@ -39,8 +39,22 @@
  */
 
 import type { UserProfile, UserPassion, UserAgreement, UserNights } from '~/types/user'
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { translate } from '~/utils/languages'
 
 export interface AdmissionForm {
+  /**
+   * La langue de la nuit.
+   *
+   * Premier champ du dossier, et le seul qui agisse AVANT d'être déposé : le
+   * changer retourne le formulaire lui-même. C'est voulu — on ne fait pas
+   * remplir vingt lignes dans une langue pour jouer dans une autre, et le
+   * joueur doit voir tout de suite ce qu'il vient de choisir.
+   *
+   * Elle part ensuite dans le profil, où elle décide de la génération.
+   */
+  language: LangCode
   /** Le prénom seul : c'est lui qu'on emploie en jeu, et lui qui porte le namank. */
   firstName: string
   /** Le nom de famille. Avec le prénom, il donne l'héritage. */
@@ -76,8 +90,9 @@ export interface AdmissionForm {
   dreamNote: string
 }
 
-export function emptyAdmissionForm(): AdmissionForm {
+export function emptyAdmissionForm(lang: LangCode = DEFAULT_LANG): AdmissionForm {
   return {
+    language: lang,
     firstName: '',
     lastName: '',
     birthday: '',
@@ -98,38 +113,17 @@ export function emptyAdmissionForm(): AdmissionForm {
 }
 
 /**
- * L'accord, proposé en trois touches.
+ * L'accord et les amorces de passions ont quitté ce fichier.
  *
- * Ce n'est pas une question d'identité : c'est une question de grammaire. Le
- * jeu narre à la deuxième personne et doit savoir accorder « tu es entré(e) ».
+ * Ils vivaient ici en dur, en français : trois libellés d'accord avec leur
+ * exemple, trois lignes d'amorce sous les passions. Ce sont des textes
+ * AFFICHÉS, et leur formulation change complètement d'une langue à l'autre —
+ * l'exemple d'accord surtout, qui porte un participe en français, un pronom en
+ * anglais et une forme d'adresse en turc. Ils sont donc dans les packs de
+ * langue, sous `admission.agreement_*` et `admission.passion_ph*`, et
+ * `AdmissionScreen.vue` les y prend.
  */
-export const AGREEMENT_CHOICES: Array<{ value: UserAgreement; label: string; example: string }> = [
-  { value: 'masculin', label: 'Masculin', example: 'tu es entré' },
-  { value: 'feminin', label: 'Féminin', example: 'tu es entrée' },
-  { value: 'neutre', label: 'Neutre', example: 'tu franchis le seuil' },
-]
 
-/**
- * Les exemples affichés sous les trois lignes de passions.
- *
- * Ce sont des AMORCES, pas des réponses : elles montrent le grain attendu — un
- * objet, un lieu, une habitude — là où la grille de touches d'avant proposait
- * des rayons de supermarché. Rien ici n'entre dans le profil ; seul ce que le
- * joueur écrit y entre.
- */
-export const PASSION_EXAMPLES: string[] = [
-  'les vinyles de mon père, que je n\'ose pas jouer',
-  'les séances de minuit, toujours seul',
-  'le pain que je rate depuis deux ans',
-]
-
-/**
- * Combien de lignes de passions.
- *
- * Trois écrites valent mieux que cinq cochées : une ligne demande un effort,
- * et c'est justement l'effort qui produit la matière. `intensityAt` donne la
- * première et la deuxième pour hautes, la troisième pour moyenne.
- */
 export const MAX_PASSIONS = 3
 
 /**
@@ -156,7 +150,14 @@ export function ageFrom(birthday: string): number | undefined {
   return age >= 0 && age < 130 ? age : undefined
 }
 
-/** « 1990-03-07 » → « 7 mars ». Pour la ligne « Né(e) le » des divers. */
+/**
+ * « 1990-03-07 » → « 7 mars ». Pour la ligne « Né(e) le » des divers.
+ *
+ * Reste EN FRANÇAIS quelle que soit la langue jouée, et ce n'est pas un oubli :
+ * `misc_facts` ne s'affiche nulle part, il part au modèle, au milieu d'un
+ * prompt français. Le traduire n'aurait servi personne et aurait mis un mot
+ * étranger là où tout le reste de la consigne est d'une seule langue.
+ */
 function frenchDay(birthday: string): string | null {
   const [, m, d] = birthday.split('-').map(Number)
   const months = [
@@ -274,8 +275,11 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
     }))
 
   return {
+    // La langue voyage AVEC le dossier, pas seulement dans le cookie : une
+    // partie reprise depuis un autre appareil garde ainsi la sienne.
+    language: form.language,
     identity: {
-      name: fullName || 'Sans-nom',
+      name: fullName || translate(form.language, 'admission.unnamed'),
       first_name: firstName || undefined,
       last_name: lastName || undefined,
       birthday: form.birthday || undefined,
