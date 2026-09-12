@@ -333,6 +333,7 @@
     "oracle.missing": "Czegoś ci brakuje: nikt stąd bez tego nie wychodzi.",
     "oracle.not_talked": "Nie rozmawiałeś jeszcze z: {{names}}.",
     "oracle.holder_knows": "{{name}} wie więcej, niż mówi.",
+    "oracle.takeable": "Nie wszystko idzie przez ludzi: to, co opis zapisuje Wielkimi Literami, możesz dotknąć, a jedną z tych rzeczy da się podnieść.",
     "oracle.holding": "Masz {{item}}. {{why}}",
     "oracle.use_lens": "Użyj jej, zanim wyjdziesz: lupa otwiera zniekształcone nazwy w tekście, a to, co mówią, warte jest tego objazdu.",
     "oracle.just_exit": "Zostało ci tylko przejść przez {{exit}}.",
@@ -395,6 +396,7 @@
         "Przechyl urządzenie, żeby naprowadzić oko na zniekształconą nazwę przedmiotu, i TRZYMAJ JE NIERUCHOMO. Po chwili otwiera się analiza.",
         "Wróć do oka, żeby czytać nazwiska ludzi: te dwa nie czytają tego samego."
       ],
+      "caps_note": "Wielkie Litery w opisie wskazują to, czego możesz dotknąć. I nie wszystko dostaniesz w rozmowie: niektóre rzeczy po prostu leżą, nazwane pośród tekstu, nikt ci ich nie poda i znajdziesz je tylko wtedy, gdy się dobrze przyjrzysz.",
       "footer": "Odczytana nazwa nie zapamiętuje się sama. Gra nie zapamięta jej za ciebie.",
       "cta": "Rozumiem"
     },

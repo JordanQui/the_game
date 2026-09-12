@@ -329,6 +329,7 @@
     "oracle.missing": "Bir şey eksik: buradan kimse onsuz çıkmaz.",
     "oracle.not_talked": "Henüz şunlarla konuşmadın: {{names}}.",
     "oracle.holder_knows": "{{name}} söylediğinden fazlasını biliyor.",
+    "oracle.takeable": "Her şey insanlardan geçmez: anlatının Büyük Harfle yazdığı şeylere dokunabilirsin ve onlardan biri alınabilir.",
     "oracle.holding": "{{item}} sende. {{why}}",
     "oracle.use_lens": "Çıkmadan önce kullan: büyüteç metindeki karıştırılmış adları açar, ve söyledikleri bu zahmete değer.",
     "oracle.just_exit": "Geriye sadece {{exit}} geçmek kaldı.",
@@ -391,6 +392,7 @@
         "Gözü karıştırılmış bir nesne adına getirmek için cihazı eğ ve orada SABİT TUT. Bir an sonra analiz açılır.",
         "İnsanların adlarını okumak için yeniden göze dön: ikisi aynı şeyi okumaz."
       ],
+      "caps_note": "Anlatıdaki Büyük Harfler, dokunabileceğin şeylerdir. Ve her şey konuşmayla elde edilmez: bazı şeyler öylece durur, metnin ortasında adlandırılmış halde; kimse onları sana uzatmaz, onları ancak iyi bakarsan bulursun.",
       "footer": "Okunmuş bir ad kendi kendine akılda kalmaz. Oyun onu senin yerine hatırlamayacak.",
       "cta": "Anladım"
     },

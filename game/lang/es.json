@@ -361,6 +361,7 @@
     "oracle.missing": "Te falta algo: nadie sale de aquí sin ello.",
     "oracle.not_talked": "Todavía no has hablado con: {{names}}.",
     "oracle.holder_knows": "{{name}} sabe más de lo que dice.",
+    "oracle.takeable": "No todo pasa por la gente: lo que el relato escribe en Mayúsculas puedes tocarlo, y una de esas cosas se puede recoger.",
     "oracle.holding": "Tienes {{item}}. {{why}}",
     "oracle.use_lens": "Úsala antes de salir: la lupa abre los nombres emborronados del relato, y lo que dicen merece el rodeo.",
     "oracle.just_exit": "Solo te queda cruzar {{exit}}.",
@@ -423,6 +424,7 @@
         "Inclina el aparato para llevar el ojo hasta un nombre de objeto emborronado y MANTENLO QUIETO encima. Al cabo de un instante, se abre el análisis.",
         "Vuelve al ojo para leer los nombres de la gente: los dos no leen lo mismo."
       ],
+      "caps_note": "Las Mayúsculas del relato son lo que puedes tocar. Y no todo se consigue hablando: hay cosas ahí puestas, nombradas en medio del texto, que nadie te va a ofrecer y que solo encontrarás si miras bien.",
       "footer": "Un nombre leído no se retiene solo. El juego no lo recordará por ti.",
       "cta": "Entendido"
     },

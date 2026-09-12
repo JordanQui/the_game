@@ -311,6 +311,7 @@
     "oracle.missing": "Bạn còn thiếu một thứ: không ai ra khỏi đây mà không có nó.",
     "oracle.not_talked": "Bạn chưa nói chuyện với: {{names}}.",
     "oracle.holder_knows": "{{name}} biết nhiều hơn những gì đã nói.",
+    "oracle.takeable": "Không phải thứ gì cũng đến từ con người: những gì lời kể Viết Hoa đều có thể chạm vào, và một trong số đó nhặt được.",
     "oracle.holding": "Bạn đang giữ {{item}}. {{why}}",
     "oracle.use_lens": "Hãy dùng nó trước khi ra: kính lúp mở những cái tên bị xáo trong truyện, và điều chúng nói đáng để bạn đi vòng.",
     "oracle.just_exit": "Chỉ còn việc bước qua {{exit}}.",
@@ -373,6 +374,7 @@
         "Nghiêng thiết bị để đưa mắt tới một tên đồ vật bị xáo, và GIỮ YÊN ở đó. Một lát sau, phần phân tích mở ra.",
         "Quay lại dùng mắt để đọc tên người: hai thứ không đọc cùng một thứ."
       ],
+      "caps_note": "Những chữ Viết Hoa trong lời kể là thứ bạn có thể chạm vào. Và không phải thứ gì cũng có được qua trò chuyện: có những thứ nằm đó, được gọi tên giữa đoạn văn, chẳng ai đưa cho bạn cả, và bạn chỉ tìm ra nếu nhìn cho kỹ.",
       "footer": "Một cái tên đã đọc không tự nhớ lấy mình. Trò chơi sẽ không nhớ hộ bạn.",
       "cta": "Đã hiểu"
     },

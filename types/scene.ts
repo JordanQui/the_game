@@ -246,6 +246,8 @@ export interface SceneTextResponse extends GeneratedScene {
     howto_title: string
     howto_pointer: string[]
     howto_gyro: string[]
+    /** La règle d'observation : la Majuscule se touche, et le décor garde ce que personne ne donne. */
+    caps_note?: string
     footer: string
     cta: string
   }

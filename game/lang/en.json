@@ -318,6 +318,7 @@
     "oracle.missing": "Something is missing: nobody leaves here without it.",
     "oracle.not_talked": "You have not spoken to: {{names}}.",
     "oracle.holder_knows": "{{name}} knows more than they let on.",
+    "oracle.takeable": "Not everything goes through people: whatever the story writes in Capitals, you can touch, and one of those things can be picked up.",
     "oracle.holding": "You are holding {{item}}. {{why}}",
     "oracle.use_lens": "Use it before you leave: the lens opens the scrambled names in the text, and what they say is worth the detour.",
     "oracle.just_exit": "All that is left is to step through {{exit}}.",
@@ -380,6 +381,7 @@
         "Tilt the device to bring the eye onto a scrambled object name, and HOLD IT STILL there. After a moment, the analysis opens.",
         "Switch back to the eye to read people's names: the two do not read the same thing."
       ],
+      "caps_note": "The Capitals in the story are what you can touch. And not everything is handed over in conversation: some things are simply lying there, named in the middle of the text, that nobody will offer you and that you will only find by looking closely.",
       "footer": "A name you have read does not remember itself. The game will not remember it for you.",
       "cta": "Understood"
     },

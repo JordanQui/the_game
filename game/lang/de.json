@@ -348,6 +348,7 @@
     "oracle.missing": "Dir fehlt etwas: ohne das geht hier niemand raus.",
     "oracle.not_talked": "Mit diesen hast du noch nicht gesprochen: {{names}}.",
     "oracle.holder_knows": "{{name}} weiß mehr, als gesagt wird.",
+    "oracle.takeable": "Nicht alles läuft über die Leute: Was der Text groß schreibt, kannst du anfassen, und eines dieser Dinge lässt sich aufheben.",
     "oracle.holding": "Du hältst {{item}}. {{why}}",
     "oracle.use_lens": "Benutz sie, bevor du gehst: die Lupe öffnet die verwischten Namen im Text, und was sie sagen, ist den Umweg wert.",
     "oracle.just_exit": "Es bleibt nur noch, {{exit}} zu durchqueren.",
@@ -410,6 +411,7 @@
         "Neig das Gerät, um das Auge auf einen verwischten Gegenstandsnamen zu bringen, und HALT ES STILL darauf. Nach einem Augenblick öffnet sich die Analyse.",
         "Nimm wieder das Auge, um die Namen der Leute zu lesen: die beiden lesen nicht dasselbe."
       ],
+      "caps_note": "Die Großschreibung im Text zeigt, was du anfassen kannst. Und nicht alles bekommst du im Gespräch: manche Dinge liegen einfach da, mitten im Text benannt, niemand reicht sie dir, und du findest sie nur, wenn du genau hinsiehst.",
       "footer": "Ein gelesener Name merkt sich nicht von allein. Das Spiel wird ihn nicht für dich behalten.",
       "cta": "Verstanden"
     },

@@ -328,6 +328,7 @@
     "oracle.missing": "Er ontbreekt iets: zonder dat komt hier niemand weg.",
     "oracle.not_talked": "Je hebt nog niet gesproken met: {{names}}.",
     "oracle.holder_knows": "{{name}} weet meer dan hij loslaat.",
+    "oracle.takeable": "Niet alles loopt via de mensen: wat het verhaal met Hoofdletters schrijft, kun je aanraken, en een van die dingen kun je oprapen.",
     "oracle.holding": "Je hebt {{item}}. {{why}}",
     "oracle.use_lens": "Gebruik hem voor je weggaat: de loep opent de vervormde namen in de tekst, en wat ze zeggen is de omweg waard.",
     "oracle.just_exit": "Je hoeft alleen nog {{exit}} door.",
@@ -390,6 +391,7 @@
         "Kantel het apparaat om het oog op een vervormde voorwerpnaam te brengen en HOUD HET STIL. Na een ogenblik opent de analyse.",
         "Neem het oog weer om de namen van mensen te lezen: die twee lezen niet hetzelfde."
       ],
+      "caps_note": "De Hoofdletters in het verhaal zijn wat je kunt aanraken. En niet alles krijg je via een gesprek: sommige dingen liggen er gewoon, middenin de tekst genoemd, niemand geeft ze je, en je vindt ze alleen door goed te kijken.",
       "footer": "Een gelezen naam onthoudt zichzelf niet. Het spel zal het niet voor je onthouden.",
       "cta": "Begrepen"
     },

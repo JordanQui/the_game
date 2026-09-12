@@ -218,6 +218,8 @@ export interface ScriptDefaults {
     howto_title: string
     howto_pointer: string[]
     howto_gyro: string[]
+    /** La Majuscule se touche, et le décor garde ce que personne ne donne. */
+    caps_note?: string
     footer: string
     cta: string
   }

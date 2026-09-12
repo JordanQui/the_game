@@ -351,6 +351,7 @@
     "oracle.missing": "Il te manque quelque chose : personne ne sort d'ici sans.",
     "oracle.not_talked": "Tu n'as pas encore parlé à : {{names}}.",
     "oracle.holder_knows": "{{name}} en sait plus qu'il n'en dit.",
+    "oracle.takeable": "Tout ne passe pas par les gens : ce que le récit écrit en Majuscules, tu peux le toucher, et une de ces choses-là se ramasse.",
     "oracle.holding": "Tu tiens {{item}}. {{why}}",
     "oracle.use_lens": "Sers-t'en avant de sortir : la loupe ouvre les noms brouillés du récit, et ce qu'ils disent vaut le détour.",
     "oracle.just_exit": "Il ne te reste qu'à franchir {{exit}}.",

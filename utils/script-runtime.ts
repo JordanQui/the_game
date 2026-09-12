@@ -21,6 +21,7 @@ import { interpolate } from '~/utils/prompt-builder'
 import { matchesKeyword } from '~/utils/text-match'
 import { enforceAccentVisibility } from '~/utils/palette'
 import { enforceNameCaps, fold } from '~/utils/naming'
+import { isTakeable } from '~/utils/interactables'
 import { sanitizeHtml } from '~/utils/sanitize-html'
 import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import type { LangCode } from '~/types/i18n'
@@ -187,6 +188,19 @@ export class SceneRuntime {
 
   /** Le pack de la langue jouée. */
   private get pack() { return pack(this.lang) }
+
+  /**
+   * Les verbes que `isTakeable` reconnaîtra, dits au modèle.
+   *
+   * Le client décide qu'un objet se ramasse en comparant son `verb` à la liste
+   * du pack — et c'est de là que vient le bouton « Ramasser ». Le modèle écrit
+   * dans la langue jouée : sans cette ligne il choisit un synonyme hors liste,
+   * l'objet reste dans le décor sans que rien ne le prenne, et la seule voie
+   * qui ne passe pas par un personnage se referme en silence.
+   */
+  private get takeVerbs(): string {
+    return this.pack.input.take.slice(0, 3).map(v => `« ${v} »`).join(', ')
+  }
 
   /**
    * Le bloc qui impose la langue de sortie, en tête de chaque prompt.
@@ -539,6 +553,10 @@ ${this.script.defaults.locks.instruction}
 ${s.sealed_object
   ? `OBJET SCELLÉ\n${interpolate(s.sealed_object.instruction, { quest_title: 'la quête' })}\n`
   : ''}
+OBJETS MANIPULABLES
+${s.interactables.instruction}
+Le verbe de l'objet à prendre s'écrit exactement ainsi : ${this.takeVerbs}.
+
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
 ${this.vocabulary}
@@ -806,6 +824,23 @@ ${lines}`)
 
     if (!Array.isArray(generated.npcs) || generated.npcs.length === 0) {
       throw new Error('Scène invalide : aucun PNJ')
+    }
+
+    // UNE SALLE DOIT AVOIR QUELQUE CHOSE À RAMASSER. C'est la seule voie du jeu
+    // qui ne passe pas par une conversation : l'objet est posé là, la Majuscule
+    // est le seul signal, et c'est au joueur de le voir. Le modèle, laissé
+    // libre, fait tout passer par les gens — et à l'auberge l'objet manquant
+    // ferme le sas, qui attend qu'on ait déchiffré quelque chose.
+    const takeable = (generated.interactables ?? []).filter(o => isTakeable(o, this.lang))
+    if (!takeable.length) {
+      throw new Error(
+        'Scène invalide : aucun objet à ramasser — un objet au moins doit être posé dans le '
+        + `décor avec pour verbe ${this.takeVerbs}, en plus de ce que les personnages donnent`)
+    }
+    if (!takeable.some(o => o.observation?.trim())) {
+      throw new Error(
+        `Scène invalide : "${takeable[0].label}" se ramasse mais ne porte aucune observation — `
+        + "la loupe n'aurait rien à y lire")
     }
 
     // Une scène qui répartit ce qu'elle apprend le fait sur TOUS ses habitants :

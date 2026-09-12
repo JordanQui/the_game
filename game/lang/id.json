@@ -315,6 +315,7 @@
     "oracle.missing": "Ada yang kurang: tidak ada yang keluar dari sini tanpa itu.",
     "oracle.not_talked": "Kau belum bicara dengan: {{names}}.",
     "oracle.holder_knows": "{{name}} tahu lebih banyak daripada yang dikatakannya.",
+    "oracle.takeable": "Tidak semuanya lewat orang: apa pun yang ditulis narasi dengan Huruf Kapital bisa kausentuh, dan salah satunya bisa dipungut.",
     "oracle.holding": "Kau memegang {{item}}. {{why}}",
     "oracle.use_lens": "Pakai sebelum kau keluar: lensa membuka nama-nama yang teracak dalam teks, dan apa yang mereka katakan sepadan dengan waktunya.",
     "oracle.just_exit": "Tinggal melewati {{exit}}.",
@@ -377,6 +378,7 @@
         "Miringkan perangkat untuk membawa mata ke nama benda yang teracak, dan TAHAN DIAM di situ. Sesaat kemudian analisis terbuka.",
         "Kembali ke mata untuk membaca nama orang: keduanya tidak membaca hal yang sama."
       ],
+      "caps_note": "Huruf Kapital dalam narasi adalah apa yang bisa kausentuh. Dan tidak semuanya didapat lewat percakapan: ada benda yang tergeletak begitu saja, disebut di tengah teks, yang takkan disodorkan siapa pun dan hanya kautemukan kalau kaulihat dengan saksama.",
       "footer": "Nama yang sudah dibaca tidak mengingat dirinya sendiri. Permainan ini tidak akan mengingatnya untukmu.",
       "cta": "Mengerti"
     },

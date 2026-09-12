@@ -17,6 +17,11 @@ import { interpolate } from '~/utils/prompt-builder'
  * Le RÉCIT est brodé à partir des champs déjà générés de l'objet — il change
  * donc d'un joueur à l'autre, comme l'objet lui-même — et ne coûte aucun appel
  * supplémentaire. Le MODE D'EMPLOI, lui, est fixe : c'est une mécanique.
+ *
+ * C'EST AUSSI LE SEUL ENDROIT OÙ LA RÈGLE D'OBSERVATION SE DIT (`caps_note`).
+ * L'augmentation, elle, vient d'un personnage : si rien ne le corrigeait, le
+ * joueur en déduirait que tout s'obtient en parlant, et traverserait le reste
+ * de la nuit sans jamais ramasser ce que les salles laissent traîner.
  */
 const playerStore = usePlayerStore()
 const gameStore = useGameStore()
@@ -100,6 +105,10 @@ function close() {
           </li>
         </ol>
       </div>
+
+      <p v-if="primer.caps_note" class="text-ink-200/80 text-[13px] leading-relaxed">
+        {{ primer.caps_note }}
+      </p>
 
       <p class="text-steel-400 text-[11px] leading-relaxed italic">
         {{ primer.footer }}

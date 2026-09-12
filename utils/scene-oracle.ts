@@ -3,7 +3,7 @@ import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { normalize } from '~/utils/text-match'
 import { pack, translate } from '~/utils/languages'
-import { teaching } from '~/utils/interactables'
+import { teaching, isTakeable } from '~/utils/interactables'
 
 /**
  * Répond localement, sans appeler le modèle.
@@ -24,6 +24,8 @@ export interface OracleState {
   talkedToNpcIds: string[]
   /** Il a ouvert un objet qui avait quelque chose à lui apprendre. */
   hasAnalysed: boolean
+  /** Les ids de ce qu'il porte déjà : ce qui est ramassé n'est plus à trouver. */
+  carriedIds: string[]
 }
 
 export interface LocalAnswer {
@@ -93,6 +95,14 @@ export function buildGuidance(
       }))
     }
   }
+
+  // Les gens ne donnent pas tout. Sans cette ligne, le récapitulatif n'envoie
+  // le joueur que vers des personnages, et il traverse la salle sans voir que
+  // le récit y a posé quelque chose — la Majuscule est le seul signal, et rien
+  // d'autre ne le lui apprend.
+  const loose = (scene.interactables ?? []).filter(
+    obj => obj.label && isTakeable(obj, lang) && !state.carriedIds.includes(obj.id))
+  if (loose.length) lines.push(t('oracle.takeable'))
 
   if (scene.npcs.length) {
     lines.push(t('oracle.present', {

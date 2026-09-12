@@ -368,6 +368,7 @@
     "oracle.missing": "Ti manca qualcosa: nessuno esce di qui senza.",
     "oracle.not_talked": "Non hai ancora parlato con: {{names}}.",
     "oracle.holder_knows": "{{name}} ne sa più di quanto dica.",
+    "oracle.takeable": "Non tutto passa dalle persone: ciò che il racconto scrive in Maiuscolo puoi toccarlo, e una di quelle cose si può raccogliere.",
     "oracle.holding": "Hai {{item}}. {{why}}",
     "oracle.use_lens": "Servitene prima di uscire: la lente apre i nomi confusi del racconto, e quello che dicono vale la deviazione.",
     "oracle.just_exit": "Non ti resta che varcare {{exit}}.",
@@ -430,6 +431,7 @@
         "Inclina l'apparecchio per portare l'occhio su un nome di oggetto confuso e TIENILO FERMO sopra. Dopo un istante l'analisi si apre.",
         "Riprendi l'occhio per leggere i nomi delle persone: i due non leggono la stessa cosa."
       ],
+      "caps_note": "Le Maiuscole del racconto sono ciò che puoi toccare. E non tutto si ottiene parlando: certe cose stanno lì, nominate in mezzo al testo, che nessuno ti porgerà e che troverai solo guardando bene.",
       "footer": "Un nome letto non si ricorda da solo. Il gioco non se lo ricorderà al posto tuo.",
       "cta": "Ho capito"
     },

@@ -49,6 +49,9 @@ export function useStorylets() {
       hasKeyItem: gameStore.hasKeyItem,
       talkedToNpcIds: gameStore.talkedToNpcIds,
       hasAnalysed: lessons().read,
+      // Ce qu'il porte déjà : le récapitulatif ne lui signale un objet posé
+      // dans la salle que tant qu'il ne l'a pas ramassé.
+      carriedIds: gameStore.inventory.map(o => o.id),
     }
   }
 
