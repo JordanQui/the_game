@@ -126,6 +126,15 @@ export interface SealedObject {
 
 export interface SceneQuest {
   title: string
+  /**
+   * Ce que le joueur vient faire dans ce lieu, en une phrase.
+   *
+   * L'ouverture de l'auberge le dit AVANT que le barman parle : sans lui, le
+   * joueur traversait la seule scène gratuite sans savoir ce qu'il était venu
+   * chercher. Ce n'est pas l'objectif de la quête mais son premier pas — ce que
+   * le barman déplace en racontant l'augmentation.
+   */
+  errand: string
   hook: string
   objective: string
   stakes: string

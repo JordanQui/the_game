@@ -217,6 +217,22 @@ if (!script.defaults.generation?.output_schema?.key_item?.observation) {
   errors.push('le schéma de sortie ne demande pas "key_item.observation"')
 }
 
+// --- ce que le joueur vient faire là ----------------------------------------
+// L'ouverture doit l'énoncer AVANT que le barman parle : sans ça, la seule scène
+// gratuite commence par une errance, et le but n'arrive qu'en bouche d'un PNJ.
+if (!script.defaults.quest?.structure?.errand) {
+  errors.push('defaults.quest.structure ne demande pas "errand" : rien ne fixe ce que le joueur vient faire')
+}
+if (!script.defaults.generation?.output_schema?.quest?.errand) {
+  errors.push('le schéma de sortie ne demande pas "quest.errand"')
+}
+if (!opening?.narrative?.structure?.some(x => x.includes('quest.errand'))) {
+  errors.push(`"${script.progression.start_scene}" : la structure du texte ne fait pas dire ce que le joueur vient faire ici`)
+}
+if (!opening?.narrative?.opening?.includes('quest.errand')) {
+  errors.push(`"${script.progression.start_scene}" : l'ouverture ne renvoie pas à quest.errand`)
+}
+
 // --- la fenêtre d'explication ------------------------------------------------
 // Elle s'ouvre au premier passage à la loupe et n'est jamais régénérée : chaque
 // jeton de son récit doit venir d'un champ déjà produit, et avoir un repli.

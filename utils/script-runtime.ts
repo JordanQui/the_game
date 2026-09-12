@@ -769,6 +769,32 @@ ${lines}`)
 
     if (!generated.quest?.title) throw new Error('Scène invalide : quest.title manquant')
 
+    // CE QUE LE JOUEUR VIENT FAIRE ICI. Sans cette phrase, le modèle retombe
+    // sur l'errance — « tu ne dors pas, tu marches » — et l'ouverture ne dit
+    // plus pourquoi il a poussé cette porte-là : le joueur traverse la seule
+    // scène gratuite en attendant qu'on lui donne un but. Le champ est exigé
+    // partout où le script le demande, donc sur les dix scènes.
+    if ('errand' in this.scene.quest.structure && !generated.quest.errand?.trim()) {
+      throw new Error(
+        'Scène invalide : quest.errand manquant — rien ne dit ce que le joueur vient faire ici')
+    }
+
+    // L'HORIZON N'EST PAS UNE CARTE D'ACCÈS. Les cartes colorées sont la
+    // mécanique de toutes les scènes suivantes, et le modèle y retombe : il
+    // promet alors, dans la phrase du sas, le laissez-passer de la scène
+    // d'après. C'est la dernière chose que le joueur lit avant de payer — elle
+    // doit nommer le bout de la nuit, pas la prochaine serrure. Seule la
+    // famille « carte » est filtrée, c'est la seule sur laquelle il glisse, et
+    // dans les douze langues puisque le texte est généré dans la sienne. La
+    // liste est volontairement étroite : un refus à tort coûte une réparation.
+    const CARD = /(?<!\p{L})(cartes?|cards?|tarjetas?|karten?|kaart(?:en)?|cartas?|cart(?:ão|ao|ões|oes)|kart[ıiyaąę]?|kartlar[ıi]?|kartu|карт[аыуой]|thẻ)(?!\p{L})/iu
+    if (generated.quest.artifact && CARD.test(generated.quest.artifact)) {
+      throw new Error(
+        `Scène invalide : quest.artifact est une carte ("${generated.quest.artifact}") — `
+        + "l'horizon de la nuit ne peut pas être un laissez-passer, "
+        + 'écris ce qui se tient au bout de la montée')
+    }
+
     // Le modèle recopie parfois la mécanique dans l'archétype affiché, ce qui
     // révèle au joueur qui détient quoi avant même qu'il ait parlé à personne.
     const LEAKS = /informat|d[ée]tent|porteur de|gardien de l|personnage.cl|t[ée]moin.cl|\bindice\b|\bcontact\b|\bpnj\b/i
