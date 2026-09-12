@@ -27,12 +27,15 @@ export function usePaywall() {
   /**
    * Ouvre la sortie. Un joueur qui a déjà payé passe directement à la suite :
    * le droit d'accès dure un mois, on ne lui repropose pas le paiement.
+   *
+   * `force` est réservé au canal '#' : le raccourci existe justement pour
+   * atteindre la porte sans avoir joué les tours qui y mènent.
    */
-  function openExit() {
+  function openExit(options: { force?: boolean } = {}) {
     // Garde-fou : on ne quitte pas une scène dont l'objectif n'est pas rempli.
     // Le deck écarte déjà la sortie tant que l'objet manque, mais rien
-    // n'empêchait un autre chemin — un raccourci, un bouton — d'avancer sans.
-    if (!objectiveMet()) return
+    // n'empêchait un autre chemin — un bouton — d'avancer sans.
+    if (!options.force && !objectiveMet()) return
 
     // Seule la scène-porte demande le paiement. Ailleurs, franchir la sortie
     // fait simplement passer à la suite — sans quoi chaque scène renverrait à

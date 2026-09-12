@@ -44,10 +44,11 @@ export function useSceneCommands() {
           say('Aucune scène chargée — la porte n\'existe pas encore.')
           return
         }
-        // Même mise en scène que la sortie jouée, mais sans le garde-fou du
-        // nombre de tours : c'est tout l'intérêt du raccourci.
+        // Même mise en scène que la sortie jouée, mais sans les garde-fous du
+        // nombre de tours ni de l'objet-clé : c'est tout l'intérêt du
+        // raccourci — on va voir la porte, pas la mériter.
         gameStore.addNarrativeEntry('narration', gate)
-        setTimeout(openExit, 1400)
+        setTimeout(() => openExit({ force: true }), 1400)
       },
     },
     {
