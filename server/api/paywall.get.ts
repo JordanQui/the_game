@@ -42,7 +42,11 @@ export default defineEventHandler(async (event) => {
     min_turns_before_trigger: 0,
     pitch: {
       eyebrow: p.pitch.eyebrow,
-      points: p.pitch.points.map(pt => ({ label: pt.label, text: fill(pt.text) })),
+      // La tension et ce vers quoi elle tend viennent du plan de la nuit : sans
+      // scène chargée il n'y en a pas, et un point sans elles ne dirait rien.
+      points: p.pitch.points
+        .filter(pt => !/{{(tension|release)}}/.test(pt.text))
+        .map(pt => ({ label: pt.label, text: fill(pt.text) })),
       closing: fill(p.pitch.closing),
     },
   }

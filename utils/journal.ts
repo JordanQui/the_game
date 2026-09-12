@@ -1,4 +1,4 @@
-import type { SceneTextResponse } from '~/types/scene'
+import type { NightPlan, PlannedScene, SceneTextResponse } from '~/types/scene'
 
 /**
  * Ce qu'une scène laisse à la suivante.
@@ -20,6 +20,12 @@ export interface JournalEntry {
   who_mattered: string[]
   /** Ce qu'il en a emporté. */
   carried: string | null
+  /**
+   * La quête de la nuit, fixée à l'auberge : le but et le plan sur lesquels
+   * toutes les scènes se construisent. Optionnelle, les journaux d'avant ce
+   * champ n'en ont pas.
+   */
+  night?: NightPlan
 }
 
 export function entryFrom(scene: SceneTextResponse): JournalEntry {
@@ -33,18 +39,62 @@ export function entryFrom(scene: SceneTextResponse): JournalEntry {
     what_changed: scene.quest?.objective ?? '',
     who_mattered: who,
     carried: scene.key_item?.name ?? null,
+    // Le titre et l'horizon sont figés avec le plan : les scènes suivantes les
+    // recopient au lieu d'en inventer, et le sas les promet tels quels.
+    night: scene.night
+      ? {
+          ...scene.night,
+          title: scene.night.title || scene.quest?.title,
+          horizon: scene.night.horizon || scene.quest?.artifact,
+        }
+      : undefined,
+  }
+}
+
+/** La quête de la nuit, telle que l'auberge l'a fixée. Cherchée sur tout le journal. */
+export function nightOf(entries: JournalEntry[]): NightPlan | undefined {
+  return entries.find(e => e.night?.goal)?.night
+}
+
+/** Un lieu du plan, par l'identifiant de sa scène. */
+export function plannedScene(plan: NightPlan | undefined, sceneId?: string): PlannedScene | undefined {
+  if (!plan || !sceneId) return undefined
+  return plan.acts?.flatMap(a => a.scenes ?? []).find(s => s.scene_id === sceneId)
+}
+
+/**
+ * Un lieu du plan renvoyé par le client, borné.
+ *
+ * Il entre dans le prompt image et dans celui des tours : comme tout ce qui
+ * vient du navigateur, il ne doit pas pouvoir y faire passer un roman.
+ */
+export function clampPlanned(p?: PlannedScene | null): PlannedScene | null {
+  if (!p || typeof p !== 'object') return null
+  const cut = (v: unknown, max = 300) => (typeof v === 'string' ? v.slice(0, max) : '')
+  return {
+    scene_id: cut(p.scene_id, 40),
+    title: cut(p.title, 80),
+    place: cut(p.place),
+    focal: cut(p.focal),
+    step: cut(p.step),
+    requirement: cut(p.requirement),
+    exit_label: cut(p.exit_label, 80),
   }
 }
 
 /** Le résumé tel que le modèle le lit. Borné : les scènes anciennes tombent. */
 export function renderJournal(entries: JournalEntry[], max: number): string {
-  return entries.slice(-max).map((e, i) => {
+  // Le but se lit AVANT de borner : l'auberge sort du résumé à la septième
+  // scène, et le but de la nuit ne doit pas tomber avec elle.
+  const goal = nightOf(entries)?.goal
+  const body = entries.slice(-max).map((e, i) => {
     const lines = [`${i + 1}. ${e.scene_title} — ${e.place_name}`]
     if (e.what_changed) lines.push(`   ce qui s'y est joué : ${e.what_changed}`)
     if (e.who_mattered.length) lines.push(`   qui a compté : ${e.who_mattered.join(', ')}`)
     if (e.carried) lines.push(`   emporté : ${e.carried}`)
     return lines.join('\n')
   }).join('\n')
+  return goal ? `Ce qu'il est sorti chercher cette nuit : ${goal}\n${body}` : body
 }
 
 /**

@@ -414,8 +414,12 @@
             "text": "Tempatnya, orang-orangnya, misinya: semuanya dibangun dari apa yang kau alami. Tidak ada yang umum, tidak ada yang akan dimainkan ulang untuk orang lain."
           },
           {
-            "label": "Misinya bukan hiasan",
-            "text": "{{quest_title}} mementaskan sebuah ketegangan yang benar-benar kau bawa — ketegangan antara siapa dirimu dan apa yang diharapkan darimu. Permainan ini tidak pernah menyebutkannya. Ia membuatmu melewatinya."
+            "label": "Yang menegang dalam dirimu",
+            "text": "“{{tension}}” Permainan ini tak pernah mengatakannya padamu. Ia membuatmu melewatinya."
+          },
+          {
+            "label": "Ke mana arahnya",
+            "text": "“{{release}}” Sisa malam ini digambar untuk membawamu ke sana: tiga babak, sembilan tempat yang tak akan dilalui orang lain."
           },
           {
             "label": "Jalan keluarnya penting",
@@ -445,34 +449,34 @@
     },
     "scene_titles": {
       "auberge": "Meja Bar",
-      "rue": "Jalan Tenggelam",
-      "passage": "Terowongan Bawah Rel",
-      "oracle": "Sang Peramal",
-      "crete": "Punggungan Antena",
-      "relais": "Stasiun Relai",
-      "terminal": "Terminal Akses",
-      "porte": "Gerbang",
-      "etage": "Lantai Satu",
-      "sommet": "Operasi",
+      "a1s1": "Tahap 1",
+      "a1s2": "Tahap 2",
+      "a1s3": "Tahap 3",
+      "a2s1": "Tahap 4",
+      "a2s2": "Tahap 5",
+      "a2s3": "Tahap 6",
+      "a3s1": "Tahap 7",
+      "a3s2": "Tahap 8",
+      "a3s3": "Tahap 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "Jalan",
-      "hauteurs": "Ketinggian",
-      "building": "Menara",
+      "acte1": "Babak I",
+      "acte2": "Babak II",
+      "acte3": "Babak III",
       "epilogue": "Epilog"
     },
     "exit_labels": {
       "auberge": "Sekat Udara, menuju hujan",
-      "rue": "Terowongan Bawah Rel",
-      "passage": "Kereta Gantung, menuju ketinggian",
-      "oracle": "Jembatan Titian, menuju punggungan",
-      "crete": "Stasiun Relai",
-      "relais": "Lantai Teknis",
-      "terminal": "Turunan, menuju menara",
-      "porte": "Lift, menuju lantai satu",
-      "etage": "Tangga Servis, menuju puncak",
-      "sommet": "Yang datang sesudahnya"
+      "a1s1": "Jalan Selanjutnya",
+      "a1s2": "Jalan Selanjutnya",
+      "a1s3": "Jalan Selanjutnya",
+      "a2s1": "Jalan Selanjutnya",
+      "a2s2": "Jalan Selanjutnya",
+      "a2s3": "Jalan Selanjutnya",
+      "a3s1": "Jalan Selanjutnya",
+      "a3s2": "Jalan Selanjutnya",
+      "a3s3": "Jalan Selanjutnya"
     }
   }
 }

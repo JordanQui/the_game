@@ -455,8 +455,12 @@
             "text": "O lugar, as pessoas, a missão: tudo foi construído a partir do que você viveu. Nada é genérico, nada será jogado de novo para outra pessoa."
           },
           {
-            "label": "A missão não é decorativa",
-            "text": "{{quest_title}} encena uma tensão que você carrega de verdade — a que se joga entre o que você é e o que esperam de você. O jogo nunca a nomeia. Ele faz você atravessá-la."
+            "label": "O que se tensiona em você",
+            "text": "“{{tension}}” O jogo nunca lhe disse isso. Ele fez você atravessar."
+          },
+          {
+            "label": "Para onde isso tende",
+            "text": "“{{release}}” O resto da noite foi traçado para levar você até lá: três atos, nove lugares que ninguém mais vai atravessar."
           },
           {
             "label": "A saída conta",
@@ -486,34 +490,34 @@
     },
     "scene_titles": {
       "auberge": "O Balcão",
-      "rue": "A Rua Afogada",
-      "passage": "A Passagem Sob a Via",
-      "oracle": "O Oráculo",
-      "crete": "A Crista de Antenas",
-      "relais": "A Estação Repetidora",
-      "terminal": "O Terminal de Acesso",
-      "porte": "A Porta",
-      "etage": "O Primeiro Andar",
-      "sommet": "A Operação",
+      "a1s1": "Etapa 1",
+      "a1s2": "Etapa 2",
+      "a1s3": "Etapa 3",
+      "a2s1": "Etapa 4",
+      "a2s2": "Etapa 5",
+      "a2s3": "Etapa 6",
+      "a3s1": "Etapa 7",
+      "a3s2": "Etapa 8",
+      "a3s3": "Etapa 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "A Estrada",
-      "hauteurs": "As Alturas",
-      "building": "O Edifício",
+      "acte1": "Ato I",
+      "acte2": "Ato II",
+      "acte3": "Ato III",
       "epilogue": "O Epílogo"
     },
     "exit_labels": {
       "auberge": "A Comporta, para a chuva",
-      "rue": "A Passagem Sob a Via",
-      "passage": "O Funicular, para as alturas",
-      "oracle": "A Passarela, para a crista",
-      "crete": "A Estação Repetidora",
-      "relais": "O Andar Técnico",
-      "terminal": "A Descida, para o edifício",
-      "porte": "O Elevador, para o primeiro andar",
-      "etage": "A Escada de Serviço, para o topo",
-      "sommet": "O que vem depois"
+      "a1s1": "O Caminho Adiante",
+      "a1s2": "O Caminho Adiante",
+      "a1s3": "O Caminho Adiante",
+      "a2s1": "O Caminho Adiante",
+      "a2s2": "O Caminho Adiante",
+      "a2s3": "O Caminho Adiante",
+      "a3s1": "O Caminho Adiante",
+      "a3s2": "O Caminho Adiante",
+      "a3s3": "O Caminho Adiante"
     }
   }
 }

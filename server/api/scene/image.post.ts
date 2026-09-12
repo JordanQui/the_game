@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type { SceneImageRequest, SceneImageResponse } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
+import { clampPlanned } from '~/utils/journal'
 import { generateImage } from '~/server/utils/image-gen'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import { assertNotLocked, consumeQuota } from '~/server/utils/session-quota'
@@ -25,7 +26,9 @@ export default defineEventHandler(async (event): Promise<SceneImageResponse> => 
   }
 
   const runtime = await ScriptRuntime.load()
-  const scene = runtime.scene(body.scene_id)
+  // Le lieu d'une scène vient du plan de la nuit, que le client renvoie. Il
+  // entre dans le prompt image : il est borné, comme le reste de ce qu'il envoie.
+  const scene = runtime.scene(body.scene_id).withPlan(clampPlanned(body.planned))
 
   // Illustration figée : on sort AVANT le quota comme avant le client OpenAI.
   // Elle ne coûte rien, elle ne doit donc rien consommer — sinon un quota

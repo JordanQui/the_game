@@ -217,20 +217,60 @@ if (!script.defaults.generation?.output_schema?.key_item?.observation) {
   errors.push('le schéma de sortie ne demande pas "key_item.observation"')
 }
 
-// --- ce que le joueur vient faire là ----------------------------------------
-// L'ouverture doit l'énoncer AVANT que le barman parle : sans ça, la seule scène
-// gratuite commence par une errance, et le but n'arrive qu'en bouche d'un PNJ.
-if (!script.defaults.quest?.structure?.errand) {
-  errors.push('defaults.quest.structure ne demande pas "errand" : rien ne fixe ce que le joueur vient faire')
+// --- la quête de la nuit -----------------------------------------------------
+// La racine de la partie. Le script ne fixe que le décor ; le dossier fixe un
+// but et un plan, écrits en premier à l'auberge, et chaque scène se construit
+// sur son étape. L'ouverture doit énoncer le but AVANT que le barman parle :
+// sans ça, la seule scène gratuite expose l'objet à récupérer dans la salle.
+const night = script.defaults.night
+for (const f of ['instruction', 'plan', 'fixed', 'derives']) {
+  if (!night?.[f]) errors.push(`defaults.night : champ "${f}" manquant`)
 }
-if (!script.defaults.generation?.output_schema?.quest?.errand) {
-  errors.push('le schéma de sortie ne demande pas "quest.errand"')
+for (const v of ['{{goal}}', '{{plan}}', '{{place}}', '{{focal}}', '{{requirement}}', '{{exit_label}}']) {
+  if (night?.fixed && !night.fixed.includes(v)) errors.push(`defaults.night.fixed n'interpole pas ${v}`)
 }
-if (!opening?.narrative?.structure?.some(x => x.includes('quest.errand'))) {
-  errors.push(`"${script.progression.start_scene}" : la structure du texte ne fait pas dire ce que le joueur vient faire ici`)
+if (night?.plan && !night.plan.includes('{{slots}}')) {
+  errors.push('defaults.night.plan n\'interpole pas {{slots}} : le modèle ne verrait pas la mécanique imposée')
 }
-if (!opening?.narrative?.opening?.includes('quest.errand')) {
-  errors.push(`"${script.progression.start_scene}" : l'ouverture ne renvoie pas à quest.errand`)
+const outSchema = script.defaults.generation?.output_schema ?? {}
+if (Object.keys(outSchema)[0] !== 'night') {
+  errors.push('le schéma de sortie ne commence pas par "night" : la quête doit être écrite avant ce qui en découle')
+}
+for (const f of ['goal', 'tension', 'release', 'acts']) {
+  if (!outSchema.night?.[f]) errors.push(`le schéma de sortie ne demande pas "night.${f}"`)
+}
+for (const f of ['scene_id', 'title', 'place', 'focal', 'step', 'requirement', 'exit_label']) {
+  if (!outSchema.night?.acts?.[0]?.scenes?.[0]?.[f]) errors.push(`le schéma de sortie ne demande pas "night.acts[].scenes[].${f}"`)
+}
+// Le décor ne se fixe plus dans le script : un lieu d'acte ne déclare que sa
+// mécanique, et c'est elle que le plan lit pour inventer le lieu.
+for (const act of script.acts) {
+  for (const id of act.scenes) {
+    const s = byId.get(id)
+    if (s && s.kind !== 'ending' && !s.mechanic) {
+      errors.push(`"${id}" : mécanique manquante — le plan ne saurait pas ce qu'on obtient dans ce lieu`)
+    }
+  }
+}
+// La tension se montre au paiement : sans ses variables, le point reste vide.
+const pitchText = JSON.stringify(script.paywall?.pitch ?? {})
+for (const v of ['{{tension}}', '{{release}}']) {
+  if (!pitchText.includes(v)) errors.push(`paywall.pitch n'affiche pas ${v}`)
+}
+if (JSON.stringify(script).includes('night_goal') && !JSON.stringify(script).includes('{{quest_night_goal}}')) {
+  errors.push('"night_goal" traîne encore dans le script : il a été remplacé par night.goal')
+}
+if (script.defaults.quest?.structure?.errand || outSchema.quest?.errand) {
+  errors.push('"errand" est encore demandé : il a été remplacé par night.goal')
+}
+if (!opening?.narrative?.structure?.some(x => x.includes('night.goal'))) {
+  errors.push(`"${script.progression.start_scene}" : la structure du texte ne fait pas dire ce que le joueur est sorti chercher`)
+}
+if (!opening?.narrative?.opening?.includes('night.goal')) {
+  errors.push(`"${script.progression.start_scene}" : l'ouverture ne renvoie pas à night.goal`)
+}
+if (!script.defaults.turn?.system_prompt_template?.includes('{{quest_night_goal}}')) {
+  errors.push('defaults.turn.system_prompt_template ne donne pas le but de la nuit aux tours')
 }
 
 // --- la fenêtre d'explication ------------------------------------------------

@@ -6,7 +6,7 @@ import type {
   ResolvedScene,
   SceneExit,
 } from '~/types/script'
-import type { PlayerTheme, SceneKeyItem } from '~/types/scene'
+import type { NightPlan, PlannedScene, PlayerTheme, SceneKeyItem } from '~/types/scene'
 import type {
   GeneratedScene,
   SceneTextResponse,
@@ -23,7 +23,7 @@ import { enforceAccentVisibility } from '~/utils/palette'
 import { enforceNameCaps, fold } from '~/utils/naming'
 import { isTakeable } from '~/utils/interactables'
 import { sanitizeHtml } from '~/utils/sanitize-html'
-import { renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
+import { nightOf, renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { agreementFor, overlayValue, pack } from '~/utils/languages'
@@ -184,7 +184,40 @@ export class SceneRuntime {
      * paramètre de plus sur douze méthodes se serait oublié quelque part.
      */
     readonly lang: LangCode = DEFAULT_LANG,
+    /** Le lieu fixé par le plan de la nuit, quand cette instance lui est propre. */
+    private readonly plan: PlannedScene | null = null,
   ) {}
+
+  /**
+   * Cette scène, telle que le plan de la nuit l'a fixée pour ce joueur.
+   *
+   * Le script ne porte que la mécanique d'un lieu ; son décor, son titre, sa
+   * sortie et son exigence viennent du plan. Une instance À PART : celle du
+   * script est partagée entre toutes les parties, on n'y touche jamais.
+   */
+  withPlan(planned?: PlannedScene | null): SceneRuntime {
+    if (!planned) return this
+    const s = this.scene
+    return new SceneRuntime({
+      ...s,
+      image_setting: planned.place || s.image_setting,
+      focal_element: planned.focal || s.focal_element,
+      exits: s.exits.map((e, i) => (i === 0 && planned.exit_label ? { ...e, label: planned.exit_label } : e)),
+      objective: { ...s.objective, requirement: planned.requirement || s.objective.requirement },
+    }, this.script, this.lang, planned)
+  }
+
+  /** La scène qui écrit la quête de la nuit. */
+  private get isStart(): boolean {
+    return this.scene.id === this.script.progression.start_scene
+  }
+
+  /** Les lieux que le plan doit couvrir : ceux des actes, épilogue exclu. */
+  private get planIds(): string[] {
+    return this.script.acts
+      .flatMap(a => a.scenes)
+      .filter(id => this.script.scenes.find(sc => sc.id === id)?.kind !== 'ending')
+  }
 
   /** Le pack de la langue jouée. */
   private get pack() { return pack(this.lang) }
@@ -291,7 +324,9 @@ export class SceneRuntime {
    * langue, juste là où il choisit son ton.
    */
   get title() {
-    return overlayValue<string>(this.lang, `scene_titles.${this.scene.id}`) ?? this.scene.title
+    // Le plan est déjà dans la langue du joueur : il passe devant le pack.
+    return this.plan?.title
+      || (overlayValue<string>(this.lang, `scene_titles.${this.scene.id}`) ?? this.scene.title)
   }
   get generation() { return this.scene.generation }
   get artDirection() { return this.scene.art_direction }
@@ -335,6 +370,10 @@ export class SceneRuntime {
   private outputSchema(canTrade: boolean): Record<string, unknown> {
     const schema = { ...this.scene.generation.output_schema } as Record<string, unknown>
     if (!this.scene.sealed_object) delete schema.sealed_object
+    // La quête de la nuit ne s'écrit qu'une fois, à l'auberge. Ailleurs elle
+    // arrive par le journal : la réécrire coûterait un millier de jetons par
+    // scène, et chaque réécriture pourrait la faire dériver.
+    if (!this.isStart) delete schema.night
 
     // UN ÉLÉMENT CACHÉ NE SE DÉCOUVRE QUE PAR UN ÉCHANGE, et un échange n'existe
     // que si le joueur porte quelque chose de troquable. Le schéma proposait
@@ -375,7 +414,7 @@ export class SceneRuntime {
 
 PROFIL DU JOUEUR
 ${describeUser(user)}
-${this.describeResolution(theme)}
+${this.describeResolution(theme, nightOf(journal))}
 
 TOUTE SA NUIT, DANS L'ORDRE
 ${journal.length ? renderJournal(journal, journal.length) : "Il n'a traversé aucune scène : reste sur ce que dit son profil."}
@@ -431,7 +470,7 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
    * joueur est parti, où toute la partie le menait, et quelle facette chaque
    * acte mettait à l'épreuve.
    */
-  private describeResolution(theme: PlayerTheme | null): string {
+  private describeResolution(theme: PlayerTheme | null, plan?: NightPlan): string {
     const frame = this.scene.theme_frame
     if (!frame || !theme?.sign) return theme ? this.describeTheme(theme) : ''
 
@@ -451,7 +490,9 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
         const first = this.script.scenes.find(sc => sc.id === a.scenes[0])
         const facet = first?.theme_focus?.facet
         const value = facet ? numbers[facet] : null
-        return `  - ${a.title} — ${facet ? labels[facet] : 'son parcours'}`
+        // Les titres d'acte sont ceux que le plan a donnés à SA nuit.
+        const title = plan?.acts?.find(p => p.act_id === a.id)?.title ?? a.title
+        return `  - ${title} — ${facet ? labels[facet] : 'son parcours'}`
           + (value ? ` : ${value}` : '')
       })
       .join('\n')
@@ -542,6 +583,9 @@ PROFIL DU JOUEUR
 ${describeUser(user)}
 ${themeBlock}
 ${story}
+
+LA QUÊTE DE LA NUIT
+${this.describeNight(theme, journal)}
 
 ${this.describeCarried(carried)}
 ${canTrade ? `\nCE QU'UN PERSONNAGE PEUT EN VOULOIR\n${this.script.defaults.exchange.instruction}\n` : ''}
@@ -658,6 +702,76 @@ ${list(o.posture)}`
       .join('\n')
 
     return interpolate(ending ? inv.ending_prompt : inv.prompt, { items })
+  }
+
+  /**
+   * La quête de la nuit : le but, et la ville que ce joueur va traverser.
+   *
+   * Le script ne fixe que la mécanique — trois actes de trois lieux, ce qu'on
+   * obtient dans chacun. À l'auberge, le modèle écrit d'abord le but, puis
+   * invente les neuf lieux depuis le profil ; ensuite le plan voyage par le
+   * journal et chaque scène se bâtit sur le sien. Une scène qui en inventerait
+   * un autre défait tout ce qui précède.
+   */
+  private describeNight(theme: PlayerTheme | null, journal: JournalEntry[]): string {
+    const n = this.script.defaults.night
+
+    if (this.isStart) {
+      return `${n.instruction}\n\n${interpolate(n.plan, { slots: this.describeSlots(theme) })}\n\n${n.derives}`
+    }
+
+    // Sans plan — un saut direct à une scène, un vieux journal — il ne reste
+    // que la règle : le décor retombe sur le repli du script.
+    const plan = nightOf(journal)
+    const here = this.plan
+    if (!plan || !here) return n.derives
+
+    const rendered = plan.acts
+      .map(act => [
+        `  ${act.title}`,
+        ...act.scenes.map(sc =>
+          `    ${sc.scene_id === this.scene.id ? '→' : '-'} ${sc.title} — ${sc.place} · ${sc.step}`),
+      ].join('\n'))
+      .join('\n')
+
+    return `${interpolate(n.fixed, {
+      goal: plan.goal,
+      title: plan.title ?? '',
+      horizon: plan.horizon ?? '',
+      plan: rendered,
+      place: here.place,
+      focal: here.focal,
+      step: here.step,
+      requirement: here.requirement,
+      exit_label: here.exit_label,
+    })}\n\n${n.derives}`
+  }
+
+  /**
+   * La mécanique imposée, acte par acte, telle que le plan doit la remplir.
+   *
+   * Chaque acte dit la facette qu'il met à l'épreuve, avec la valeur que le
+   * profil lui donne : c'est de là que le modèle tire des lieux qui
+   * n'appartiennent qu'à ce joueur.
+   */
+  private describeSlots(theme: PlayerTheme | null): string {
+    const numbers = theme?.numbers as Record<string, string | null> | undefined
+    return this.script.acts
+      .map((act) => {
+        const slots = act.scenes
+          .map(id => this.script.scenes.find(sc => sc.id === id))
+          .filter((sc): sc is SceneScript => Boolean(sc) && sc!.kind !== 'ending')
+        if (!slots.length) return ''
+        const focus = slots[0]!.theme_focus
+        const value = focus ? numbers?.[focus.facet] : null
+        const head = `ACTE ${act.id} — ${act.arc}`
+          + (focus ? `\n  Ce qu'il met à l'épreuve : ${focus.facet_label}${value ? ` — ${value}` : ''}` : '')
+        const lines = slots.map(sc =>
+          `  - ${sc.id} : ${sc.mechanic ?? ''} — exigence type : ${sc.objective?.requirement ?? ''}`)
+        return [head, ...lines].join('\n')
+      })
+      .filter(Boolean)
+      .join('\n\n')
   }
 
   private describeObjective(theme: PlayerTheme | null): string {
@@ -842,14 +956,27 @@ ${lines}`)
 
     if (!generated.quest?.title) throw new Error('Scène invalide : quest.title manquant')
 
-    // CE QUE LE JOUEUR VIENT FAIRE ICI. Sans cette phrase, le modèle retombe
-    // sur l'errance — « tu ne dors pas, tu marches » — et l'ouverture ne dit
-    // plus pourquoi il a poussé cette porte-là : le joueur traverse la seule
-    // scène gratuite en attendant qu'on lui donne un but. Le champ est exigé
-    // partout où le script le demande, donc sur les dix scènes.
-    if ('errand' in this.scene.quest.structure && !generated.quest.errand?.trim()) {
-      throw new Error(
-        'Scène invalide : quest.errand manquant — rien ne dit ce que le joueur vient faire ici')
+    // LA QUÊTE DE LA NUIT. C'est la racine de toute la partie : sans elle, le
+    // modèle construit l'ouverture sur l'objet à récupérer — « Vadim t'a
+    // laissé quelque chose ici » — et les neuf lieux suivants n'ont plus rien
+    // qui les tienne ensemble. Seule l'auberge l'écrit, et elle doit être
+    // entière : un lieu manquant serait une scène sans décor.
+    if (this.isStart) {
+      const night = generated.night
+      const missing: string[] = []
+      for (const f of ['goal', 'tension', 'release'] as const) {
+        if (!night?.[f]?.trim()) missing.push(`night.${f}`)
+      }
+      const planned = new Map((night?.acts ?? []).flatMap(a => a.scenes ?? []).map(sc => [sc.scene_id, sc]))
+      const fields = ['title', 'place', 'focal', 'step', 'requirement', 'exit_label'] as const
+      for (const id of this.planIds) {
+        const sc = planned.get(id)
+        const empty = fields.filter(f => !sc?.[f]?.trim())
+        if (empty.length) missing.push(`${id} (${empty.join(', ')})`)
+      }
+      if (missing.length) {
+        throw new Error(`Scène invalide : la quête de la nuit est incomplète — ${missing.join(' ; ')}`)
+      }
     }
 
     // L'HORIZON N'EST PAS UNE CARTE D'ACCÈS. Les cartes colorées sont la
@@ -1067,10 +1194,14 @@ ${lines}`)
       console.warn(`[scene/${this.scene.id}] déclarés mais absents du texte : ${naming.missing.join(' · ')}`)
     }
 
-    const vars = {
+    const vars: Record<string, string> = {
       quest_title: scene.quest.title,
       quest_artifact: scene.quest.artifact,
       place_name: scene.place.name,
+      // Montrées HORS fiction, au moment de payer la suite : ce qui se tend
+      // chez lui, et vers quoi. Écrites par le plan, donc dans sa langue.
+      tension: generated.night?.tension ?? '',
+      release: generated.night?.release ?? '',
     }
 
     return {
@@ -1080,6 +1211,7 @@ ${lines}`)
       scene_id: this.scene.id,
       scene_title: this.title,
       exit_label: this.exitLabel,
+      planned: this.plan,
       script_version: this.script.version,
       image_prompt: this.buildImagePrompt({
         place_name: scene.place.name,
@@ -1144,7 +1276,11 @@ ${lines}`)
           // à connaître la syntaxe des gabarits.
           pitch: {
             eyebrow: pw.pitch.eyebrow,
-            points: pw.pitch.points.map(pt => ({
+            // Un point dont une variable est vide n'afficherait que des
+            // guillemets : sans plan, la tension ne se montre pas.
+            points: pw.pitch.points
+              .filter(pt => [...pt.text.matchAll(/{{(\w+)}}/g)].every(m => vars[m[1]!]))
+              .map(pt => ({
               label: pt.label,
               text: interpolate(pt.text, vars),
             })),
@@ -1177,6 +1313,7 @@ ${lines}`)
       quest_title: ctx.quest.title,
       quest_objective: ctx.quest.objective,
       quest_stakes: ctx.quest.stakes,
+      quest_night_goal: ctx.night_goal ?? '',
       quest_artifact: ctx.quest.artifact,
       npc_list: npcList,
       narrative_instruction: `${this.scene.narrative.instruction}\n${this.vocabulary}\n${this.namingStyle}`,
@@ -1445,9 +1582,10 @@ ${lines}`)
    * pour ça qu'il n'est résolu qu'ici.
    */
   get exitLabel(): string {
-    return overlayValue<string>(this.lang, `exit_labels.${this.scene.id}`)
-      ?? this.scene.exits[0]?.label
-      ?? this.pack.ui['game.exit_opens']
+    return this.plan?.exit_label
+      || (overlayValue<string>(this.lang, `exit_labels.${this.scene.id}`)
+        ?? this.scene.exits[0]?.label
+        ?? this.pack.ui['game.exit_opens'])
   }
 
   /**

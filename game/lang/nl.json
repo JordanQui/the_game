@@ -427,8 +427,12 @@
             "text": "De plek, de mensen, de opdracht: alles is gebouwd uit wat jij hebt meegemaakt. Niets is generiek, niets wordt opnieuw gespeeld voor iemand anders."
           },
           {
-            "label": "De opdracht is geen versiering",
-            "text": "{{quest_title}} ensceneert een spanning die je echt met je meedraagt — die tussen wat je bent en wat er van je verwacht wordt. Het spel benoemt hem nooit. Het laat je erdoorheen gaan."
+            "label": "Wat in jou gespannen staat",
+            "text": "“{{tension}}” Het spel heeft het je nooit gezegd. Het heeft je erdoorheen laten gaan."
+          },
+          {
+            "label": "Waar het naartoe wil",
+            "text": "“{{release}}” De rest van de nacht is uitgetekend om je daar te brengen: drie bedrijven, negen plekken die niemand anders zal doorkruisen."
           },
           {
             "label": "De uitgang telt",
@@ -458,34 +462,34 @@
     },
     "scene_titles": {
       "auberge": "De Toog",
-      "rue": "De Verzopen Straat",
-      "passage": "De Onderdoorgang",
-      "oracle": "Het Orakel",
-      "crete": "De Antennekam",
-      "relais": "Het Relaisstation",
-      "terminal": "De Toegangsterminal",
-      "porte": "De Poort",
-      "etage": "De Eerste Verdieping",
-      "sommet": "De Operatie",
+      "a1s1": "Etappe 1",
+      "a1s2": "Etappe 2",
+      "a1s3": "Etappe 3",
+      "a2s1": "Etappe 4",
+      "a2s2": "Etappe 5",
+      "a2s3": "Etappe 6",
+      "a3s1": "Etappe 7",
+      "a3s2": "Etappe 8",
+      "a3s3": "Etappe 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "De Weg",
-      "hauteurs": "De Hoogten",
-      "building": "De Toren",
+      "acte1": "Bedrijf I",
+      "acte2": "Bedrijf II",
+      "acte3": "Bedrijf III",
       "epilogue": "De Epiloog"
     },
     "exit_labels": {
       "auberge": "De Sluis, de regen in",
-      "rue": "De Onderdoorgang",
-      "passage": "De Kabelbaan, naar de hoogten",
-      "oracle": "De Loopbrug, naar de kam",
-      "crete": "Het Relaisstation",
-      "relais": "De Technische Verdieping",
-      "terminal": "De Afdaling, naar de toren",
-      "porte": "De Lift, naar de eerste verdieping",
-      "etage": "De Diensttrap, naar de top",
-      "sommet": "Wat daarna komt"
+      "a1s1": "De Weg Verder",
+      "a1s2": "De Weg Verder",
+      "a1s3": "De Weg Verder",
+      "a2s1": "De Weg Verder",
+      "a2s2": "De Weg Verder",
+      "a2s3": "De Weg Verder",
+      "a3s1": "De Weg Verder",
+      "a3s2": "De Weg Verder",
+      "a3s3": "De Weg Verder"
     }
   }
 }

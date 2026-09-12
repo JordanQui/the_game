@@ -447,8 +447,12 @@
             "text": "Der Ort, die Leute, die Aufgabe: alles wurde aus dem gebaut, was du erlebt hast. Nichts daran ist generisch, nichts davon wird für jemand anderen noch einmal gespielt."
           },
           {
-            "label": "Die Aufgabe ist keine Dekoration",
-            "text": "{{quest_title}} inszeniert eine Spannung, die du wirklich trägst — die zwischen dem, was du bist, und dem, was man von dir erwartet. Das Spiel benennt sie dir nie. Es lässt dich hindurchgehen."
+            "label": "Was sich in dir spannt",
+            "text": "„{{tension}}“ Das Spiel hat es dir nie gesagt. Es hat dich hindurchgehen lassen."
+          },
+          {
+            "label": "Wohin es drängt",
+            "text": "„{{release}}“ Der Rest der Nacht wurde gezeichnet, um dich dorthin zu führen: drei Akte, neun Orte, die niemand sonst durchqueren wird."
           },
           {
             "label": "Der Ausgang zählt",
@@ -478,34 +482,34 @@
     },
     "scene_titles": {
       "auberge": "Der Tresen",
-      "rue": "Die Ertrunkene Straße",
-      "passage": "Die Unterführung",
-      "oracle": "Das Orakel",
-      "crete": "Der Antennenkamm",
-      "relais": "Die Relaisstation",
-      "terminal": "Das Zugangsterminal",
-      "porte": "Das Tor",
-      "etage": "Der Erste Stock",
-      "sommet": "Die Operation",
+      "a1s1": "Etappe 1",
+      "a1s2": "Etappe 2",
+      "a1s3": "Etappe 3",
+      "a2s1": "Etappe 4",
+      "a2s2": "Etappe 5",
+      "a2s3": "Etappe 6",
+      "a3s1": "Etappe 7",
+      "a3s2": "Etappe 8",
+      "a3s3": "Etappe 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "Die Straße",
-      "hauteurs": "Die Höhen",
-      "building": "Der Turm",
+      "acte1": "Akt I",
+      "acte2": "Akt II",
+      "acte3": "Akt III",
       "epilogue": "Der Epilog"
     },
     "exit_labels": {
       "auberge": "Die Schleuse, hinaus in den Regen",
-      "rue": "Die Unterführung",
-      "passage": "Die Standseilbahn, hinauf in die Höhen",
-      "oracle": "Der Steg, hinaus zum Kamm",
-      "crete": "Die Relaisstation",
-      "relais": "Das Technikgeschoss",
-      "terminal": "Der Abstieg, hinunter zum Turm",
-      "porte": "Der Aufzug, hinauf in den ersten Stock",
-      "etage": "Die Diensttreppe, hinauf zur Spitze",
-      "sommet": "Was danach kommt"
+      "a1s1": "Der Weg Weiter",
+      "a1s2": "Der Weg Weiter",
+      "a1s3": "Der Weg Weiter",
+      "a2s1": "Der Weg Weiter",
+      "a2s2": "Der Weg Weiter",
+      "a2s3": "Der Weg Weiter",
+      "a3s1": "Der Weg Weiter",
+      "a3s2": "Der Weg Weiter",
+      "a3s3": "Der Weg Weiter"
     }
   }
 }

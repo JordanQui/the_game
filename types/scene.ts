@@ -149,15 +149,6 @@ export interface SealedObject {
 
 export interface SceneQuest {
   title: string
-  /**
-   * Ce que le joueur vient faire dans ce lieu, en une phrase.
-   *
-   * L'ouverture de l'auberge le dit AVANT que le barman parle : sans lui, le
-   * joueur traversait la seule scène gratuite sans savoir ce qu'il était venu
-   * chercher. Ce n'est pas l'objectif de la quête mais son premier pas — ce que
-   * le barman déplace en racontant l'augmentation.
-   */
-  errand: string
   hook: string
   objective: string
   stakes: string
@@ -208,7 +199,63 @@ export interface ScenePlace {
 }
 
 /** Sortie brute de gpt-4o, avant tout enrichissement local. */
+/**
+ * Un lieu de la nuit, tel que le plan l'a inventé pour CE joueur.
+ *
+ * Le script n'en porte que la mécanique — ce qu'on y obtient, qui le détient.
+ * Tout ce qui se voit et se lit vient d'ici, dans la langue du joueur.
+ */
+export interface PlannedScene {
+  scene_id: string
+  /** Titre de chapitre, affiché. */
+  title: string
+  /** Ce qu'est le lieu : devient le décor de l'image. */
+  place: string
+  /** Ce qu'on y voit d'abord : devient l'élément focal. */
+  focal: string
+  /** Le morceau du but qu'il vient y gagner. */
+  step: string
+  /** L'exigence mécanique, redite dans ce lieu. */
+  requirement: string
+  /** Le passage vers le lieu suivant : le joueur le tape. */
+  exit_label: string
+}
+
+export interface NightAct {
+  act_id: string
+  title: string
+  scenes: PlannedScene[]
+}
+
+/**
+ * La quête de la nuit : la racine de toute la partie.
+ *
+ * Le script ne fixe plus aucun décor, seulement la mécanique : trois actes de
+ * trois lieux. Le dossier d'admission — date de naissance, prénom, nom — fixe
+ * le reste : un but, la tension qu'on montrera au paiement, et les neuf lieux.
+ * L'auberge les écrit en premier ; ils voyagent ensuite par le journal et
+ * chaque scène se construit sur son lieu. Ce n'est jamais l'objet à récupérer
+ * dans une salle.
+ */
+export interface NightPlan {
+  /** Ce qu'il est sorti chercher cette nuit, en une phrase. */
+  goal: string
+  /** Sa tension, reformulée pour lui. Hors fiction : montrée au paywall. */
+  tension: string
+  /** Ce vers quoi elle tend pour se détendre. Hors fiction, elle aussi. */
+  release: string
+  acts: NightAct[]
+  /** Reportés depuis la quête de l'auberge quand on la consigne : ils ne se réécrivent plus. */
+  title?: string
+  horizon?: string
+}
+
 export interface GeneratedScene {
+  /**
+   * Écrit par l'auberge seulement ; les scènes suivantes le reçoivent du
+   * journal, et le serveur le leur rattache.
+   */
+  night?: NightPlan
   place: ScenePlace
   palette: ScenePalette
   decor: DecorElement[]
@@ -258,6 +305,11 @@ export interface SceneTextResponse extends GeneratedScene {
    * il fallait donc que le libellé voyage pour lui-même.
    */
   exit_label: string
+  /**
+   * Ce lieu, tel que le plan de la nuit l'a fixé. Le client le renvoie aux
+   * routes d'image et de tour : le serveur ne garde rien entre deux appels.
+   */
+  planned?: PlannedScene | null
   script_version: string
   /** Prompt assemblé côté serveur. Renvoyé pour information/debug uniquement :
    *  /api/scene/image le reconstruit et n'accepte jamais un prompt du client. */
@@ -369,6 +421,8 @@ export interface SceneImageRequest {
   place_name: string
   palette: ScenePalette
   decor: DecorElement[]
+  /** Le lieu fixé par le plan : c'est lui que l'image dessine. */
+  planned?: PlannedScene | null
 }
 
 export interface SceneImageResponse {
@@ -397,6 +451,10 @@ export interface TurnContext {
   player_agreement?: string
   place: ScenePlace
   quest: SceneQuest
+  /** Ce qu'il est sorti chercher cette nuit : les personnages savent où il va. */
+  night_goal?: string
+  /** Le lieu fixé par le plan : sa sortie et son exigence en dépendent. */
+  planned?: PlannedScene
   npcs: SceneNPC[]
   /** Reporté depuis la scène : ce que les PNJ doivent faire affleurer. */
   theme?: PlayerTheme | null

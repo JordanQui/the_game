@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import type { GeneratedScene, SceneTextResponse, GeneratedEnding } from '~/types/scene'
 import type { UserProfile } from '~/types/user'
-import type { JournalEntry, CarriedItem } from '~/utils/journal'
+import { nightOf, plannedScene, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import { ScriptRuntime, loadUserFixture, resolveTheme } from '~/utils/script-runtime'
 import { interpolate } from '~/utils/prompt-builder'
 import { requireSecret } from '~/server/utils/runtime-secrets'
@@ -41,7 +41,10 @@ export default defineEventHandler(async (event) => {
   assertNotLocked(event, limits.lock.message)
   consumeQuota(event, 'scenes', limits)
 
-  const scene = runtime.scene(body.sceneId)
+  // Le lieu vient du plan de la nuit, fixé à l'auberge et porté par le journal :
+  // le script n'en connaît que la mécanique.
+  const plan = nightOf(body.journal ?? [])
+  const scene = runtime.scene(body.sceneId).withPlan(plannedScene(plan, body.sceneId))
   const user = body.user ?? await loadUserFixture()
 
   /**
@@ -228,6 +231,8 @@ export default defineEventHandler(async (event) => {
 
   const assembled = {
     ...scene.assembleText(generated, resolveTheme(user, runtime.script)),
+    // La quête voyage avec chaque scène : c'est de là que le journal la reprend.
+    night: generated.night ?? plan,
     // Permet au client de jeter une scène gardée en session dès que le script
     // a changé — sans quoi un déploiement reste invisible pour lui.
     script_fingerprint: scriptFingerprint(runtime.script),

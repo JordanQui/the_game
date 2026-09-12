@@ -432,8 +432,12 @@
             "text": "Miejsce, ludzie, zadanie: wszystko zostało zbudowane z tego, co przeżyłeś. Nic tu nie jest ogólne, nic nie zostanie rozegrane jeszcze raz dla kogoś innego."
           },
           {
-            "label": "Zadanie nie jest ozdobą",
-            "text": "{{quest_title}} wystawia na scenę napięcie, które naprawdę nosisz — to między tym, kim jesteś, a tym, czego się od ciebie oczekuje. Gra nigdy ci go nie nazywa. Każe ci przez nie przejść."
+            "label": "Co się w tobie napina",
+            "text": "„{{tension}}” Gra nigdy ci tego nie powiedziała. Kazała ci przez to przejść."
+          },
+          {
+            "label": "Dokąd to zmierza",
+            "text": "„{{release}}” Reszta nocy została wytyczona, by cię tam doprowadzić: trzy akty, dziewięć miejsc, przez które nikt inny nie przejdzie."
           },
           {
             "label": "Wyjście się liczy",
@@ -463,34 +467,34 @@
     },
     "scene_titles": {
       "auberge": "Kontuar",
-      "rue": "Zatopiona Ulica",
-      "passage": "Przejście pod Torami",
-      "oracle": "Wyrocznia",
-      "crete": "Grzbiet Anten",
-      "relais": "Stacja Przekaźnikowa",
-      "terminal": "Terminal Dostępu",
-      "porte": "Brama",
-      "etage": "Pierwsze Piętro",
-      "sommet": "Operacja",
+      "a1s1": "Etap 1",
+      "a1s2": "Etap 2",
+      "a1s3": "Etap 3",
+      "a2s1": "Etap 4",
+      "a2s2": "Etap 5",
+      "a2s3": "Etap 6",
+      "a3s1": "Etap 7",
+      "a3s2": "Etap 8",
+      "a3s3": "Etap 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "Droga",
-      "hauteurs": "Wysokości",
-      "building": "Wieża",
+      "acte1": "Akt I",
+      "acte2": "Akt II",
+      "acte3": "Akt III",
       "epilogue": "Epilog"
     },
     "exit_labels": {
       "auberge": "Śluza, w deszcz",
-      "rue": "Przejście pod Torami",
-      "passage": "Kolejka Linowa, ku wysokościom",
-      "oracle": "Kładka, ku grzbietowi",
-      "crete": "Stacja Przekaźnikowa",
-      "relais": "Piętro Techniczne",
-      "terminal": "Zejście, ku wieży",
-      "porte": "Winda, na pierwsze piętro",
-      "etage": "Schody Służbowe, na szczyt",
-      "sommet": "To, co przychodzi potem"
+      "a1s1": "Dalsza Droga",
+      "a1s2": "Dalsza Droga",
+      "a1s3": "Dalsza Droga",
+      "a2s1": "Dalsza Droga",
+      "a2s2": "Dalsza Droga",
+      "a2s3": "Dalsza Droga",
+      "a3s1": "Dalsza Droga",
+      "a3s2": "Dalsza Droga",
+      "a3s3": "Dalsza Droga"
     }
   }
 }

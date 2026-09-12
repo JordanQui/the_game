@@ -467,8 +467,12 @@
             "text": "Il luogo, le persone, la missione: tutto è stato costruito a partire da quello che hai vissuto. Niente è generico, niente sarà rigiocato per qualcun altro."
           },
           {
-            "label": "La missione non è decorativa",
-            "text": "{{quest_title}} mette in scena una tensione che porti davvero — quella che si gioca fra quello che sei e quello che ci si aspetta da te. Il gioco non te la nomina mai. Te la fa attraversare."
+            "label": "Ciò che in te è teso",
+            "text": "«{{tension}}» Il gioco non te l'ha mai detto. Te l'ha fatta attraversare."
+          },
+          {
+            "label": "Verso dove tende",
+            "text": "«{{release}}» Il resto della notte è stato tracciato per portarti lì: tre atti, nove luoghi che nessun altro attraverserà."
           },
           {
             "label": "L'uscita conta",
@@ -498,34 +502,34 @@
     },
     "scene_titles": {
       "auberge": "Il Bancone",
-      "rue": "La Via Annegata",
-      "passage": "Il Sottopasso",
-      "oracle": "L'Oracolo",
-      "crete": "La Cresta di Antenne",
-      "relais": "La Stazione Ripetitore",
-      "terminal": "Il Terminale d'Accesso",
-      "porte": "Il Portone",
-      "etage": "Il Primo Piano",
-      "sommet": "L'Operazione",
+      "a1s1": "Tappa 1",
+      "a1s2": "Tappa 2",
+      "a1s3": "Tappa 3",
+      "a2s1": "Tappa 4",
+      "a2s2": "Tappa 5",
+      "a2s3": "Tappa 6",
+      "a3s1": "Tappa 7",
+      "a3s2": "Tappa 8",
+      "a3s3": "Tappa 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "La Strada",
-      "hauteurs": "Le Alture",
-      "building": "La Torre",
+      "acte1": "Atto I",
+      "acte2": "Atto II",
+      "acte3": "Atto III",
       "epilogue": "L'Epilogo"
     },
     "exit_labels": {
       "auberge": "La Paratia, verso la pioggia",
-      "rue": "Il Sottopasso",
-      "passage": "La Funicolare, verso le alture",
-      "oracle": "La Passerella, verso la cresta",
-      "crete": "La Stazione Ripetitore",
-      "relais": "Il Piano Tecnico",
-      "terminal": "La Discesa, verso la torre",
-      "porte": "L'Ascensore, verso il primo piano",
-      "etage": "La Scala di Servizio, verso la cima",
-      "sommet": "Quello che viene dopo"
+      "a1s1": "La Via Che Prosegue",
+      "a1s2": "La Via Che Prosegue",
+      "a1s3": "La Via Che Prosegue",
+      "a2s1": "La Via Che Prosegue",
+      "a2s2": "La Via Che Prosegue",
+      "a2s3": "La Via Che Prosegue",
+      "a3s1": "La Via Che Prosegue",
+      "a3s2": "La Via Che Prosegue",
+      "a3s3": "La Via Che Prosegue"
     }
   }
 }

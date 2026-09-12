@@ -237,6 +237,11 @@ export interface ScriptDefaults {
   }
   /** Le schéma des champs de quête, commun à toutes les scènes. */
   quest: { note?: string; structure: Record<string, string> }
+  /**
+   * La quête de la nuit : le but tiré du dossier, le plan qui dit ce que chaque
+   * lieu est pour ce joueur, et ce qui s'en déduit dans chaque scène.
+   */
+  night: { note?: string; instruction: string; plan: string; fixed: string; derives: string }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
   sealed_object: { note?: string; instruction: string }
   /** Ce qu'un personnage réclame de ce que le joueur porte, et ce qu'il en donne. */
@@ -335,6 +340,11 @@ export interface SceneScript {
   is_paywall_gate: boolean
   image_setting: string
   focal_element: string
+  /**
+   * Ce qu'on obtient dans ce lieu, et comment. C'est tout ce que le script
+   * sait d'un lieu de la nuit : le plan de l'auberge invente le reste.
+   */
+  mechanic?: string
   /** Illustration figée, servie depuis public/. Court-circuite la génération. */
   static_image?: string
   naming: { instruction: string; sources: string[] }
@@ -526,11 +536,26 @@ export interface PaywallConfig {
   pitch: PaywallPitch
 }
 
+/**
+ * Un acte : ce qu'il met à l'épreuve, et ses lieux dans l'ordre.
+ *
+ * Il ne porte aucun décor. Son titre du script n'est qu'un repli : celui que
+ * voit le joueur vient du plan de la nuit, écrit par l'auberge.
+ */
+export interface ScriptAct {
+  id: string
+  title: string
+  scenes: string[]
+  arc: string
+  ends_on?: string
+}
+
 export interface Script {
   id: string
   version: string
   meta: ScriptMeta
   progression: Progression
+  acts: ScriptAct[]
   defaults: ScriptDefaults
   scenes: SceneScript[]
   paywall: PaywallConfig

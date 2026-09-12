@@ -1,4 +1,4 @@
-import type { ScenePalette, DecorElement, SceneImageResponse } from '~/types/scene'
+import type { ScenePalette, DecorElement, PlannedScene, SceneImageResponse } from '~/types/scene'
 import { useGameStore } from '~/stores/game'
 
 /**
@@ -15,6 +15,7 @@ export function useImageGen() {
     placeName: string
     palette: ScenePalette
     decor: DecorElement[]
+    planned?: PlannedScene | null
   }): Promise<string | null> {
     isLoading.value = true
     error.value = null
@@ -31,6 +32,7 @@ export function useImageGen() {
           place_name: input.placeName,
           palette: input.palette,
           decor: input.decor,
+          planned: input.planned ?? undefined,
         },
       })
       gameStore.setSceneImage(res.image)

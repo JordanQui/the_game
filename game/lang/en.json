@@ -417,8 +417,12 @@
             "text": "The place, the people, the quest: all of it was built from what you have lived. Nothing is generic, nothing will be played again for someone else."
           },
           {
-            "label": "The quest is not decorative",
-            "text": "{{quest_title}} stages a tension you genuinely carry — the one between what you are and what is expected of you. The game never names it for you. It makes you walk through it."
+            "label": "What pulls tight in you",
+            "text": "“{{tension}}” The game never told you. It made you walk through it."
+          },
+          {
+            "label": "Where it is pulling",
+            "text": "“{{release}}” The rest of the night was drawn to lead you there: three acts, nine places no one else will ever cross."
           },
           {
             "label": "The way out matters",
@@ -448,34 +452,34 @@
     },
     "scene_titles": {
       "auberge": "The Counter",
-      "rue": "The Drowned Street",
-      "passage": "The Underpass",
-      "oracle": "The Oracle",
-      "crete": "The Antenna Ridge",
-      "relais": "The Relay Station",
-      "terminal": "The Access Terminal",
-      "porte": "The Door",
-      "etage": "The First Floor",
-      "sommet": "The Operation",
+      "a1s1": "Stage 1",
+      "a1s2": "Stage 2",
+      "a1s3": "Stage 3",
+      "a2s1": "Stage 4",
+      "a2s2": "Stage 5",
+      "a2s3": "Stage 6",
+      "a3s1": "Stage 7",
+      "a3s2": "Stage 8",
+      "a3s3": "Stage 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "The Road",
-      "hauteurs": "The Heights",
-      "building": "The Building",
+      "acte1": "Act I",
+      "acte2": "Act II",
+      "acte3": "Act III",
       "epilogue": "The Epilogue"
     },
     "exit_labels": {
       "auberge": "The Airlock, into the rain",
-      "rue": "The Underpass",
-      "passage": "The Funicular, up to the heights",
-      "oracle": "The Walkway, out to the ridge",
-      "crete": "The Relay Station",
-      "relais": "The Technical Floor",
-      "terminal": "The Descent, down to the building",
-      "porte": "The Lift, up to the first floor",
-      "etage": "The Service Stairs, up to the summit",
-      "sommet": "What comes after"
+      "a1s1": "The Way On",
+      "a1s2": "The Way On",
+      "a1s3": "The Way On",
+      "a2s1": "The Way On",
+      "a2s2": "The Way On",
+      "a2s3": "The Way On",
+      "a3s1": "The Way On",
+      "a3s2": "The Way On",
+      "a3s3": "The Way On"
     }
   }
 }

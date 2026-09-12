@@ -430,6 +430,8 @@ export function useScene() {
       placeName: res.place.name,
       palette: res.palette,
       decor: res.decor,
+      // Le lieu vient du plan de la nuit : c'est lui que l'image dessine.
+      planned: res.planned,
     })
   }
 

@@ -428,8 +428,12 @@
             "text": "Mekân, insanlar, görev: hepsi yaşadıklarından kuruldu. Hiçbiri genel geçer değil, hiçbiri bir başkası için yeniden oynanmayacak."
           },
           {
-            "label": "Görev süs değil",
-            "text": "{{quest_title}} gerçekten taşıdığın bir gerilimi sahneye koyar — olduğun şeyle senden beklenen şey arasında oynanan gerilimi. Oyun onu asla adlandırmaz. Onu sana yaşatır."
+            "label": "İçinde gerilen şey",
+            "text": "“{{tension}}” Oyun bunu sana hiç söylemedi. Onun içinden geçmeni sağladı."
+          },
+          {
+            "label": "Neye doğru uzandığı",
+            "text": "“{{release}}” Gecenin geri kalanı seni oraya götürmek için çizildi: üç perde, başka kimsenin geçmeyeceği dokuz yer."
           },
           {
             "label": "Çıkış önemlidir",
@@ -459,34 +463,34 @@
     },
     "scene_titles": {
       "auberge": "Tezgâh",
-      "rue": "Boğulmuş Sokak",
-      "passage": "Alt Geçit",
-      "oracle": "Kâhin",
-      "crete": "Anten Sırtı",
-      "relais": "Aktarma İstasyonu",
-      "terminal": "Erişim Terminali",
-      "porte": "Kapı Kanadı",
-      "etage": "Birinci Kat",
-      "sommet": "Operasyon",
+      "a1s1": "1. Aşama",
+      "a1s2": "2. Aşama",
+      "a1s3": "3. Aşama",
+      "a2s1": "4. Aşama",
+      "a2s2": "5. Aşama",
+      "a2s3": "6. Aşama",
+      "a3s1": "7. Aşama",
+      "a3s2": "8. Aşama",
+      "a3s3": "9. Aşama",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "Yol",
-      "hauteurs": "Yükseklikler",
-      "building": "Kule",
+      "acte1": "I. Perde",
+      "acte2": "II. Perde",
+      "acte3": "III. Perde",
       "epilogue": "Sonsöz"
     },
     "exit_labels": {
       "auberge": "Hava Kilidi, yağmura doğru",
-      "rue": "Alt Geçit",
-      "passage": "Füniküler, yükseklere doğru",
-      "oracle": "Yaya Köprüsü, sırta doğru",
-      "crete": "Aktarma İstasyonu",
-      "relais": "Teknik Kat",
-      "terminal": "İniş, kuleye doğru",
-      "porte": "Asansör, birinci kata",
-      "etage": "Servis Merdiveni, zirveye",
-      "sommet": "Sonrasında gelen"
+      "a1s1": "Devam Eden Yol",
+      "a1s2": "Devam Eden Yol",
+      "a1s3": "Devam Eden Yol",
+      "a2s1": "Devam Eden Yol",
+      "a2s2": "Devam Eden Yol",
+      "a2s3": "Devam Eden Yol",
+      "a3s1": "Devam Eden Yol",
+      "a3s2": "Devam Eden Yol",
+      "a3s3": "Devam Eden Yol"
     }
   }
 }

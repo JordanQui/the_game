@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type { TurnRequest } from '~/types/scene'
 import { ScriptRuntime } from '~/utils/script-runtime'
+import { clampPlanned } from '~/utils/journal'
 import { buildConversationHistory } from '~/utils/prompt-builder'
 import { requireSecret } from '~/server/utils/runtime-secrets'
 import { assertNotLocked, consumeQuota } from '~/server/utils/session-quota'
@@ -31,7 +32,8 @@ export default defineEventHandler(async (event) => {
   assertNotLocked(event, limits.lock.message)
   consumeQuota(event, 'turns', limits)
 
-  const scene = runtime.scene(body.sceneId)
+  // La sortie et l'exigence du lieu viennent du plan, que le client renvoie.
+  const scene = runtime.scene(body.sceneId).withPlan(clampPlanned(body.context.planned))
 
   const npc = body.npcId && body.mode !== 'exit_nudge'
     ? body.context.npcs?.find(n => n.id === body.npcId)

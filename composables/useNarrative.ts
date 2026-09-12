@@ -34,6 +34,8 @@ export function useNarrative() {
       player_agreement: playerStore.playerAgreement ?? undefined,
       place: scene.place,
       quest: scene.quest,
+      night_goal: scene.night?.goal,
+      planned: scene.planned ?? undefined,
       npcs: scene.npcs,
       theme: scene.theme ?? null,
       key_item: scene.key_item ?? null,

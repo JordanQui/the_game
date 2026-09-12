@@ -460,8 +460,12 @@
             "text": "El lugar, la gente, la misión: todo se ha construido a partir de lo que has vivido. Nada es genérico, nada se volverá a jugar para otra persona."
           },
           {
-            "label": "La misión no es decorativa",
-            "text": "{{quest_title}} pone en escena una tensión que llevas de verdad — la que se juega entre lo que eres y lo que se espera de ti. El juego nunca te la nombra. Te la hace atravesar."
+            "label": "Lo que se tensa en ti",
+            "text": "«{{tension}}» El juego nunca te lo dijo. Te lo hizo atravesar."
+          },
+          {
+            "label": "Hacia dónde tiende",
+            "text": "«{{release}}» El resto de la noche se trazó para llevarte hasta ahí: tres actos, nueve lugares que nadie más recorrerá."
           },
           {
             "label": "La salida cuenta",
@@ -491,34 +495,34 @@
     },
     "scene_titles": {
       "auberge": "El Mostrador",
-      "rue": "La Calle Ahogada",
-      "passage": "El Paso Bajo la Vía",
-      "oracle": "El Oráculo",
-      "crete": "La Cresta de Antenas",
-      "relais": "La Estación Repetidora",
-      "terminal": "El Terminal de Acceso",
-      "porte": "La Puerta",
-      "etage": "El Primer Piso",
-      "sommet": "La Operación",
+      "a1s1": "Etapa 1",
+      "a1s2": "Etapa 2",
+      "a1s3": "Etapa 3",
+      "a2s1": "Etapa 4",
+      "a2s2": "Etapa 5",
+      "a2s3": "Etapa 6",
+      "a3s1": "Etapa 7",
+      "a3s2": "Etapa 8",
+      "a3s3": "Etapa 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "La Ruta",
-      "hauteurs": "Las Alturas",
-      "building": "El Edificio",
+      "acte1": "Acto I",
+      "acte2": "Acto II",
+      "acte3": "Acto III",
       "epilogue": "El Epílogo"
     },
     "exit_labels": {
       "auberge": "La Esclusa, hacia la lluvia",
-      "rue": "El Paso Bajo la Vía",
-      "passage": "El Funicular, hacia las alturas",
-      "oracle": "La Pasarela, hacia la cresta",
-      "crete": "La Estación Repetidora",
-      "relais": "El Piso Técnico",
-      "terminal": "La Bajada, hacia el edificio",
-      "porte": "El Ascensor, hacia el primer piso",
-      "etage": "La Escalera de Servicio, hacia la cima",
-      "sommet": "Lo que viene después"
+      "a1s1": "El Camino Que Sigue",
+      "a1s2": "El Camino Que Sigue",
+      "a1s3": "El Camino Que Sigue",
+      "a2s1": "El Camino Que Sigue",
+      "a2s2": "El Camino Que Sigue",
+      "a2s3": "El Camino Que Sigue",
+      "a3s1": "El Camino Que Sigue",
+      "a3s2": "El Camino Que Sigue",
+      "a3s3": "El Camino Que Sigue"
     }
   }
 }

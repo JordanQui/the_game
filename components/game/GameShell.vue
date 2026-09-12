@@ -121,6 +121,7 @@ function retryImage() {
     placeName: scene.place.name,
     palette: scene.palette,
     decor: scene.decor,
+    planned: scene.planned,
   })
 }
 </script>

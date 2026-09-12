@@ -410,8 +410,12 @@
             "text": "Địa điểm, con người, nhiệm vụ: tất cả được dựng lên từ những gì bạn đã sống qua. Không có gì chung chung, không có gì sẽ được chơi lại cho người khác."
           },
           {
-            "label": "Nhiệm vụ không phải đồ trang trí",
-            "text": "{{quest_title}} dựng lên một căng thẳng mà bạn thật sự mang trong mình — căng thẳng giữa con người bạn và điều người ta chờ đợi ở bạn. Trò chơi không bao giờ gọi tên nó. Nó bắt bạn đi xuyên qua."
+            "label": "Điều đang căng trong bạn",
+            "text": "“{{tension}}” Trò chơi chưa bao giờ nói điều đó với bạn. Nó để bạn đi xuyên qua."
+          },
+          {
+            "label": "Nó hướng về đâu",
+            "text": "“{{release}}” Phần còn lại của đêm được vạch ra để dẫn bạn đến đó: ba hồi, chín nơi không ai khác sẽ đi qua."
           },
           {
             "label": "Lối ra có ý nghĩa",
@@ -441,34 +445,34 @@
     },
     "scene_titles": {
       "auberge": "Quầy Rượu",
-      "rue": "Con Phố Chìm",
-      "passage": "Đường Chui Dưới Ray",
-      "oracle": "Nhà Tiên Tri",
-      "crete": "Sống Núi Ăng-ten",
-      "relais": "Trạm Tiếp Sóng",
-      "terminal": "Trạm Cấp Quyền",
-      "porte": "Cổng Lớn",
-      "etage": "Tầng Một",
-      "sommet": "Cuộc Thao Tác",
+      "a1s1": "Chặng 1",
+      "a1s2": "Chặng 2",
+      "a1s3": "Chặng 3",
+      "a2s1": "Chặng 4",
+      "a2s2": "Chặng 5",
+      "a2s3": "Chặng 6",
+      "a3s1": "Chặng 7",
+      "a3s2": "Chặng 8",
+      "a3s3": "Chặng 9",
       "fin": "Far Night"
     },
     "act_titles": {
-      "route": "Con Đường",
-      "hauteurs": "Những Đỉnh Cao",
-      "building": "Toà Tháp",
+      "acte1": "Hồi I",
+      "acte2": "Hồi II",
+      "acte3": "Hồi III",
       "epilogue": "Vĩ Thanh"
     },
     "exit_labels": {
       "auberge": "Khoang Khí, ra với cơn mưa",
-      "rue": "Đường Chui Dưới Ray",
-      "passage": "Đường Sắt Leo Dốc, lên những đỉnh cao",
-      "oracle": "Cầu Đi Bộ, ra sống núi",
-      "crete": "Trạm Tiếp Sóng",
-      "relais": "Tầng Kỹ Thuật",
-      "terminal": "Lối Xuống, về phía toà tháp",
-      "porte": "Thang Máy, lên tầng một",
-      "etage": "Cầu Thang Phục Vụ, lên đỉnh",
-      "sommet": "Thứ đến sau đó"
+      "a1s1": "Lối Đi Tiếp",
+      "a1s2": "Lối Đi Tiếp",
+      "a1s3": "Lối Đi Tiếp",
+      "a2s1": "Lối Đi Tiếp",
+      "a2s2": "Lối Đi Tiếp",
+      "a2s3": "Lối Đi Tiếp",
+      "a3s1": "Lối Đi Tiếp",
+      "a3s2": "Lối Đi Tiếp",
+      "a3s3": "Lối Đi Tiếp"
     }
   }
 }
