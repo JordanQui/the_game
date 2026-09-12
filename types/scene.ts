@@ -43,7 +43,25 @@ export interface SceneNPC {
    * arrive les mains nues. Lui donner l'objet ne débloque rien — ça délie une
    * langue, et c'est la seule façon d'obtenir ce que `reward` contient.
    */
-  wants?: { item_id: string; hint: string; reward: string } | null
+  wants?: {
+    item_id: string
+    hint: string
+    reward: string
+    /**
+     * Ce qu'il rend en échange, quand l'échange donne un objet.
+     *
+     * L'échange doit faire avancer : il délie une langue, il remet une chose,
+     * ou il découvre un morceau du décor (`reveals_id`) — jamais deux à la fois.
+     */
+    reward_item?: {
+      id: string
+      label: string
+      item_kind?: 'echange' | 'recit'
+      observation?: string
+    } | null
+    /** L'id d'un interactable `hidden` que cet échange fait exister. */
+    reveals_id?: string
+  } | null
   opening_line: string
   /** Data URI, ajoutée après coup par /api/image/generate. */
   portraitUrl?: string
@@ -105,6 +123,11 @@ export interface SceneKeyItem {
   resolving_action?: string
   /** Nombre d'échanges avec le détenteur avant la remise. */
   exchanges_before_handover: number
+  /**
+   * Comment il s'obtient. `found` : personne ne le détient, il est inscrit dans
+   * le lieu, et c'est le déchiffrage de son nom qui le remet au joueur.
+   */
+  acquisition?: 'informant_then_holder' | 'holder' | 'found'
 }
 
 /**
@@ -152,6 +175,22 @@ export interface Interactable {
   verb: string
   triggers_paywall?: boolean
   /**
+   * Ce qu'il devient une fois ramassé, pour un objet qu'on peut PRENDRE.
+   *
+   * `echange` : quelqu'un le voudra, et il quittera l'inventaire ce jour-là.
+   * `recit` (défaut) : il ne vaut que par ce qu'il apprend. Les cartes et
+   * l'augmentation ne passent pas par ici — elles arrivent en objet-clé.
+   */
+  item_kind?: 'echange' | 'recit'
+  /**
+   * Il n'existe qu'après un échange : personne ne l'a nommé avant.
+   *
+   * Tant qu'il n'est pas révélé, il n'est ni brouillé dans le récit, ni
+   * ramassable, ni compté par l'oracle — sans quoi le jeu signalerait une
+   * chose que le joueur n'a aucun moyen de voir.
+   */
+  hidden?: boolean
+  /**
    * Ce que l'analyse révèle, pour un objet qu'on peut PRENDRE.
    *
    * Écrite à la génération de la scène, donc gratuite à l'affichage — c'est la
@@ -184,7 +223,7 @@ export interface GeneratedScene {
    */
   game_over: string
   /** Choisi par le modèle : qui détient l'objet, et lequel. */
-  key_item: Omit<SceneKeyItem, 'exchanges_before_handover'>
+  key_item: Omit<SceneKeyItem, 'exchanges_before_handover' | 'acquisition'>
   /** L'objet à analyser pour approfondir la quête. */
   sealed_object?: SealedObject
 }
@@ -382,6 +421,14 @@ export interface TurnContext {
    * recevoir.
    */
   carried_ids?: string[]
+  /**
+   * Le nom de l'élément caché qu'un échange de cette scène découvrirait.
+   *
+   * Les `hidden` sont écrits par le modèle à la génération : le serveur, qui
+   * bâtit le prompt du tour, ne les a jamais vus. Sans ce report, il ne
+   * pourrait pas demander au personnage de nommer ce qu'il montre.
+   */
+  reveal_label?: string
 }
 
 /** 'exit_nudge' : le joueur parle de sortir mais le paywall n'est pas atteint. */

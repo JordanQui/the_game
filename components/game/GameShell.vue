@@ -6,9 +6,7 @@ import { usePlayerStore } from '~/stores/player'
 import { useNarrative } from '~/composables/useNarrative'
 import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
-import { analyzables, isTakeable } from '~/utils/interactables'
-import { pack } from '~/utils/languages'
-import { normalize } from '~/utils/text-match'
+import { observationOf } from '~/utils/interactables'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
@@ -24,83 +22,9 @@ const { play } = useStorylets()
  */
 const showNpcs = ref(true)
 
-/** Les articles à retirer d'un nom, normalisés une fois pour toutes. */
-const articles = computed(() => pack(playerStore.language).input.articles
-  .map(a => normalize(a))
-  .filter(Boolean)
-  // Les plus longs d'abord : « de la » avant « de », sinon « de » gagne et
-  // laisse « la » collé au nom.
-  .sort((a, b) => b.length - a.length))
-
-/**
- * L'objet qui vient d'arriver dans la conversation, et qu'on peut prendre.
- *
- * On ne regarde QUE la dernière réplique : le bouton est un geste offert à
- * l'instant où l'objet apparaît, pas un inventaire du décor. Une barre
- * permanente listant tout ce qui a été nommé afficherait le comptoir, les
- * murs, et les personnages.
- */
-const justAppeared = computed(() => {
-  const scene = playerStore.scene
-  const last = gameStore.narrativeHistory[gameStore.narrativeHistory.length - 1]
-  if (!scene?.interactables || !last) return null
-  if (last.type !== 'narration' && last.type !== 'npc_speech') return null
-
-  const text = normalize(last.text)
-  // Ni les personnages ni le décor : on ne ramasse ni les gens, ni les murs,
-  // ni le comptoir. La génération met « prendre » un peu partout.
-  const excluded = [
-    ...scene.npcs.map(n => normalize(n.name)),
-    ...(scene.decor ?? []).map(d => normalize(d.name ?? '')),
-  ].filter(n => n.length > 2)
-
-  return scene.interactables.find((obj) => {
-    // Même règle que pour le chiffrement du texte : ce qui se ramasse et ce qui
-    // se déchiffre sont la même liste.
-    if (!isTakeable(obj, playerStore.language)) return false
-    if (gameStore.inventory.some(o => o.id === obj.id)) return false
-
-    // L'article se retire avec la liste de la langue jouée : « le Sas » se
-    // cherche par « sas », « the Airlock » par « airlock », et le russe n'a
-    // rien à retirer. La liste française en dur ne trouvait rien ailleurs.
-    const label = articles.value.reduce(
-      (name, article) => name.startsWith(article) ? name.slice(article.length).trim() : name,
-      normalize(obj.label))
-    if (label.length < 3) return false
-    if (excluded.some(n => label.includes(n) || n.includes(label))) return false
-
-    return text.includes(label)
-  }) ?? null
-})
-
 /** Refermer l'épreuve, c'est retirer la demande : elle n'a pas d'autre état. */
 function closeTest() {
   gameStore.clearChallenge()
-}
-
-function pickUp(obj: { id: string; label: string }) {
-  // Ce que l'analyse en dira part AVEC l'objet : la scène qui l'a écrit sera
-  // loin quand le joueur pensera enfin à le rouvrir.
-  gameStore.pickUp({
-    id: obj.id,
-    label: obj.label,
-    from: playerStore.scene?.place?.name,
-    kind: 'lore',
-    observation: observationFor(obj.id),
-  })
-  gameStore.addNarrativeEntry('system', t('game.pickup', { label: obj.label }))
-}
-
-/**
- * Ce que l'analyse d'une chose révèle, où qu'elle se trouve.
- *
- * D'abord la scène — c'est elle qui l'a écrit —, puis l'inventaire, pour tout
- * ce que le joueur traîne depuis une scène précédente et rouvre maintenant.
- */
-function observationFor(id: string): string | undefined {
-  const scene = playerStore.scene
-  const here = scene ? analyzables(scene).find(o => o.id === id)?.observation : undefined
-  return here || gameStore.inventory.find(o => o.id === id)?.observation
 }
 
 /**
@@ -127,8 +51,17 @@ function onSolved() {
   // l'objet scellé, les ramassables du décor, et l'augmentation elle-même, dont
   // le nom est prononcé dès l'ouverture sans que le joueur puisse le lire. Trois
   // recherches séparées laissaient chaque fois un chemin en arrière.
-  const observation = observationFor(target.id)
+  const observation = observationOf(
+    playerStore.scene, gameStore.inventory, target.id,
+    playerStore.language, gameStore.revealedInteractableIds)
   if (observation) gameStore.addNarrativeEntry('narration', observation)
+
+  // LÀ OÙ L'OBJET N'EST SUR PERSONNE, LE LIRE EST L'OBTENIR. Une fréquence
+  // affichée par un terminal, un code gravé sur une plaque : il n'y a rien à
+  // recevoir des mains de quelqu'un, et la remise — seul chemin vers
+  // `hasKeyItem` — ne se déclenchait jamais. La scène se refermait donc sur un
+  // joueur qui avait tout fait juste.
+  if (isFoundItem.value && target.id === `cle_${playerStore.scene?.scene_id}`) collectItem()
 }
 
 /**
@@ -147,6 +80,12 @@ function offerItem(itemId: string) {
   void play(`Tu tends ${known ? item.label : 'ce que tu portes'} à ${npc.name}.`)
 }
 
+/** La grille de l'inventaire est ouverte : elle recouvre la scène. */
+const inventoryOpen = ref(false)
+
+/** Ici, l'objet-clé n'a pas de détenteur : il est inscrit dans le lieu. */
+const isFoundItem = computed(() => playerStore.scene?.key_item?.acquisition === 'found')
+
 /** Le joueur prend l'objet que le détenteur lui tend. */
 function collectItem() {
   const item = playerStore.scene?.key_item
@@ -158,6 +97,9 @@ function collectItem() {
     name: playerStore.scene?.key_item?.name ?? '',
     from: playerStore.scene?.place?.name,
     color: playerStore.scene?.key_item?.color,
+    // La couleur de la carte EST l'accent de la scène où on la prend : on la
+    // fige ici, sinon la pastille se repeindrait au lieu suivant.
+    hex: playerStore.scene?.palette?.accent?.hex,
     observation: playerStore.scene?.key_item?.observation,
   })
   gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
@@ -223,11 +165,15 @@ function retryImage() {
 
     </div>
 
-    <!-- Outils de lecture -->
-    <ToolRail />
+    <!-- Outils de lecture, et l'accès à ce que le joueur porte -->
+    <ToolRail @inventory="inventoryOpen = true" />
 
-    <!-- Ce que le joueur porte : sans ça, les cartes colorées sont injouables -->
-    <InventoryRail @give="offerItem" />
+    <!-- Le même inventaire, étalé : les noms en entier et les mêmes gestes -->
+    <InventoryGrid
+      v-if="inventoryOpen"
+      @give="offerItem"
+      @close="inventoryOpen = false"
+    />
 
     <!-- Réglages, en surimpression en haut à droite de l'écran -->
     <SettingsPanel />
@@ -261,17 +207,6 @@ function retryImage() {
       @solved="onSolved"
       @close="closeTest"
     />
-
-    <!-- Un objet vient d'apparaître : on le prend d'un geste, pas en le tapant -->
-    <Transition name="slide">
-      <PickupPrompt
-        v-if="justAppeared"
-        :label="justAppeared.label"
-        :action="t('game.action_pickup')"
-        :slide-label="t('game.slide_pickup')"
-        @confirm="pickUp(justAppeared)"
-      />
-    </Transition>
 
     <!--
       L'objet est TENDU, pas donné : c'est la fin de la conversation avec celui

@@ -90,6 +90,17 @@ export interface Qualities {
    */
   failureAtTurn: number
 
+  /**
+   * La saisie réclame une chose du décor, et le joueur sait la nommer.
+   *
+   * Le nom se lit : il a déchiffré celui-là. C'est la boucle entière de la
+   * première scène — obtenir l'augmentation, ouvrir un nom brouillé, et
+   * seulement alors pouvoir demander la chose qu'il porte.
+   */
+  takesReadableObject: boolean
+  /** Il réclame une chose dont le nom est encore brouillé pour lui. */
+  takesUnreadObject: boolean
+
   /** Le joueur TEND un objet de son inventaire à quelqu'un. */
   offersItem: boolean
   /** Et cette personne attendait précisément celui-là. */
@@ -108,7 +119,9 @@ export type StoryletPlay =
   /** La porte s'ouvre : le texte de sortie, puis l'écran. */
   | { kind: 'exit' }
   /** Une réponse déjà écrite quelque part. Aucun appel, aucun token. */
-  | { kind: 'local'; say: 'oracle' | 'nobody' | 'unused_lens' | 'exhausted' | 'game_over' }
+  | { kind: 'local'; say: 'oracle' | 'nobody' | 'unused_lens' | 'unread_object' | 'exhausted' | 'game_over' }
+  /** Il prend ce qu'il a nommé. Un geste, pas un tour : rien ne part au modèle. */
+  | { kind: 'pickup' }
   /** Un tour facturé. `mode` cadre le prompt côté serveur. */
   | { kind: 'model'; mode?: TurnMode }
 
@@ -118,7 +131,7 @@ export type StoryletPlay =
  * Il y en avait trois : le dénouement automatique en posait deux de plus. Il a
  * disparu avec le tour 10, qui ne sauve plus le joueur mais referme la nuit.
  */
-export type StoryletEffect = 'offer_key_item' | 'consume_given_item'
+export type StoryletEffect = 'offer_key_item' | 'consume_given_item' | 'grant_reward'
 
 export interface Storylet {
   id: string
@@ -212,6 +225,25 @@ export const DECK: Storylet[] = [
     play: { kind: 'local', say: 'nobody' },
   },
   {
+    id: 'ramassage',
+    note: "il nomme une chose du décor et la prend : un geste, pas un tour facturé",
+    // AVANT la remise et le don : porter la main sur quelque chose est un acte
+    // sans ambiguïté, et il ne doit pas se faire coiffer par le dénouement
+    // d'une conversation qui, elle, se poursuivra au tour suivant.
+    when: q => q.takesReadableObject,
+    play: { kind: 'pickup' },
+  },
+  {
+    id: 'ramassage_illisible',
+    note: "il réclame une chose dont il ne sait pas encore lire le nom",
+    // Le récit brouille le nom de tout ce qui s'acquiert : en arriver ici
+    // suppose de l'avoir deviné. On ne le lui accorde pas — pas de nom, pas
+    // d'interaction —, et on lui dit par où ça s'ouvre plutôt que de facturer
+    // un tour d'ambiance qui narrerait un ramassage qui n'a pas eu lieu.
+    when: q => q.takesUnreadObject,
+    play: { kind: 'local', say: 'unread_object' },
+  },
+  {
     id: 'remise',
     note: "le détenteur a assez parlé : il tend l'objet",
     // Passe AVANT l'oracle : la remise est le dénouement de la scène, elle
@@ -229,7 +261,9 @@ export const DECK: Storylet[] = [
     // reste prioritaire — on ne fait pas patienter la scène qui se noue.
     when: q => q.offersWantedItem,
     play: { kind: 'model', mode: 'give' },
-    after: ['consume_given_item'],
+    // La récompense AVANT la consommation : elle se lit sur `pendingGive`, que
+    // `consume_given_item` efface en prenant l'objet des mains du joueur.
+    after: ['grant_reward', 'consume_given_item'],
   },
   {
     id: 'don_refuse',

@@ -90,6 +90,8 @@ export interface TurnRules {
   steer_instruction_missing_item: string
   /** Variante employée tant que le joueur ignore qui détient l'objet. */
   steer_instruction_missing_informant: string
+  /** Variante des scènes où l'objet ne s'obtient de personne : il est dans le lieu. */
+  steer_instruction_missing_found: string
   /** Plafond dur de tours facturés, si le comptage de tokens venait à manquer. */
   hard_turn_cap: number
   /** Ce que dit la scène quand elle passe en autonomie. */
@@ -97,6 +99,8 @@ export interface TurnRules {
 
   /** Faits de l'objet-clé, ajoutés au prompt système dès qu'il existe. */
   key_item_context: string
+  /** Variante sans détenteur : l'objet est inscrit dans le lieu, personne ne le tend. */
+  key_item_context_found: string
   /** Ce qu'un personnage réclame, greffé à ses répliques. Interpole `{{npc_wants_hint}}`. */
   wants_rule?: string
   /** Il prend l'objet et lâche ce qu'il sait. */
@@ -131,10 +135,18 @@ export interface TurnRules {
   holder_locked_prompt: string
   /** Réplique du détenteur une fois le joueur informé : il amorce, il relance. */
   holder_prompt: string
+  /** Greffé au don quand l'échange remet un objet. Interpole `{{reward_label}}`. */
+  give_reward_item_rule: string
+  /** Greffé au don quand l'échange découvre un élément caché du décor. */
+  give_reveal_rule: string
+  /** Greffé au don quand il n'y a rien d'autre à en tirer que ce qu'il sait. */
+  give_reward_none_rule: string
   /** Réplique du détenteur au moment où il remet l'objet. */
   handover_prompt: string
   /** Narration quand le joueur veut sortir sans l'objet. */
   blocked_exit_prompt: string
+  /** La même, là où l'objet n'est sur personne : ne jamais inventer de détenteur. */
+  blocked_exit_prompt_found: string
 }
 
 export interface GenerationConfig {

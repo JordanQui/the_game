@@ -11,9 +11,17 @@ import { usePlayerStore } from '~/stores/player'
  * l'oeil déchiffre les identités, la loupe — l'augmentation — analyse les
  * objets scellés. La loupe n'apparaît qu'une fois l'augmentation obtenue :
  * avant, le joueur ne doit pas soupçonner qu'un second mode existe.
+ *
+ * LE TROISIÈME BOUTON N'EST PAS UN OUTIL : il ouvre ce que le joueur porte.
+ * Sa place est ici quand même — c'est la rangée qu'on regarde pour savoir ce
+ * qu'on peut faire —, mais il est mis à part : l'oeil et la loupe changent la
+ * lecture de la scène, l'inventaire la recouvre. Il n'apparaît que quand il y
+ * a quelque chose dedans : une grille vide n'apprend rien.
  */
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
+
+const emit = defineEmits<{ inventory: [] }>()
 
 const lensLabel = computed(() => playerStore.scene?.key_item?.name ?? 'Analyse')
 </script>
@@ -50,6 +58,26 @@ const lensLabel = computed(() => playerStore.scene?.key_item?.name ?? 'Analyse')
           v-if="gameStore.activeTool === 'lens'"
           d="M8.5 5.2v6.6M5.2 8.5h6.6" stroke-width="0.9" opacity="0.6"
         />
+      </svg>
+    </button>
+
+    <!--
+      Ce que le joueur porte. Séparé des outils par un filet : ce bouton
+      n'arme rien, il ouvre une fenêtre.
+    -->
+    <button
+      v-if="gameStore.inventory.length"
+      class="p-1.5 -my-0.5 ml-1 pl-2.5 border-l border-steel-600/40 text-steel-400
+             hover:text-neon-400 transition-colors"
+      :aria-label="t('game.inventory_all')"
+      :title="t('game.inventory_all')"
+      @click="emit('inventory')"
+    >
+      <svg viewBox="0 0 20 20" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2.5" y="2.5" width="6" height="6" />
+        <rect x="11.5" y="2.5" width="6" height="6" />
+        <rect x="2.5" y="11.5" width="6" height="6" />
+        <rect x="11.5" y="11.5" width="6" height="6" />
       </svg>
     </button>
   </div>

@@ -198,6 +198,8 @@ export default defineEventHandler(async (event) => {
    * reste. Le coût d'une reprise est celui d'une génération — de l'ordre de
    * trois centimes — et il n'est payé que sur un échec.
    */
+  scene.dropUnreachable(generated)
+
   try {
     scene.assertValid(generated)
   } catch (err) {
@@ -210,6 +212,7 @@ export default defineEventHandler(async (event) => {
       { role: 'user', content: interpolate(gen.repair_prompt, { reason }) },
     ])
     generated = parseScene(repaired)
+    scene.dropUnreachable(generated)
 
     try {
       scene.assertValid(generated)

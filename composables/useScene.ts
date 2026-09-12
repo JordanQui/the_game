@@ -153,7 +153,9 @@ interface Carry {
   journal: JournalEntry[]
   inventory: Array<{
     id: string; label: string; from?: string
-    kind: 'key' | 'lore'; color?: string
+    kind: 'key' | 'lore' | 'trade'; color?: string
+    /** La couleur de la carte, figée au ramassage : la pastille en dépend. */
+    hex?: string
     /** Ce que l'analyse en dira. Recopié de la scène au ramassage. */
     observation?: string
   }>

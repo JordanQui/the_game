@@ -3,7 +3,7 @@ import type { StoryletEffect } from '~/utils/storylets'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { normalize, matchesKeyword } from '~/utils/text-match'
-import { pack } from '~/utils/languages'
+import { pack, translate } from '~/utils/languages'
 
 /** Durée totale au-delà de laquelle on considère le tour perdu. */
 const TURN_TIMEOUT_MS = 60_000
@@ -43,7 +43,19 @@ export function useNarrative() {
       // l'objet qu'il vient de recevoir.
       carried_ids: gameStore.inventory.map(o => o.id),
       offered_item: offeredItem(),
+      // Le nom de ce qu'un échange découvrirait : les éléments cachés sont
+      // écrits par le modèle, le serveur ne les connaît pas, et c'est pourtant
+      // lui qui doit redire ce nom au personnage qui va le montrer.
+      reveal_label: revealLabel(),
     }
+  }
+
+  /** Le libellé de l'élément caché qu'un échange de cette scène découvrirait. */
+  function revealLabel(): string | undefined {
+    const scene = playerStore.scene
+    const id = scene?.npcs.find(n => n.wants?.reveals_id)?.wants?.reveals_id
+    if (!id) return undefined
+    return scene?.interactables.find(o => o.id === id)?.label
   }
 
   /**
@@ -306,14 +318,52 @@ export function useNarrative() {
    * laisser derrière lui un objet tendu que personne n'a jamais offert.
    */
   function applyEffects(effects: StoryletEffect[]) {
+    // Qui vient de recevoir quoi : `consume_given_item` efface `pendingGive`,
+    // et la récompense se lit dessus. On la capture donc avant la boucle.
+    const give = gameStore.pendingGive
+
     for (const effect of effects) {
       // L'objet est TENDU, pas donné : le joueur doit le prendre lui-même. Un
       // objet qui apparaît tout seul dans l'inventaire ne se remarque pas.
       if (effect === 'offer_key_item' && !gameStore.hasKeyItem) gameStore.offerKeyItem()
+      // L'ÉCHANGE FAIT AVANCER. Il délie une langue — c'est la réplique qui
+      // vient d'être jouée —, et il peut faire deux choses de plus : remettre
+      // un objet, ou découvrir un morceau du décor que personne ne voyait.
+      if (effect === 'grant_reward' && give) grantReward(give.npcId)
       // L'échange est définitif : l'objet quitte l'inventaire une fois la
       // réplique jouée, jamais avant. Un tour qui échoue ne coûte rien.
       if (effect === 'consume_given_item') gameStore.consumeGivenItem()
     }
+  }
+
+  /**
+   * Ce que l'échange rend, une fois la réplique passée.
+   *
+   * Écrit à la génération de la scène, donc gratuit : ni l'objet remis ni
+   * l'élément découvert ne coûtent un appel de plus. Le texte, lui, a déjà été
+   * dit par le personnage — ici on ne fait qu'enregistrer ce qui a changé.
+   */
+  function grantReward(npcId: string) {
+    const wants = playerStore.npcs.find(n => n.id === npcId)?.wants
+    if (!wants) return
+
+    const gift = wants.reward_item
+    if (gift?.id && gift.label) {
+      gameStore.pickUp({
+        id: gift.id,
+        label: gift.label,
+        from: playerStore.scene?.place?.name,
+        kind: gift.item_kind === 'echange' ? 'trade' : 'lore',
+        observation: gift.observation,
+      })
+      gameStore.addNarrativeEntry(
+        'system',
+        translate(playerStore.language, 'game.received', { label: gift.label }))
+    }
+
+    // Découvert, pas ramassé : l'élément EXISTE désormais dans la salle, et le
+    // joueur en fait ce qu'il veut — le prendre s'il se prend, l'ouvrir sinon.
+    if (wants.reveals_id) gameStore.revealInteractable(wants.reveals_id)
   }
 
   /**

@@ -3,7 +3,7 @@ import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { normalize } from '~/utils/text-match'
 import { pack, translate } from '~/utils/languages'
-import { teaching, isTakeable } from '~/utils/interactables'
+import { teaching, isTakeable, visible } from '~/utils/interactables'
 
 /**
  * Répond localement, sans appeler le modèle.
@@ -26,6 +26,8 @@ export interface OracleState {
   hasAnalysed: boolean
   /** Les ids de ce qu'il porte déjà : ce qui est ramassé n'est plus à trouver. */
   carriedIds: string[]
+  /** Ce qu'un échange a fait apparaître : avant ça, l'élément n'existe pas. */
+  revealedIds: string[]
 }
 
 export interface LocalAnswer {
@@ -74,7 +76,12 @@ export function buildGuidance(
     const holder = scene.npcs.find(n => n.id === item.npc_id)
     const others = scene.npcs.filter(n => !state.talkedToNpcIds.includes(n.id))
     lines.push(t('oracle.missing'))
-    if (others.length) {
+    // Là où l'objet n'est sur personne, envoyer le joueur faire le tour des
+    // habitants est un mensonge : il est inscrit dans le lieu, et c'est la
+    // loupe qui l'ouvre.
+    if (item.acquisition === 'found') {
+      lines.push(t('oracle.found_item'))
+    } else if (others.length) {
       lines.push(t('oracle.not_talked', { names: others.map(n => n.name).join(', ') }))
     } else if (holder) {
       lines.push(t('oracle.holder_knows', { name: holder.name }))
@@ -100,7 +107,7 @@ export function buildGuidance(
   // le joueur que vers des personnages, et il traverse la salle sans voir que
   // le récit y a posé quelque chose — la Majuscule est le seul signal, et rien
   // d'autre ne le lui apprend.
-  const loose = (scene.interactables ?? []).filter(
+  const loose = visible(scene.interactables, state.revealedIds).filter(
     obj => obj.label && isTakeable(obj, lang) && !state.carriedIds.includes(obj.id))
   if (loose.length) lines.push(t('oracle.takeable'))
 

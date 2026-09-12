@@ -166,9 +166,18 @@ export const useGameStore = defineStore('game', {
        * loin. `lore` : il ÉCLAIRE — il ne débloque rien, il approfondit la
        * quête et rapproche le joueur de ce qu'il doit finir par comprendre.
        */
-      kind: 'key' | 'lore'
+      kind: 'key' | 'lore' | 'trade'
       /** Sa couleur, pour une carte. C'est par elle que le joueur la reconnaît. */
       color?: string
+      /**
+       * Cette couleur, en hexadécimal, figée AU RAMASSAGE.
+       *
+       * La pastille se peignait à l'accent de la scène affichée : une carte
+       * prise trois scènes plus tôt y prenait la couleur du lieu où on la
+       * regarde, et le joueur comparait une pastille qui ment à une serrure qui
+       * dit vrai.
+       */
+      hex?: string
       /**
        * Ce que l'analyse révèle, recopié depuis la scène AU RAMASSAGE.
        *
@@ -181,6 +190,15 @@ export const useGameStore = defineStore('game', {
     }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
+    /**
+     * Ce qu'un échange a fait apparaître dans cette scène.
+     *
+     * Un élément `hidden` n'existe pour personne avant qu'un personnage ne le
+     * montre : c'est la seconde chose qu'un échange peut rendre, avec l'objet.
+     * La liste se vide à la scène suivante — ce qui a été découvert ici ne
+     * traverse pas la porte, seul l'inventaire voyage.
+     */
+    revealedInteractableIds: [] as string[],
     /**
      * Nombre d'échanges par personnage.
      *
@@ -458,7 +476,7 @@ export const useGameStore = defineStore('game', {
     equipFromScript(kit: {
       augmentation?: boolean
       items?: Array<{
-        id: string; label: string; kind: 'key' | 'lore'
+        id: string; label: string; kind: 'key' | 'lore' | 'trade'
         color?: string; from?: string; decrypted?: boolean
       }>
     } | null): number {
@@ -506,6 +524,11 @@ export const useGameStore = defineStore('game', {
       this.pendingChallenge = null
     },
 
+    /** Un personnage vient de découvrir cet élément : il existe désormais. */
+    revealInteractable(id: string) {
+      if (!this.revealedInteractableIds.includes(id)) this.revealedInteractableIds.push(id)
+    },
+
     markDecrypted(id: string) {
       if (!this.decryptedObjectIds.includes(id)) this.decryptedObjectIds.push(id)
     },
@@ -518,8 +541,9 @@ export const useGameStore = defineStore('game', {
       id: string
       label: string
       from?: string
-      kind?: 'key' | 'lore'
+      kind?: 'key' | 'lore' | 'trade'
       color?: string
+      hex?: string
       observation?: string
     }) {
       if (this.inventory.some(o => o.id === item.id)) return
@@ -537,18 +561,29 @@ export const useGameStore = defineStore('game', {
      */
     collectKeyItem(
       grantsAugmentation = false,
-      item?: { id?: string; name: string; from?: string; color?: string; observation?: string },
+      item?: {
+        id?: string; name: string; from?: string
+        color?: string; hex?: string; observation?: string
+      },
     ) {
       this.hasKeyItem = true
       this.pendingKeyItem = false
       if (grantsAugmentation) this.hasAugmentation = true
       if (item?.name) {
+        const id = item.id || `cle_${this.inventory.length + 1}`
+        // L'AUGMENTATION SE LIT DÈS QU'ELLE EST EN MAIN. Son nom n'a jamais été
+        // brouillé dans le récit ; sans cette ligne l'inventaire la croyait
+        // scellée et proposait de l'ouvrir à la loupe — c'est-à-dire avec
+        // elle-même. Son observation devient au contraire lisible tout de
+        // suite, et c'est là qu'elle se lit : nulle part ailleurs.
+        if (grantsAugmentation) this.markDecrypted(id)
         this.pickUp({
-          id: item.id || `cle_${this.inventory.length + 1}`,
+          id,
           label: item.name,
           from: item.from,
           kind: 'key',
           color: item.color,
+          hex: item.hex,
           observation: item.observation,
         })
       }
@@ -617,6 +652,8 @@ export const useGameStore = defineStore('game', {
       this.pendingKeyItem = false
       this.pendingGive = null
       this.talkedToNpcIds = []
+      // Ce qu'un échange avait découvert appartenait à cette salle-là.
+      this.revealedInteractableIds = []
       this.npcExchanges = {}
       this.resolved = false
       this.conversationHistory = []
@@ -660,6 +697,8 @@ export const useGameStore = defineStore('game', {
       this.pendingKeyItem = false
       this.pendingGive = null
       this.talkedToNpcIds = []
+      // Ce qu'un échange avait découvert appartenait à cette salle-là.
+      this.revealedInteractableIds = []
       this.npcExchanges = {}
       this.resolved = false
       this.conversationHistory = []

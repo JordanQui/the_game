@@ -190,6 +190,19 @@ export class SceneRuntime {
   private get pack() { return pack(this.lang) }
 
   /**
+   * L'objet-clé de cette scène se trouve-t-il, au lieu de se recevoir ?
+   *
+   * Trois scènes sur dix n'ont AUCUN détenteur : la fréquence est sur le
+   * terminal, le code sur une plaque, la séquence sur la console. Tous les
+   * prompts du tour parlaient pourtant d'un porteur — et à défaut d'en trouver
+   * un, ils écrivaient « un habitué », ce qui envoyait le joueur mendier un
+   * objet que personne n'a jamais eu.
+   */
+  private get itemIsFound(): boolean {
+    return (this.scene.key_item?.acquisition ?? 'informant_then_holder') === 'found'
+  }
+
+  /**
    * Les verbes que `isTakeable` reconnaîtra, dits au modèle.
    *
    * Le client décide qu'un objet se ramasse en comparant son `verb` à la liste
@@ -319,11 +332,24 @@ export class SceneRuntime {
    * bloc d'instructions, le modèle en inventerait un au hasard, et on paierait
    * la sortie d'un champ que personne ne lit.
    */
-  private get outputSchema(): Record<string, unknown> {
-    const schema = this.scene.generation.output_schema as Record<string, unknown>
-    if (this.scene.sealed_object) return schema
-    const { sealed_object: _omit, ...rest } = schema
-    return rest
+  private outputSchema(canTrade: boolean): Record<string, unknown> {
+    const schema = { ...this.scene.generation.output_schema } as Record<string, unknown>
+    if (!this.scene.sealed_object) delete schema.sealed_object
+
+    // UN ÉLÉMENT CACHÉ NE SE DÉCOUVRE QUE PAR UN ÉCHANGE, et un échange n'existe
+    // que si le joueur porte quelque chose de troquable. Le schéma proposait
+    // `hidden` dans tous les cas : le modèle posait alors une trappe que
+    // personne ne pouvait montrer, et la scène partait en 502. C'est l'état
+    // normal en sortant de l'auberge — le joueur n'a que son augmentation, un
+    // objet [OUVRE], qui ne se troque pas.
+    if (!canTrade) {
+      const objects = schema.interactables as Array<Record<string, unknown>> | undefined
+      if (objects?.length) {
+        const { hidden: _drop, ...fields } = objects[0]!
+        schema.interactables = [fields]
+      }
+    }
+    return schema
   }
 
   /**
@@ -501,6 +527,10 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     const themeBlock = theme ? this.describeTheme(theme) : ''
     const tension = theme?.sign?.tension ?? ''
 
+    // Rien de troquable, rien à réclamer : la section entière ne ferait que
+    // décrire au modèle une mécanique qu'il n'a pas de quoi armer.
+    const canTrade = carried.some(o => o.kind === 'trade')
+
     const c = this.script.defaults.continuity
     const story = journal.length
       ? interpolate(c.prompt, { journal: renderJournal(journal, c.max_entries) })
@@ -514,7 +544,7 @@ ${themeBlock}
 ${story}
 
 ${this.describeCarried(carried)}
-${carried.length ? `\nCE QU'UN PERSONNAGE PEUT EN VOULOIR\n${this.script.defaults.exchange.instruction}\n` : ''}
+${canTrade ? `\nCE QU'UN PERSONNAGE PEUT EN VOULOIR\n${this.script.defaults.exchange.instruction}\n` : ''}
 
 NOM DU LIEU
 ${interpolate(s.naming.instruction, this.langVars)}
@@ -573,7 +603,7 @@ ${this.script.defaults.game_over.instruction}
 
 SORTIE ATTENDUE
 Un unique objet JSON respectant ce schéma, sans markdown :
-${JSON.stringify(this.outputSchema, null, 2)}`
+${JSON.stringify(this.outputSchema(canTrade), null, 2)}`
   }
 
   /** La table de composition des noms. Jointe à la génération, jamais aux tours. */
@@ -619,8 +649,10 @@ ${list(o.posture)}`
     // La nature de l'objet est dite au modèle : une carte se présente, un
     // souvenir se comprend. Sans elle, il traitait les deux pareil.
     const label = (o: CarriedItem) => o.decrypted ? o.label : `un objet ${inv.unread}`
+    const mark = (o: CarriedItem) =>
+      o.kind === 'key' ? 'OUVRE' : o.kind === 'trade' ? 'ÉCHANGE' : 'ÉCLAIRE'
     const items = carried
-      .map(o => `  - [${o.kind === 'key' ? 'OUVRE' : 'ÉCLAIRE'}] ${label(o)}`
+      .map(o => `  - [${mark(o)}] ${label(o)}`
         + (o.color ? ` — couleur : ${o.color}` : '')
         + (o.from ? ` — récupéré : ${o.from}` : ''))
       .join('\n')
@@ -765,6 +797,29 @@ ${lines}`)
     })
   }
 
+  /**
+   * Ce que le modèle a posé sans que personne puisse le montrer.
+   *
+   * Un élément `hidden` que nul `reveals_id` ne désigne est invisible pour
+   * toujours — mais il est aussi, par construction, absent partout : le schéma
+   * lui interdit `scene_text`, `visible()` l'écarte du récit comme du bouton
+   * « Ramasser », et l'oracle ne le compte pas. Le refuser coûtait au joueur
+   * la scène entière — deux générations, puis un 502 en travers du
+   * rechargement — pour une trappe que personne n'aurait jamais vue. On
+   * l'enlève : ce qui reste est exactement la scène qui allait s'afficher.
+   */
+  dropUnreachable(generated: GeneratedScene): void {
+    const revealed = (generated.npcs ?? [])
+      .map(n => n.wants?.reveals_id).filter((id): id is string => Boolean(id))
+    const objects = generated.interactables ?? []
+    const orphans = objects.filter(o => o.hidden && !revealed.includes(o.id))
+    if (!orphans.length) return
+
+    console.warn(`[scene/${this.scene.id}] caché sans personne pour le montrer, retiré : `
+      + orphans.map(o => o.label || o.id).join(' · '))
+    generated.interactables = objects.filter(o => !orphans.includes(o))
+  }
+
   /** Garde-fou : le modèle oublie régulièrement un champ. */
   assertValid(generated: GeneratedScene): void {
     if (!generated.place?.name) throw new Error('Scène invalide : place.name manquant')
@@ -837,6 +892,28 @@ ${lines}`)
         'Scène invalide : aucun objet à ramasser — un objet au moins doit être posé dans le '
         + `décor avec pour verbe ${this.takeVerbs}, en plus de ce que les personnages donnent`)
     }
+    // CE QU'UN ÉCHANGE DÉCOUVRE DOIT EXISTER. Un `reveals_id` qui ne désigne
+    // rien fait promettre au personnage, dans sa réplique même, une chose qui
+    // n'apparaîtra jamais : l'échange ne fait plus avancer, et c'est toute sa
+    // raison d'être. Le cas symétrique — un `hidden` que personne ne montre —
+    // n'est plus une erreur : `dropUnreachable` l'a retiré avant d'arriver ici.
+    const hidden = (generated.interactables ?? []).filter(o => o.hidden)
+    for (const npc of generated.npcs ?? []) {
+      const id = npc.wants?.reveals_id
+      if (id && !hidden.some(o => o.id === id)) {
+        throw new Error(
+          `Scène invalide : un personnage découvre "${id}", qui n'est pas un interactable caché`)
+      }
+    }
+
+    // Un échange rend UNE chose : ce qu'il sait, un objet, ou ce qu'il montre.
+    for (const npc of generated.npcs ?? []) {
+      if (npc.wants?.reward_item?.id && npc.wants.reveals_id) {
+        throw new Error(
+          `Scène invalide : ${npc.name} rend un objet ET découvre un élément — l'un ou l'autre`)
+      }
+    }
+
     if (!takeable.some(o => o.observation?.trim())) {
       throw new Error(
         `Scène invalide : "${takeable[0].label}" se ramasse mais ne porte aucune observation — `
@@ -878,10 +955,13 @@ ${lines}`)
     }
 
     // L'AUGMENTATION SEULE porte un nom soudé, et le récit doit le prononcer
-    // dès l'ouverture. C'est le premier mot que le joueur voit sans pouvoir le
-    // lire — la démonstration de ce qui lui manque. Un nom absent du texte, ou
-    // écrit en plusieurs mots, et il n'y a plus rien à brouiller : le brouillage
-    // découpe mot par mot, et l'épreuve ne s'ouvrira sur rien.
+    // dès l'ouverture. Il est en CLAIR, contrairement à tout le reste de ce qui
+    // s'acquiert : c'est l'outil avec lequel on déchiffre, le brouiller
+    // reviendrait à le faire ouvrir par lui-même. Sa majuscule est tout le
+    // signal — elle dit qu'il y a là quelque chose, et ce qu'on en fait est
+    // d'aller la chercher parmi les gens. Soudé en un seul mot pour cette
+    // raison exactement : un nom en plusieurs morceaux se lit comme une
+    // description du décor, et plus rien ne le distingue.
     if (this.scene.objective?.kind === 'acquire_augmentation') {
       if (!AUGMENTATION_NAME_RE.test(item.name)) {
         throw new Error(
@@ -891,12 +971,12 @@ ${lines}`)
       if (!written.includes(fold(item.name))) {
         throw new Error(
           `Scène invalide : "${item.name}" n'apparaît pas dans le texte d'ouverture — `
-          + 'le joueur ne verrait jamais le nom qu\'il ne peut pas lire')
+          + 'rien ne dirait au joueur ce qu\'il est venu chercher ici')
       }
       if (!item.observation?.trim()) {
         throw new Error(
-          'Scène invalide : key_item.observation manquante — déchiffrer le nom de '
-          + 'l\'augmentation n\'apprendrait rien')
+          'Scène invalide : key_item.observation manquante — l\'augmentation '
+          + 'n\'aurait rien à dire d\'elle-même dans l\'inventaire')
       }
     }
 
@@ -1028,6 +1108,9 @@ ${lines}`)
       key_item: {
         ...generated.key_item,
         exchanges_before_handover: this.scene.key_item.exchanges_before_handover,
+        // Comment il s'obtient voyage avec la scène : le client doit savoir
+        // qu'ici personne ne le tend, et que c'est le déchiffrage qui le donne.
+        acquisition: this.scene.key_item.acquisition ?? 'informant_then_holder',
       },
       palette_audit: {
         adjusted: audit.adjusted,
@@ -1106,7 +1189,7 @@ ${lines}`)
       : base
 
     const withItem = ctx.key_item
-      ? `${agreed}\n\n${interpolate(t.key_item_context, {
+      ? `${agreed}\n\n${interpolate(this.itemIsFound ? t.key_item_context_found : t.key_item_context, {
           item_name: ctx.key_item.name,
           item_description: ctx.key_item.description,
           item_why: ctx.key_item.why,
@@ -1136,7 +1219,9 @@ ${lines}`)
     // le détenteur avant qu'il connaisse la piste l'envoyait sur un personnage
     // programmé pour ne rien dire.
     let steer = t.steer_instruction
-    if (item && !ctx.has_key_item && !ctx.informed_about_item) {
+    if (item && !ctx.has_key_item && this.itemIsFound) {
+      steer = t.steer_instruction_missing_found
+    } else if (item && !ctx.has_key_item && !ctx.informed_about_item) {
       steer = interpolate(t.steer_instruction_missing_informant, {
         quest_title: ctx.quest.title,
         npc_name: nameOf(item.informant_npc_id),
@@ -1149,6 +1234,31 @@ ${lines}`)
     }
 
     return `${spoken}\n\n${steer}`
+  }
+
+  /**
+   * Ce que le personnage fait, en plus de parler, au moment où il prend l'objet.
+   *
+   * Trois cas et jamais deux à la fois : il remet quelque chose, il découvre un
+   * élément caché, ou il n'a que ce qu'il sait. Le troisième doit être dit
+   * explicitement — sans lui, le modèle offre spontanément un objet qui
+   * n'existe nulle part, et le joueur cherche ensuite dans son inventaire une
+   * chose que personne ne lui a donnée.
+   */
+  private rewardRule(npc: SceneNPC, ctx: TurnContext): string {
+    const t = this.scene.turn
+    const wants = npc.wants
+    const gift = wants?.reward_item
+    if (gift?.label) return interpolate(t.give_reward_item_rule, { reward_label: gift.label })
+
+    if (wants?.reveals_id) {
+      // Le libellé vient de la scène générée, pas du script : les éléments
+      // cachés sont écrits par le modèle, et le client nous les reporte.
+      return interpolate(t.give_reveal_rule, {
+        reward_label: ctx.reveal_label || wants.reveals_id,
+      })
+    }
+    return t.give_reward_none_rule
   }
 
   /**
@@ -1210,6 +1320,11 @@ ${lines}`)
           ? ctx.offered_item.name
           : "la chose qu'il porte sans en connaître le nom",
         item_reward: npc.wants?.reward ?? '',
+        // Ce que l'échange fait AVANCER, en plus de ce qu'il dit : un objet
+        // qu'il sort de sa poche, ou une chose du décor que personne ne voyait.
+        // Le nom doit tomber dans sa réplique à la lettre près — c'est le seul
+        // endroit où le joueur peut l'apprendre.
+        reward_extra: mode === 'give' ? this.rewardRule(npc, ctx) : '',
       })
     }
 
@@ -1229,7 +1344,7 @@ ${lines}`)
     }
 
     if (mode === 'blocked_exit' && ctx.key_item) {
-      return interpolate(t.blocked_exit_prompt, {
+      return interpolate(this.itemIsFound ? t.blocked_exit_prompt_found : t.blocked_exit_prompt, {
         player_input: input,
         exit_label: this.scene.exits[0]?.label ?? 'la sortie',
         item_name: ctx.key_item.name,

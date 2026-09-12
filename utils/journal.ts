@@ -61,10 +61,11 @@ export interface CarriedItem {
   from?: string
   /**
    * `key` : il ouvre quelque chose, ici ou plus loin. `lore` : il n'ouvre rien
-   * et éclaire la quête. Les deux voyagent, mais une scène ne s'en sert pas de
-   * la même façon — l'une se déverrouille, l'autre se comprend.
+   * et éclaire la quête. `trade` : quelqu'un d'autre le veut, et c'est le seul
+   * qu'un personnage puisse réclamer — prendre au joueur ce qui ouvre le
+   * laisserait devant une porte qu'il ne peut plus franchir.
    */
-  kind: 'key' | 'lore'
+  kind: 'key' | 'lore' | 'trade'
   /** Sa couleur, pour une carte : c'est ce que le joueur retient et compare. */
   color?: string
 }

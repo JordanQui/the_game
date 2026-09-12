@@ -37,7 +37,12 @@ const names = computed<Term[]>(() => {
   // La liste vit dans `utils/interactables` : la sortie de l'auberge exige
   // qu'on ait analysé quelque chose, et elle doit interroger exactement ce que
   // le récit a brouillé ici.
-  const things: Term[] = analyzables(scene)
+  // La LANGUE JOUÉE, pas celle par défaut : `analyzables` reconnaît les objets
+  // qu'on ramasse à leur verbe, et le verbe vient du modèle, donc du pack. Le
+  // français en dur ne trouvait aucun ramassable ailleurs — ni brouillé dans le
+  // récit, ni ouvrable à la loupe, dans onze langues sur douze.
+  const things: Term[] = analyzables(
+    scene, playerStore.language, gameStore.revealedInteractableIds)
     .map(o => ({ value: o.label, kind: 'object', id: o.id }))
 
   return [...people, ...things]

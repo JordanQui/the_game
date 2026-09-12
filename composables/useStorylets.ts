@@ -7,7 +7,7 @@ import { usePaywall } from '~/composables/usePaywall'
 import { useSceneCommands } from '~/composables/useSceneCommands'
 import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
 import { translate } from '~/utils/languages'
-import { teaching } from '~/utils/interactables'
+import { teaching, takeTarget, observationOf } from '~/utils/interactables'
 import { matchesKeyword } from '~/utils/text-match'
 
 /**
@@ -36,11 +36,32 @@ export function useStorylets() {
    */
   function lessons() {
     const scene = playerStore.scene
-    const objects = scene ? teaching(scene, playerStore.language) : []
+    const objects = scene
+      ? teaching(scene, playerStore.language, gameStore.revealedInteractableIds)
+      : []
     return {
       available: objects.length > 0,
       read: objects.some(o => gameStore.decryptedObjectIds.includes(o.id)),
     }
+  }
+
+  /**
+   * La chose du décor que cette saisie réclame, si elle en réclame une.
+   *
+   * Résolue deux fois — une fois pour la qualité, une fois pour l'exécuter —
+   * parce que le deck ne doit connaître que des booléens : il se teste sans
+   * Vue, sans Pinia et sans scène, et une chose de la scène n'y entrerait pas.
+   * Le calcul est un filtre sur une poignée d'objets, il ne coûte rien.
+   */
+  function claimed(input: string) {
+    const scene = playerStore.scene
+    if (!scene) return null
+    const obj = takeTarget(
+      input, scene.interactables, playerStore.language, gameStore.revealedInteractableIds)
+    // Déjà dans sa poche : ce n'est plus un ramassage, et le tour ordinaire
+    // dira mieux que nous qu'il l'a sur lui.
+    if (!obj || gameStore.inventory.some(o => o.id === obj.id)) return null
+    return obj
   }
 
   /** Ce que l'oracle et le récapitulatif ont besoin de savoir du joueur. */
@@ -52,6 +73,7 @@ export function useStorylets() {
       // Ce qu'il porte déjà : le récapitulatif ne lui signale un objet posé
       // dans la salle que tant qu'il ne l'a pas ramassé.
       carriedIds: gameStore.inventory.map(o => o.id),
+      revealedIds: gameStore.revealedInteractableIds,
     }
   }
 
@@ -71,6 +93,8 @@ export function useStorylets() {
     // lui depuis le tour d'avant. Le deck n'a jamais à savoir lequel des deux.
     const npc = scene ? interlocutor(input) : undefined
     const lesson = lessons()
+
+    const claim = claimed(input)
 
     // Le don ne se lit pas dans la phrase : il vient du clic sur « Donner »,
     // qui a déjà désigné l'objet ET le destinataire. La saisie ne sert qu'à
@@ -112,6 +136,9 @@ export function useStorylets() {
 
       failureAtTurn: pacing?.failure_after_turns ?? 0,
 
+      takesReadableObject: Boolean(claim) && gameStore.decryptedObjectIds.includes(claim!.id),
+      takesUnreadObject: Boolean(claim) && !gameStore.decryptedObjectIds.includes(claim!.id),
+
       offersItem: Boolean(give),
       offersWantedItem: Boolean(give) && wanted,
 
@@ -121,13 +148,17 @@ export function useStorylets() {
   }
 
   /** Le texte d'une réponse qui ne passe pas par le modèle. */
-  function localText(say: 'oracle' | 'nobody' | 'unused_lens' | 'exhausted', q: Qualities): string {
+  function localText(
+    say: 'oracle' | 'nobody' | 'unused_lens' | 'unread_object' | 'exhausted',
+    q: Qualities,
+  ): string {
     const scene = playerStore.scene
     const lang = playerStore.language
     const t = (key: string, vars?: Record<string, string>) => translate(lang, key, vars)
 
     if (say === 'oracle') return q.localAnswer?.text ?? ''
     if (say === 'nobody') return t('oracle.no_name')
+    if (say === 'unread_object') return t('oracle.unread_object')
     if (say === 'unused_lens') {
       return t('oracle.unused_lens', {
         tool: scene?.key_item?.name ?? t('oracle.unused_lens_tool'),
@@ -197,6 +228,32 @@ export function useStorylets() {
       return
     }
 
+    // IL LE PREND PARCE QU'IL L'A DEMANDÉ. Rien ne part au modèle et rien ne
+    // se compte : c'est un geste, comme l'était le bouton qu'il remplace — la
+    // différence est que l'initiative vient de lui, et qu'il a fallu savoir
+    // nommer la chose pour en arriver là.
+    if (moment.play.kind === 'pickup') {
+      const obj = claimed(input)
+      if (obj) {
+        gameStore.pickUp({
+          id: obj.id,
+          label: obj.label,
+          from: playerStore.scene?.place?.name,
+          // La scène a dit en le posant s'il valait pour quelqu'un d'autre :
+          // c'est ce qui décide qu'un personnage pourra le réclamer, ici ou
+          // trois scènes plus loin. Dans le doute, il n'éclaire que la quête.
+          kind: obj.item_kind === 'echange' ? 'trade' : 'lore',
+          observation: observationOf(
+            playerStore.scene, gameStore.inventory, obj.id,
+            playerStore.language, gameStore.revealedInteractableIds),
+        })
+        gameStore.addNarrativeEntry(
+          'system', translate(playerStore.language, 'game.pickup', { label: obj.label }))
+      }
+      gameStore.setPlayingSubState('awaiting_input')
+      return
+    }
+
     if (moment.play.kind === 'local') {
       // La nuit se referme. Le texte a été écrit à la génération de la scène :
       // on ne fait pas patienter vingt secondes quelqu'un à qui on ferme la
@@ -208,7 +265,9 @@ export function useStorylets() {
       // Une réponse anonyme ne consomme pas de tour : le joueur n'a rien joué,
       // il lui manque un outil.
       // Idem pour l'outil jamais employé : il lui manque un geste, pas un tour.
-      if (moment.play.say === 'nobody' || moment.play.say === 'unused_lens') {
+      if (moment.play.say === 'nobody'
+        || moment.play.say === 'unused_lens'
+        || moment.play.say === 'unread_object') {
         gameStore.addNarrativeEntry('system', localText(moment.play.say, q))
         gameStore.setPlayingSubState('awaiting_input')
         return
