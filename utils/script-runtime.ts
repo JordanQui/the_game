@@ -717,7 +717,7 @@ ${list(o.posture)}`
     const n = this.script.defaults.night
 
     if (this.isStart) {
-      return `${n.instruction}\n\n${interpolate(n.plan, { slots: this.describeSlots(theme) })}\n\n${n.derives}`
+      return `${n.instruction}\n\n${this.describeCalculus(theme)}\n\n${interpolate(n.plan, { slots: this.describeSlots(theme) })}\n\n${n.derives}`
     }
 
     // Sans plan — un saut direct à une scène, un vieux journal — il ne reste
@@ -745,6 +745,26 @@ ${list(o.posture)}`
       requirement: here.requirement,
       exit_label: here.exit_label,
     })}\n\n${n.derives}`
+  }
+
+  /**
+   * L'aventure de la nuit, calculée depuis le signe et les nombres.
+   *
+   * Le modèle choisissait le but dans tout le dossier, et il prenait le plus
+   * émouvant : la personne qui compte. La nuit devenait celle d'un autre
+   * (« offrir à Vadim une place sous les projecteurs »). Les ingrédients sont
+   * donc posés ligne à ligne, et les empreintes n'en font pas partie.
+   */
+  private describeCalculus(theme: PlayerTheme | null): string {
+    const c = this.script.defaults.night.calculus
+    const lines = [
+      theme?.sign ? `  - Ce que sa vie lui refuse : ${theme.sign.tension}` : '',
+      theme?.sign?.adventure ? `  - L'aventure que son signe réclame : ${theme.sign.adventure}` : '',
+      theme?.numbers.destiny ? `  - La forme qu'elle prend : ${theme.numbers.destiny}` : '',
+      theme?.numbers.drive ? `  - Sa manière d'y aller : ${theme.numbers.drive}` : '',
+      theme?.numbers.heritage ? `  - Ce que son nom traîne, à démentir en route : ${theme.numbers.heritage}` : '',
+    ].filter(Boolean)
+    return lines.length ? interpolate(c.instruction, { lines: lines.join('\n') }) : c.fallback
   }
 
   /**
@@ -923,6 +943,20 @@ ${lines}`)
    * l'enlève : ce qui reste est exactement la scène qui allait s'afficher.
    */
   dropUnreachable(generated: GeneratedScene): void {
+    // Le cas symétrique : un `reveals_id` qui ne désigne aucun élément caché.
+    // Le modèle y met l'id de l'objet-clé — « a1s1_card » — pour faire remettre
+    // la carte par l'échange, ce que la règle interdit déjà à `reward_item`.
+    // L'échange retombe sur sa première forme, ce qu'il sait : `reward` reste
+    // sa réplique, et la carte se mérite par le chemin prévu.
+    const hiddenIds = new Set((generated.interactables ?? []).filter(o => o.hidden).map(o => o.id))
+    for (const npc of generated.npcs ?? []) {
+      const id = npc.wants?.reveals_id
+      if (id && !hiddenIds.has(id)) {
+        console.warn(`[scene/${this.scene.id}] ${npc.name} découvrait "${id}", qui n'est pas caché : retiré`)
+        delete npc.wants!.reveals_id
+      }
+    }
+
     const revealed = (generated.npcs ?? [])
       .map(n => n.wants?.reveals_id).filter((id): id is string => Boolean(id))
     const objects = generated.interactables ?? []
@@ -932,6 +966,40 @@ ${lines}`)
     console.warn(`[scene/${this.scene.id}] caché sans personne pour le montrer, retiré : `
       + orphans.map(o => o.label || o.id).join(' · '))
     generated.interactables = objects.filter(o => !orphans.includes(o))
+  }
+
+  /**
+   * Le nom de l'augmentation, ressoudé avant d'être jugé.
+   *
+   * La consigne exige un nom sans accent, et le modèle écrit en français :
+   * « LentilleNéonIntervalle » arrivait, et la scène entière partait en
+   * réparation pour une seule lettre. Retirer l'accent ou recoller deux
+   * morceaux ne change rien à ce qu'il a voulu dire. On corrige donc le nom,
+   * et chaque texte généré qui le cite, pour que le récit et la fiche restent
+   * identiques à la lettre. Ce qui ne se ressoude pas reste refusé plus bas.
+   */
+  weldAugmentationName(generated: GeneratedScene): void {
+    const item = generated.key_item
+    if (this.scene.objective?.kind !== 'acquire_augmentation' || !item?.name) return
+
+    const welded = item.name
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .split(/[^A-Za-z]+/).filter(Boolean)
+      .map(w => w[0]!.toUpperCase() + w.slice(1))
+      .join('')
+    if (welded === item.name || !AUGMENTATION_NAME_RE.test(welded)) return
+
+    const from = item.name
+    const replace = (value: unknown): unknown => {
+      if (typeof value === 'string') return value.split(from).join(welded)
+      if (Array.isArray(value)) return value.map(replace)
+      if (value && typeof value === 'object') {
+        for (const [k, v] of Object.entries(value)) (value as Record<string, unknown>)[k] = replace(v)
+      }
+      return value
+    }
+    replace(generated)
+    console.warn(`[scene/${this.scene.id}] nom de l'augmentation ressoudé : ${from} → ${welded}`)
   }
 
   /** Garde-fou : le modèle oublie régulièrement un champ. */

@@ -6,8 +6,14 @@ import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useImageGen } from '~/composables/useImageGen'
 
-/** La génération de scène tourne autour de 15-20 s ; au-delà, c'est perdu. */
-const SCENE_TEXT_TIMEOUT_MS = 90_000
+/**
+ * Une scène de l'auberge prend 50 à 80 s : environ 18 000 jetons de prompt, et
+ * un JSON de 4 000 à 6 000 jetons avec le plan de la nuit. Une scène refusée
+ * par la validation vaut une reprise qui le réécrit en entier — le double. À
+ * 90 s, le navigateur abandonnait une scène que le serveur allait livrer, et
+ * qu'il avait déjà payée.
+ */
+const SCENE_TEXT_TIMEOUT_MS = 240_000
 
 /**
  * Orchestre le pipeline découplé.

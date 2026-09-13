@@ -241,7 +241,15 @@ export interface ScriptDefaults {
    * La quête de la nuit : le but tiré du dossier, le plan qui dit ce que chaque
    * lieu est pour ce joueur, et ce qui s'en déduit dans chaque scène.
    */
-  night: { note?: string; instruction: string; plan: string; fixed: string; derives: string }
+  night: {
+    note?: string
+    instruction: string
+    /** Les ingrédients du but, posés depuis le signe et les nombres. */
+    calculus: { instruction: string; fallback: string }
+    plan: string
+    fixed: string
+    derives: string
+  }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
   sealed_object: { note?: string; instruction: string }
   /** Ce qu'un personnage réclame de ce que le joueur porte, et ce qu'il en donne. */
@@ -421,6 +429,11 @@ export interface ZodiacSignScript {
   tension: string
   /** À quoi ressemble sa résolution, en acte. */
   resolution: string
+  /**
+   * La grande aventure que le signe réclame, pour la vie du joueur lui-même.
+   * C'est la matière de `night.goal` : jamais un service rendu à un proche.
+   */
+  adventure: string
 }
 
 export interface ZodiacScript {

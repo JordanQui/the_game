@@ -197,5 +197,9 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: process.env.VERCEL ? 'vercel' : undefined,
+    // Une scène et sa reprise tiennent jusqu'à ~160 s. Sans plafond déclaré,
+    // Vercel coupe la fonction à sa durée par défaut, avant la réponse, et la
+    // génération est payée pour rien. Le client attend 240 s.
+    vercel: { functions: { maxDuration: 300 } },
   },
 })

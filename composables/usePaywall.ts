@@ -37,6 +37,15 @@ export function usePaywall() {
     // n'empêchait un autre chemin — un bouton — d'avancer sans.
     if (!options.force && !objectiveMet()) return
 
+    // Le raccourci vient VOIR la porte. Il passait par le même aiguillage que
+    // la sortie jouée : un cookie d'accès resté d'un paiement de test, ou une
+    // scène qui n'est pas la porte, le faisaient filer à la scène suivante —
+    // une génération payée, et pas d'écran de paiement.
+    if (options.force) {
+      gameStore.triggerPaywall()
+      return
+    }
+
     // Seule la scène-porte demande le paiement. Ailleurs, franchir la sortie
     // fait simplement passer à la suite — sans quoi chaque scène renverrait à
     // l'écran de succès puis à elle-même, en boucle.

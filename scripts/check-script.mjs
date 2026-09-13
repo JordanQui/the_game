@@ -229,6 +229,18 @@ for (const f of ['instruction', 'plan', 'fixed', 'derives']) {
 for (const v of ['{{goal}}', '{{plan}}', '{{place}}', '{{focal}}', '{{requirement}}', '{{exit_label}}']) {
   if (night?.fixed && !night.fixed.includes(v)) errors.push(`defaults.night.fixed n'interpole pas ${v}`)
 }
+// Le but se calcule sur le signe et les nombres. Laissé libre dans le dossier,
+// le modèle prenait la personne qui compte, et la nuit devenait celle d'un autre.
+if (!night?.calculus?.instruction?.includes('{{lines}}')) {
+  errors.push('defaults.night.calculus n\'interpole pas {{lines}} : le but ne serait plus calculé')
+}
+if (!night?.calculus?.fallback) errors.push('defaults.night.calculus.fallback manquant')
+for (const [key, sign] of Object.entries(script.zodiac.signs)) {
+  if (!sign.adventure) errors.push(`le signe "${key}" n'a pas d'aventure : night.goal n'aurait rien à calculer`)
+}
+if (/pour qui|personne qui compte pour lui :/i.test(night?.instruction ?? '')) {
+  errors.push('defaults.night.instruction renvoie encore le but vers une personne du dossier')
+}
 if (night?.plan && !night.plan.includes('{{slots}}')) {
   errors.push('defaults.night.plan n\'interpole pas {{slots}} : le modèle ne verrait pas la mécanique imposée')
 }

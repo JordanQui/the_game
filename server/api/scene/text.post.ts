@@ -202,6 +202,7 @@ export default defineEventHandler(async (event) => {
    * trois centimes — et il n'est payé que sur un échec.
    */
   scene.dropUnreachable(generated)
+  scene.weldAugmentationName(generated)
 
   try {
     scene.assertValid(generated)
@@ -216,6 +217,7 @@ export default defineEventHandler(async (event) => {
     ])
     generated = parseScene(repaired)
     scene.dropUnreachable(generated)
+    scene.weldAugmentationName(generated)
 
     try {
       scene.assertValid(generated)

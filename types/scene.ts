@@ -58,7 +58,7 @@ export interface SceneNPC {
       label: string
       item_kind?: 'echange' | 'recit'
       observation?: string
-    } | null
+    } |sign: { key: string; name: string; element: string; tension: string; resolution: string; adventure: string } | null
     /** L'id d'un interactable `hidden` que cet échange fait exister. */
     reveals_id?: string
   } | null
