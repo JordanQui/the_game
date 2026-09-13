@@ -188,44 +188,46 @@ export default defineEventHandler(async (event) => {
   }
 
   /**
-   * Une scène refusée par la validation vaut UNE reprise, et une seule.
+   * Une scène refusée par la validation vaut jusqu'à DEUX reprises.
    *
    * Le modèle manque parfois une contrainte — le plus souvent un personnage
    * qu'il déclare dans `npcs` sans jamais le nommer dans le texte, ce qui le
-   * rend inatteignable. Jusqu'ici la scène partait en 502 : le joueur venait de
-   * remplir son dossier d'admission et tombait sur une panne, avec son quota
-   * déjà consommé.
+   * rend inatteignable, ou un `reveals_id` qui désigne un élément que le décor
+   * ne porte pas encore. Une seule reprise laissait passer les rares cas où le
+   * modèle ratait aussi sa correction : la scène partait en 502, le joueur
+   * venait de remplir son dossier d'admission et tombait sur une panne, avec
+   * son quota déjà consommé.
    *
    * On lui renvoie donc sa propre réponse et le motif du refus, plutôt que de
    * relancer une génération à l'aveugle : il corrige le point visé et garde le
-   * reste. Le coût d'une reprise est celui d'une génération — de l'ordre de
-   * trois centimes — et il n'est payé que sur un échec.
+   * reste. Chaque reprise porte la conversation entière, motifs précédents
+   * compris, pour ne jamais revenir sur un point déjà corrigé. Le coût d'une
+   * reprise est celui d'une génération — de l'ordre de trois centimes — et il
+   * n'est payé que sur un échec, ce qui reste vrai même à deux reprises : le
+   * cas où les trois générations échouent est rare par construction.
    */
-  scene.dropUnreachable(generated)
-
-  try {
-    scene.assertValid(generated)
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err)
-    console.warn('[scene/text] scène refusée, une reprise demandée :', reason)
-
-    const repaired = await ask([
-      ...messages,
-      { role: 'assistant', content: raw },
-      { role: 'user', content: interpolate(gen.repair_prompt, { reason }) },
-    ])
-    generated = parseScene(repaired)
+  const MAX_REPAIRS = 2
+  let conversation = messages
+  let lastRaw = raw
+  for (let attempt = 0; ; attempt++) {
     scene.dropUnreachable(generated)
-
     try {
       scene.assertValid(generated)
-    } catch (again) {
-      console.error('[scene/text] scène invalide après reprise :',
-        again instanceof Error ? again.message : again)
-      throw createError({
-        statusCode: 502,
-        statusMessage: again instanceof Error ? again.message : 'Scène invalide',
-      })
+      break
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err)
+      if (attempt >= MAX_REPAIRS) {
+        console.error('[scene/text] scène invalide après reprise :', reason)
+        throw createError({ statusCode: 502, statusMessage: reason })
+      }
+      console.warn(`[scene/text] scène refusée, reprise ${attempt + 1}/${MAX_REPAIRS} demandée :`, reason)
+      conversation = [
+        ...conversation,
+        { role: 'assistant', content: lastRaw },
+        { role: 'user', content: interpolate(gen.repair_prompt, { reason }) },
+      ]
+      lastRaw = await ask(conversation)
+      generated = parseScene(lastRaw)
     }
   }
 
