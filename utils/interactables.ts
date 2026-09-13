@@ -28,7 +28,12 @@ import { pack } from '~/utils/languages'
 export function isTakeable(obj: Interactable, lang: LangCode = DEFAULT_LANG): boolean {
   if (obj.triggers_paywall) return false
   const verb = normalize(obj.verb ?? '')
-  return pack(lang).input.take.some(v => normalize(v) === verb)
+  // Le modèle écrit parfois le verbe avec son complément — « prendre le
+  // badge ». Il se ramasse tout autant : on compare le début, mot entier.
+  return pack(lang).input.take.some(v => {
+    const take = normalize(v)
+    return verb === take || verb.startsWith(`${take} `)
+  })
 }
 
 /**
