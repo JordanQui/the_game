@@ -539,7 +539,7 @@ export interface GeneratedEnding {
  * L'épilogue, tel qu'il arrive au client.
  *
  * `ending_html` a déjà été réduit aux quatre balises autorisées côté serveur :
- * il peut être rendu tel quel. Il se superpose à l'image du couchant — c'est
+ * il peut être rendu tel quel. Il se superpose à l'image du lever du jour — c'est
  * ce montage qui permet d'avoir du vrai texte français lisible, qu'aucun
  * modèle d'image ne sait produire.
  */

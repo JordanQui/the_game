@@ -14,7 +14,7 @@ export type GameScreen =
   | 'paywall'
   | 'payment_processing'
   | 'payment_success'
-  /** L'épilogue : le couchant, et le texte de fin par-dessus. */
+  /** L'épilogue : le lever du jour, et le texte de fin par-dessus. */
   | 'ending'
   /**
    * La ville est fermée : la nuit a patiné, ou l'histoire est allée au bout.

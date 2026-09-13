@@ -1821,13 +1821,13 @@
       "is_free": false,
       "is_paywall_gate": false,
       "kind": "ending",
-      "note": "Onzième étape. Elle génère du TEXTE et une IMAGE, mais pas comme les autres : pas de personnages, pas d'objet-clé, pas de quête. L'image est un soleil couchant sur la ville, peuplé de ce que le joueur a traversé ; le texte de fin se superpose en HTML PAR-DESSUS l'image — c'est ce qui permet d'avoir du vrai texte français lisible, qu'aucun modèle d'image ne sait produire.",
+      "note": "Onzième étape. Elle génère du TEXTE et une IMAGE, mais pas comme les autres : pas de personnages, pas d'objet-clé, pas de quête. L'image est un soleil qui se lève sur la ville — la nuit est finie —, peuplée de ce que le joueur a traversé ; le texte de fin se superpose en HTML PAR-DESSUS l'image — c'est ce qui permet d'avoir du vrai texte français lisible, qu'aucun modèle d'image ne sait produire.",
       "generation": {
         "model": "gpt-4o",
         "temperature": 0.9,
         "max_tokens": 1800,
         "system_prompt": "Tu écris la fin d'un jeu d'aventure textuel cyberpunk en {{language}}, et tu décris l'image qui l'accompagne. Tu réponds uniquement par un objet JSON, sans markdown.",
-        "instruction": "LA FIN DE L'HISTOIRE.\nLe joueur vient d'accomplir l'acte final. Le soleil est bas sur l'horizon, posé entre deux tours, et il coupe la ville en bandes. C'est l'image qui portera ce texte.\n\n=== LE TEXTE (`ending_html`) — trois mouvements ===\n1. CE QUI VIENT DE SE PASSER : l'acte accompli, et ce que la ville en fait dans les minutes qui suivent. Concret, à hauteur de rue — une lumière qui revient, un bruit qui cesse, une porte qui s'ouvre ailleurs.\n2. LA NUIT RELUE : reprends ce qu'il a traversé — les lieux, ceux qui l'ont laissé passer, ce qu'il porte encore. Sers-toi du résumé et de l'inventaire, et NOMME-LES : ce sont ses souvenirs, pas des exemples. Un objet dont le nom n'a jamais été déchiffré reste sans nom — dis seulement qu'il l'a gardé sans jamais savoir ce que c'était.\n3. CE QU'IL EMPORTE : la tension de son SIGNE trouve ici sa résolution. Pas résolue proprement — déplacée : il a fait dehors ce qu'il n'arrivait pas à faire chez lui. Ne nomme jamais le signe, le nombre ni la tension. Montre-la une dernière fois, en situation.\n{{counsel}}\n\nTON : deuxième personne, présent, phrases courtes. Les trois premiers mouvements MONTRENT sans commenter — pas de lyrisme, pas de morale, aucune suite annoncée. Le quatrième, lui, parle en clair : c'est le seul du jeu qui le fasse, et il ne doit pas contaminer les autres. Aucune question au joueur nulle part. 220 à 280 mots en tout.\nFORMAT : du HTML, et SEULEMENT ces balises — <h2>, <p>, <em>, <strong>. Un <h2> de titre (3 à 6 mots, tirés de SA nuit, jamais générique). QUATRE <p>, un par mouvement, la lecture en dernier. <em> pour les lieux et les personnes, <strong> pour l'acte accompli et pour le conseil final. Aucun attribut : tout le reste sera retiré.\n\n=== L'IMAGE ===\n`palette` est celle du couchant : la dominante reste la nuit qui n'a pas fini de partir, l'accent est le soleil. Même règle 70/20/10 que partout ailleurs.\n`decor` peuple l'image de SA nuit à lui : dans la silhouette de la ville on doit reconnaître les lieux qu'il a traversés (voir le résumé), et au premier plan ce qu'il a rapporté (voir l'inventaire). Ce ne sont pas des décors génériques — chaque fragment `visual` renvoie à quelque chose de précis de sa partie.\nAUCUN TEXTE DANS L'IMAGE : pas d'enseigne lisible, pas de lettres, pas de chiffres. Le texte se superpose ensuite en HTML, c'est lui qui porte les mots.",
+        "instruction": "LA FIN DE L'HISTOIRE.\nLe joueur vient d'accomplir l'acte final. Le jour se lève : c'est la fin de la nuit. Le soleil sort à peine de l'horizon, entre deux tours, et il coupe la ville en bandes. C'est l'image qui portera ce texte.\n\n=== LE TEXTE (`ending_html`) — trois mouvements ===\n1. CE QUI VIENT DE SE PASSER : l'acte accompli, et ce que la ville en fait dans les minutes qui suivent. Concret, à hauteur de rue — une lumière qui revient, un bruit qui cesse, une porte qui s'ouvre ailleurs.\n2. LA NUIT RELUE : reprends ce qu'il a traversé — les lieux, ceux qui l'ont laissé passer, ce qu'il porte encore. Sers-toi du résumé et de l'inventaire, et NOMME-LES : ce sont ses souvenirs, pas des exemples. Un objet dont le nom n'a jamais été déchiffré reste sans nom — dis seulement qu'il l'a gardé sans jamais savoir ce que c'était.\n3. CE QU'IL EMPORTE : la tension de son SIGNE trouve ici sa résolution. Pas résolue proprement — déplacée : il a fait dehors ce qu'il n'arrivait pas à faire chez lui. Ne nomme jamais le signe, le nombre ni la tension. Montre-la une dernière fois, en situation.\n{{counsel}}\n\nTON : deuxième personne, présent, phrases courtes. Les trois premiers mouvements MONTRENT sans commenter — pas de lyrisme, pas de morale, aucune suite annoncée. Le quatrième, lui, parle en clair : c'est le seul du jeu qui le fasse, et il ne doit pas contaminer les autres. Aucune question au joueur nulle part. 220 à 280 mots en tout.\nFORMAT : du HTML, et SEULEMENT ces balises — <h2>, <p>, <em>, <strong>. Un <h2> de titre (3 à 6 mots, tirés de SA nuit, jamais générique). QUATRE <p>, un par mouvement, la lecture en dernier. <em> pour les lieux et les personnes, <strong> pour l'acte accompli et pour le conseil final. Aucun attribut : tout le reste sera retiré.\n\n=== L'IMAGE ===\n`palette` est celle de l'aube : la dominante reste la nuit qui n'a pas fini de partir, l'accent est le soleil qui se lève. Même règle 70/20/10 que partout ailleurs.\nC'EST UN LEVER, JAMAIS UN COUCHER : le ciel pâlit par le bas, les néons encore allumés perdent leur éclat, la brume du petit matin monte des rues. Rien ne doit se lire comme un soir qui tombe.\n`decor` peuple l'image de SA nuit à lui : dans la silhouette de la ville on doit reconnaître les lieux qu'il a traversés (voir le résumé), et au premier plan ce qu'il a rapporté (voir l'inventaire). Ce ne sont pas des décors génériques — chaque fragment `visual` renvoie à quelque chose de précis de sa partie.\nAUCUN TEXTE DANS L'IMAGE : pas d'enseigne lisible, pas de lettres, pas de chiffres. Le texte se superpose ensuite en HTML, c'est lui qui porte les mots.",
         "output_schema": {
           "ending_html": "string (HTML : un <h2> puis QUATRE <p> — les trois mouvements du récit, puis la lecture. Balises <h2> <p> <em> <strong> uniquement, sans attribut)",
           "title": "string (le titre du <h2>, en clair)",
@@ -1862,8 +1862,8 @@
           ]
         }
       },
-      "image_setting": "Le soleil bas sur l'horizon d'une mégapole, posé entre deux tours, vu depuis le lieu où le joueur vient d'accomplir l'opération",
-      "focal_element": "Le disque solaire, coupé en bandes horizontales par la brume de la ville",
+      "image_setting": "Le soleil qui se lève sur l'horizon d'une mégapole, sorti à peine entre deux tours, vu depuis le lieu où le joueur vient d'accomplir l'opération",
+      "focal_element": "Le disque solaire levant, coupé en bandes horizontales par la brume du petit matin",
       "naming": {
         "instruction": "Le lieu est déjà nommé : c'est là où le joueur vient d'agir. Reprends son nom tel quel.",
         "sources": []
@@ -1871,7 +1871,7 @@
       "decor_slots": [
         {
           "id": "soleil",
-          "role": "Le disque solaire bas, coupé en bandes horizontales",
+          "role": "Le disque solaire qui se lève, coupé en bandes horizontales",
           "source": "—",
           "visual_weight": "accent",
           "required": true
@@ -2251,7 +2251,7 @@
       "scenes": [
         "fin"
       ],
-      "arc": "Le soleil se couche sur la ville. Le joueur relit sa propre nuit : les lieux traversés, ceux qui l'ont laissé passer, ce qu'il emporte, et l'acte qu'il a accompli.",
+      "arc": "Le soleil se lève sur la ville : la nuit est finie. Le joueur relit sa propre nuit : les lieux traversés, ceux qui l'ont laissé passer, ce qu'il emporte, et l'acte qu'il a accompli.",
       "ends_on": "Rien. C'est la fin."
     }
   ],

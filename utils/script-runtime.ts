@@ -395,7 +395,7 @@ export class SceneRuntime {
    * Le prompt de l'épilogue.
    *
    * Il ne demande ni personnages, ni quête, ni objet-clé : la partie est finie.
-   * Il demande un texte, la palette d'un couchant, et de quoi peupler l'image
+   * Il demande un texte, la palette d'une aube, et de quoi peupler l'image
    * de ce que CE joueur a traversé. Le journal y passe en ENTIER — c'est le
    * seul moment où toute la nuit compte, on ne le tronque donc pas.
    */

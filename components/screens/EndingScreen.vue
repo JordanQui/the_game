@@ -9,7 +9,7 @@ import type { EndingResponse } from '~/types/scene'
 /**
  * L'épilogue.
  *
- * Deux couches : l'image du couchant, générée et peuplée de ce que le joueur a
+ * Deux couches : l'image du lever du jour, générée et peuplée de ce que le joueur a
  * traversé, et par-dessus le texte de fin en HTML. C'est ce montage qui permet
  * d'avoir du vrai texte français lisible — aucun modèle d'image ne sait en
  * produire. Le HTML a été réduit côté serveur aux quatre balises autorisées.
@@ -40,7 +40,7 @@ onMounted(async () => {
         })),
       },
     })
-    // Le couchant a sa propre palette : l'interface la prend aussi.
+    // L'aube a sa propre palette : l'interface la prend aussi.
     interfacePalette.applyScene(ending.value)
   } catch (err) {
     error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage

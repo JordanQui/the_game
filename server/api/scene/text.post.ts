@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
   const gen = scene.generation
 
   // L'épilogue ne suit pas le schéma des autres scènes : ni personnages, ni
-  // quête, ni objet-clé. Il rend un texte, une palette de couchant et de quoi
+  // quête, ni objet-clé. Il rend un texte, une palette d'aube et de quoi
   // peupler l'image de ce que ce joueur-là a traversé.
   const isEnding = scene.kind === 'ending'
 
