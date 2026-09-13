@@ -1276,6 +1276,7 @@ ${lines}`)
           // à connaître la syntaxe des gabarits.
           pitch: {
             eyebrow: pw.pitch.eyebrow,
+            generative: pw.pitch.generative,
             // Un point dont une variable est vide n'afficherait que des
             // guillemets : sans plan, la tension ne se montre pas.
             points: pw.pitch.points

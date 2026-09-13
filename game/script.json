@@ -319,7 +319,7 @@
     },
     "night": {
       "note": "La quête de la nuit. Les trois actes ne sont plus fixés d'avance : une rue, des hauteurs ou une tour peuvent y figurer, mais seulement si ce joueur y mène. Le script fixe la MÉCANIQUE — trois actes de trois lieux, ce que chaque acte met à l'épreuve, ce qu'on obtient dans chaque lieu. Le dossier d'admission fixe le reste : la date de naissance donne le signe, le prénom et le nom donnent les nombres, et de là sortent un but, une tension à montrer au paiement, et neuf lieux inventés pour ce joueur. Écrits en premier par la génération de l'auberge, portés par le journal, jamais régénérés : chaque scène suivante se construit sur son lieu.",
-      "instruction": "CE QUE LE JOUEUR EST SORTI CHERCHER CETTE NUIT — `night.goal`, le premier champ que tu écris, parce que toute la partie se construit dessus. C'est le but de la NUIT ENTIÈRE, pas celui d'un lieu. Une phrase, telle qu'il se la dirait lui-même.\nÀ L'ÉCHELLE DE LA VILLE ET DE SA VIE : il ne s'accomplit dans aucune salle, aucun personnage ne peut le lui remettre, et il faut traverser toute la ville pour l'atteindre. Ce n'est JAMAIS une commission — ni un objet qu'on lui a laissé quelque part, ni un paquet à récupérer, ni quelqu'un à retrouver au comptoir, ni une dette à régler sur place. « Quelqu'un t'a laissé quelque chose ici » est l'objet d'une salle, pas le but d'une nuit. Si la phrase peut s'accomplir dans le lieu où il se trouve, elle est fausse. Jamais un état d'âme non plus : « comprendre ce qui lui arrive » n'est pas un but.\nIL SORT DE SON DOSSIER D'ADMISSION, et c'est ce qui le rend unique. Sa date de naissance a donné son SIGNE : le but est la `Résolution recherchée` rendue concrète dans sa vie. Son prénom et son nom ont donné ses NOMBRES : la forme de son objectif dit comment il le poursuit, ce que son nom traîne dit ce qu'il a à régler. Et il s'incarne dans une chose de son dossier — la personne qui compte pour lui, l'objet auquel il tient, ce qu'il fait des nuits où il ne dort pas, le rêve qui lui revient, ce qu'il ne supporte pas. Un verbe d'action, ce qui compte pour lui, et ce que ça changerait. Deux joueurs différents ne sortent jamais pour la même raison.\nIl ignore encore par où ça passe : il ne nomme ni l'augmentation, ni un lieu, ni rien qu'un personnage doit lui apprendre. Aucun mot du signe, d'un nombre ni de la tension : on y lit un désir, pas un diagnostic.\n\nCE QUI SE TEND, ET VERS QUOI — `night.tension` et `night.release`, écrits juste après. Ces deux champs ne vont PAS dans la fiction : ils seront montrés au joueur au moment de payer la suite, pour qu'il reconnaisse ce que le jeu a lu de lui. Pars de la `Tension` et de la `Résolution recherchée` du SIGNE, colore-les par ses NOMBRES, et reformule-les pour lui seul, à la deuxième personne, une à deux phrases chacune. `release` ne promet rien : il dit vers quoi la tension tend pour se détendre. Ne nomme jamais le signe, un nombre, l'astrologie ni la numérologie : on doit s'y reconnaître, pas y lire un horoscope.",
+      "instruction": "CE QUE LE JOUEUR EST SORTI CHERCHER CETTE NUIT — `night.goal`, le premier champ que tu écris, parce que toute la partie se construit dessus. C'est le but de la NUIT ENTIÈRE, pas celui d'un lieu. Une phrase, telle qu'il se la dirait lui-même.\nÀ L'ÉCHELLE DE LA VILLE ET DE SA VIE : il ne s'accomplit dans aucune salle, aucun personnage ne peut le lui remettre, et il faut traverser toute la ville pour l'atteindre. Ce n'est JAMAIS une commission — ni un objet qu'on lui a laissé quelque part, ni un paquet à récupérer, ni quelqu'un à retrouver au comptoir, ni une dette à régler sur place. « Quelqu'un t'a laissé quelque chose ici » est l'objet d'une salle, pas le but d'une nuit. Si la phrase peut s'accomplir dans le lieu où il se trouve, elle est fausse. Jamais un état d'âme non plus : « comprendre ce qui lui arrive » n'est pas un but.\nIL SORT DE SON DOSSIER D'ADMISSION, et c'est ce qui le rend unique. Sa date de naissance a donné son SIGNE : le but est la `Résolution recherchée` rendue concrète dans sa vie. Son prénom et son nom ont donné ses NOMBRES : la forme de son objectif dit comment il le poursuit, ce que son nom traîne dit ce qu'il a à régler. Et il s'incarne dans une chose de son dossier — la personne qui compte pour lui, l'objet auquel il tient, ce qu'il fait des nuits où il ne dort pas, le rêve qui lui revient, ce qu'il ne supporte pas. Un verbe d'action, ce qui compte pour lui, et ce que ça changerait. Deux joueurs différents ne sortent jamais pour la même raison.\nIl ignore encore par où ça passe : il ne nomme ni l'augmentation, ni un lieu, ni rien qu'un personnage doit lui apprendre. Aucun mot du signe, d'un nombre ni de la tension : on y lit un désir, pas un diagnostic.\n\nCE QUI SE TEND, ET VERS QUOI — `night.tension` et `night.release`, écrits juste après. Ces deux champs ne vont PAS dans la fiction : ils seront montrés au joueur au moment de payer la suite, pour qu'il reconnaisse ce que le jeu a lu de lui. Pars de la `Tension` et de la `Résolution recherchée` du SIGNE, colore-les par ses NOMBRES, et reformule-les pour lui seul, à la deuxième personne, une à deux phrases chacune. `release` ne promet rien : il dit vers quoi la tension tend pour se détendre. NI L'UN NI L'AUTRE NE RÉVÈLENT LA NUIT : le joueur les lit AVANT de payer la suite. Aucun lieu, aucun personnage, aucun objet, aucun événement, aucune étape, rien de ce qu'il fera ni de ce qu'il trouvera. Ils parlent de lui, jamais de l'aventure. Ne nomme jamais le signe, un nombre, l'astrologie ni la numérologie : on doit s'y reconnaître, pas y lire un horoscope.",
       "plan": "LE PLAN DE LA NUIT — `night.acts`, écrit juste après, avant tout le reste de ce JSON.\nRIEN N'EST FIXÉ D'AVANCE DANS LA VILLE. Une rue, des hauteurs, une tour restent possibles — mais parce que CE joueur y mène, jamais par habitude. Le script ne fixe que la MÉCANIQUE ci-dessous — trois actes de trois lieux, ce que chaque acte met à l'épreuve, et ce qu'on obtient dans chaque lieu. Les lieux eux-mêmes, c'est TOI qui les inventes, et ils sortent de CE joueur : sa tension (SIGNE) décide de ce qu'il traverse, ses NOMBRES de la façon dont la ville lui résiste, son dossier de ce qu'il y reconnaît. Deux joueurs ne traversent jamais la même ville.\nLA PROGRESSION : l'acte I le fait avancer encore tout entier pris dans sa tension ; l'acte II lui renvoie ce qu'il en fait ; l'acte III le fait agir contre elle. Les lieux s'éloignent de l'auberge et se rapprochent de ce qu'il est sorti chercher. Le dernier lieu est celui où `night.goal` s'accomplit : son `focal` EST `quest.artifact`, la chose au bout de la nuit.\nC'EST UNE MÉGAPOLE CYBERPUNK, LA NUIT : chaque lieu est une architecture qu'on pourrait dessiner, jamais une idée, et jamais deux fois le même genre de lieu.\nPOUR CHAQUE LIEU :\n  - `title` : son nom de chapitre, 2 à 4 mots avec article, en Majuscules de Titre.\n  - `place` : ce qu'est le lieu, en une phrase.\n  - `focal` : ce qu'on y voit d'abord, en quelques mots — la chose d'où vient ce qu'on y obtient.\n  - `step` : quel morceau de SON but il vient y gagner, et ce que ça lui demande.\n  - `requirement` : la mécanique imposée, redite dans CE lieu, en une phrase courte.\n  - `exit_label` : le nom du passage qui mène au lieu suivant, 2 à 5 mots avec article, en Majuscules de Titre — le joueur le tapera.\nEt pour chaque acte, `title` : 2 à 4 mots, en Majuscules de Titre.\nChaque lieu reste ouvert : aucun ne nomme un personnage, aucun ne dit comment la scène se résout. Aucun mot du signe, d'un nombre ni de la tension.\nLA MÉCANIQUE IMPOSÉE — un élément de `night.acts` par acte, un élément de `scenes` par lieu, avec ces identifiants exacts :\n{{slots}}",
       "fixed": "LA QUÊTE DE LA NUIT EST FIXÉE DEPUIS L'AUBERGE. Ne la réécris pas, ne la contredis pas : cette scène en est une étape.\nCe qu'il est sorti chercher : « {{goal}} »\nTitre de la quête : {{title}} — recopie-le dans `quest.title`.\nCe qui l'attend au bout : {{horizon}} — recopie-le dans `quest.artifact`.\nLe plan, acte par acte :\n{{plan}}\n\nCETTE SCÈNE EST LE LIEU MARQUÉ D'UNE FLÈCHE.\nLieu : {{place}}\nCe qu'on y voit d'abord : {{focal}}\nCe qu'il vient y gagner : {{step}}\nCe qu'il faut y faire : {{requirement}}\nLe passage vers la suite : {{exit_label}}\nLe lieu est décidé : décris-le, ne le remplace pas. C'est sur lui et sur cette étape que tu construis le décor, les personnages et l'objet-clé.",
       "derives": "TOUT LE RESTE SE CONSTRUIT SUR CE BUT. Chaque champ qui suit en est une conséquence, pas une invention à côté :\n  - LA QUÊTE : `objective` est le pas que CETTE scène lui fait faire vers lui — à partir de la deuxième, son lieu du plan rendu concret par l'exigence mécanique. `stakes` est ce qu'il perd de SON but s'il s'arrête ici. `why_leave` dit pourquoi ce but ne peut plus attendre. `restoration` est ce que ce pas remet d'aplomb, dans la ville et chez lui. `artifact` est la chose où le but s'accomplit, au bout de la nuit.\n  - LES PERSONNAGES : leur position face à la tension se lit dans ce qu'ils ont fait d'un but semblable — celui qui l'a poursuivi et l'a payé, celui qui y a renoncé, celui qui dit que ça ne se trouve pas. Ce que chacun sait est un morceau du chemin vers lui.\n  - L'OBJET-CLÉ : `why` dit pourquoi on n'avance pas vers CE but sans lui ; `resolving_action` est le geste qui l'en rapproche ; `hook_story` est l'histoire de quelqu'un qui a voulu la même chose.\n  - L'OBJET SCELLÉ et l'objet à prendre : ce qu'ils révèlent éclaire le chemin vers ce but.\n  - LE LIEU et son décor en portent un écho — une trace, jamais une illustration.\nUn élément de la scène qui ne se rattache pas à ce but est de trop. L'objet à récupérer dans un lieu n'est jamais le but : c'est un moyen."
@@ -1917,32 +1917,37 @@
     }
   ],
   "paywall": {
-    "gate_text": "Ta main se referme sur la poignée d'acier du sas. Le métal est froid. Derrière, {{quest_artifact}} t'attend quelque part sous la pluie.\n\nLe sas ne s'ouvre pas encore.",
+    "gate_text": "Ta main se referme sur la poignée d'acier du sas. Le métal est froid. Derrière, la pluie, et le reste de ta nuit.\n\nLe sas ne s'ouvre pas encore.",
     "cta": "Franchir le sas — 10 €",
     "sub_cta": "Débloquez la suite de {{quest_title}}",
     "amount_cents": 1000,
     "currency": "EUR",
     "pitch": {
-      "eyebrow": "Ce que vous êtes en train de jouer",
+      "eyebrow": "Ce qui se joue pour vous",
+      "generative": {
+        "eyebrow": "Intrication dynamique générative",
+        "title": "Une nuit que personne n'a jamais jouée",
+        "text": "Ce n'est pas un scénario habillé à votre nom : il n'y a rien en dessous. Ce n'est pas du hasard non plus : rien n'est tiré au sort. Chaque lieu, chaque visage, chaque réplique, chaque image se déduit de votre dossier d'admission et de ce que vous avez fait juste avant, et se fabrique au moment où vous entrez. Cette nuit n'a lieu qu'une fois ; elle ne sera rejouée pour personne."
+      },
       "points": [
         {
-          "label": "Ce monde est le vôtre",
-          "text": "Le lieu, les gens, la quête : tout a été bâti à partir de ce que vous avez vécu. Rien n'est générique, rien ne sera rejoué pour quelqu'un d'autre."
-        },
-        {
           "label": "Ce qui se tend en vous",
-          "text": "« {{tension}} » Le jeu ne vous l'a jamais dit. Il vous l'a fait traverser."
+          "text": "« {{tension}} » C'est ce que le jeu a lu dans votre dossier. Personne, dans cette première salle, ne l'a nommée : chacun y a répondu à sa manière."
         },
         {
-          "label": "Ce vers quoi ça tend",
-          "text": "« {{release}} » Le reste de la nuit a été tracé pour vous y mener : trois actes, neuf lieux, que personne d'autre ne traversera."
+          "label": "Vers quoi elle tend",
+          "text": "« {{release}} » Ce n'est pas une promesse : c'est une direction."
         },
         {
-          "label": "La sortie compte",
-          "text": "Ce qui vous attend dehors n'est pas un niveau de plus. La façon dont cette tension se dénoue ici éclaire la façon dont elle peut se résoudre dans votre vie."
+          "label": "Par quel moyen",
+          "text": "En jouant, et rien d'autre. Personne ne vous expliquera cette tension ni comment la dénouer : c'est ce que vous choisissez de faire qui en décide. Le jeu lit chacun de vos gestes et construit la suite dessus."
+        },
+        {
+          "label": "Ce que vous en emportez",
+          "text": "Le nœud qui se défait dans la fiction est le même que dans votre vie. On en repart avec quelque chose d'utilisable, pas avec un score."
         }
       ],
-      "closing": "{{quest_artifact}} vous attend quelque part sous la pluie. Ce que vous en ferez vous appartient."
+      "closing": "De l'autre côté du sas, la pluie n'a pas cessé de tomber. Elle attend votre pas."
     }
   },
   "zodiac": {
@@ -2089,6 +2094,7 @@
     "input_per_1m_usd": 2.5,
     "output_per_1m_usd": 10.0,
     "image_per_call_usd": 0.07,
+    "image_size_billed": "1536x1024",
     "scene_budget_usd": 0.75
   },
   "limits": {
@@ -2125,32 +2131,38 @@
     "enabled": false
   },
   "economics": {
-    "note": "Hypothèses de prévision, pour /admin/marge. Ce ne sont PAS des mesures : seuls les prix unitaires de `pricing` viennent de la facture réelle. À réviser dès que du trafic réel existe.",
+    "note": "Hypothèses de prévision, pour /admin/marge. La forme de la nuit n'est plus déclarée ici : la page la lit dans `progression.order`, `is_free` et `static_image`, et MESURE l'entrée de chaque prompt en le rendant à chaque chargement. Le prix de vente vient de `paywall.amount_cents`. Restent ici les sorties, les volumes et les frais, à réviser dès que du trafic réel existe.",
     "eur_usd": 1.08,
-    "price_eur": 10.0,
     "conversion_rate_pct": 3.0,
+    "vat": {
+      "note": "TVA comprise dans le prix affiché. 0 en franchise en base ; 20 si l'activité y est assujettie — elle se prélève alors sur chaque vente avant tout le reste.",
+      "pct": 0
+    },
     "payment": {
       "note": "Commission Square. À vérifier sur ton contrat : le taux carte européenne varie.",
       "fee_pct": 1.75,
       "fee_fixed_eur": 0.25
     },
-    "free_visitor": {
-      "note": "L'auberge seule. Son image est figée, elle ne coûte donc rien.",
-      "scenes": 1,
-      "turns": 6,
-      "images": 0
+    "play": {
+      "note": "Comment une nuit se joue en moyenne. Le verrou plafonne à `limits.lock.turns_per_scene` tours par scène ; la moyenne est plus basse. Une scène refusée par la validation vaut une reprise, payée en entier.",
+      "turns_per_scene": 6,
+      "free_visitor_turns": 6,
+      "repair_rate_pct": 15
     },
-    "paying_customer": {
-      "note": "Ce qui est consommé APRÈS paiement : les 9 scènes restantes, image comprise.",
-      "scenes": 9,
-      "turns": 90,
-      "images": 9
+    "tokens": {
+      "note": "HYPOTHÈSES : aucune facture ne couvre encore la nuit à 11 scènes. L'auberge écrit en plus le plan de la nuit (~1 000 jetons). Plafonds réels : `generation.max_tokens` et `turn.max_tokens`. L'historique est le fil du personnage renvoyé à chaque tour, borné à 6 échanges.",
+      "opening_output": 3000,
+      "scene_output": 2500,
+      "ending_output": 1200,
+      "turn_output": 150,
+      "turn_history_input": 500
     },
-    "experience": {
-      "note": "La forme réelle du produit : l'auberge gratuite, puis 9 scènes générées avec image.",
-      "scenes_total": 10,
-      "free_scenes": 1,
-      "turns_per_scene": 10
+    "hosting": {
+      "note": "Vercel, tarifs publics relevés le 2026-09-13. Le plan Hobby est réservé à l'usage non commercial : dès qu'on encaisse, c'est Pro (20 $/mois, crédit d'usage de 20 $ inclus). Web Analytics : 0,03 $ les 1 000 événements, imputés d'abord sur le crédit. Le jeu tient sur une seule page — les écrans ne sont pas des routes —, donc un chargement vaut une page vue ; les rechargements font le reste. Les fonctions, qui attendent OpenAI, restent négligeables dans le crédit.",
+      "plan_monthly_usd": 20,
+      "usage_credit_usd": 20,
+      "analytics_per_1k_events_usd": 0.03,
+      "events_per_visit": 1.5
     }
   },
   "onomastics": {

@@ -399,30 +399,35 @@
       "cta": "Mở mắt"
     },
     "paywall": {
-      "gate_text": "Tay bạn siết lấy cần thép của khoang khí. Kim loại lạnh ngắt. Phía sau nó, {{quest_artifact}} đang đợi bạn ở một nơi nào đó dưới mưa.\n\nKhoang khí vẫn chưa mở.",
+      "gate_text": "Tay bạn siết lấy cần thép của khoang khí. Kim loại lạnh ngắt. Phía sau nó là mưa, và phần còn lại của đêm bạn.\n\nKhoang khí vẫn chưa mở.",
       "cta": "Qua khoang khí — 10 €",
       "sub_cta": "Mở khoá phần tiếp theo của {{quest_title}}",
       "pitch": {
-        "eyebrow": "Thứ bạn đang chơi",
+        "eyebrow": "Điều gì đang được đặt cược cho bạn",
+        "generative": {
+          "eyebrow": "Vướng víu động sinh tạo",
+          "title": "Một đêm chưa ai từng chơi",
+          "text": "Đây không phải một kịch bản chỉ được gắn tên bạn: bên dưới chẳng có gì cả. Cũng không phải may rủi: không có gì được bốc thăm. Mỗi nơi chốn, mỗi gương mặt, mỗi lời thoại, mỗi hình ảnh đều được suy ra từ hồ sơ tiếp nhận của bạn và từ những gì bạn vừa làm, rồi được dựng lên ngay khi bạn bước vào. Đêm này chỉ diễn ra một lần; nó sẽ không được chơi lại cho bất kỳ ai."
+        },
         "points": [
           {
-            "label": "Thế giới này là của bạn",
-            "text": "Địa điểm, con người, nhiệm vụ: tất cả được dựng lên từ những gì bạn đã sống qua. Không có gì chung chung, không có gì sẽ được chơi lại cho người khác."
-          },
-          {
-            "label": "Điều đang căng trong bạn",
-            "text": "“{{tension}}” Trò chơi chưa bao giờ nói điều đó với bạn. Nó để bạn đi xuyên qua."
+            "label": "Điều đang căng lên trong bạn",
+            "text": "“{{tension}}” Đó là điều trò chơi đã đọc được trong hồ sơ của bạn. Không ai trong căn phòng đầu tiên ấy gọi tên nó: mỗi người đáp lại nó theo cách riêng."
           },
           {
             "label": "Nó hướng về đâu",
-            "text": "“{{release}}” Phần còn lại của đêm được vạch ra để dẫn bạn đến đó: ba hồi, chín nơi không ai khác sẽ đi qua."
+            "text": "“{{release}}” Đây không phải một lời hứa: đó là một hướng đi."
           },
           {
-            "label": "Lối ra có ý nghĩa",
-            "text": "Thứ đợi bạn ngoài kia không phải một màn chơi nữa. Cách căng thẳng này được gỡ ở đây soi sáng cách nó có thể được giải trong đời bạn."
+            "label": "Bằng cách nào",
+            "text": "Bằng cách chơi, và chỉ thế thôi. Không ai giải thích cho bạn căng thẳng này, hay cách tháo gỡ nó: điều bạn chọn làm sẽ quyết định. Trò chơi đọc từng cử chỉ của bạn và dựng phần tiếp theo trên đó."
+          },
+          {
+            "label": "Điều bạn mang theo",
+            "text": "Nút thắt được tháo gỡ trong hư cấu cũng chính là nút thắt trong cuộc sống của bạn. Bạn ra về với điều gì đó dùng được, chứ không phải một con số điểm."
           }
         ],
-        "closing": "{{quest_artifact}} đang đợi bạn ở một nơi nào đó dưới mưa. Bạn làm gì với nó là chuyện của bạn."
+        "closing": "Ở phía bên kia khoang khí, mưa vẫn chưa ngừng rơi. Nó đang đợi bước chân bạn."
       }
     },
     "limits": {

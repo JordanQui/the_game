@@ -416,30 +416,35 @@
       "cta": "Het oog openen"
     },
     "paywall": {
-      "gate_text": "Je hand sluit zich om de stalen hendel van de sluis. Het metaal is koud. Erachter wacht {{quest_artifact}} ergens in de regen op je.\n\nDe sluis gaat nog niet open.",
+      "gate_text": "Je hand sluit zich om de stalen hendel van de sluis. Het metaal is koud. Erachter de regen, en de rest van je nacht.\n\nDe sluis gaat nog niet open.",
       "cta": "Door de sluis — € 10",
       "sub_cta": "Ontgrendel het vervolg van {{quest_title}}",
       "pitch": {
-        "eyebrow": "Wat je aan het spelen bent",
+        "eyebrow": "Wat er voor jou op het spel staat",
+        "generative": {
+          "eyebrow": "Dynamische generatieve verstrengeling",
+          "title": "Een nacht die nog nooit iemand heeft gespeeld",
+          "text": "Dit is geen script met jouw naam erop geplakt: er zit niets onder. En het is ook geen toeval: er wordt niets geloot. Elke plek, elk gezicht, elke zin, elk beeld wordt afgeleid uit je toelatingsdossier en uit wat je net hebt gedaan, en wordt gebouwd op het moment dat je binnenkomt. Deze nacht gebeurt maar één keer; hij wordt voor niemand opnieuw gespeeld."
+        },
         "points": [
           {
-            "label": "Deze wereld is de jouwe",
-            "text": "De plek, de mensen, de opdracht: alles is gebouwd uit wat jij hebt meegemaakt. Niets is generiek, niets wordt opnieuw gespeeld voor iemand anders."
+            "label": "Wat er in je gespannen staat",
+            "text": "“{{tension}}” Dit heeft het spel in je dossier gelezen. Niemand in die eerste ruimte heeft het benoemd: ieder antwoordde er op eigen wijze op."
           },
           {
-            "label": "Wat in jou gespannen staat",
-            "text": "“{{tension}}” Het spel heeft het je nooit gezegd. Het heeft je erdoorheen laten gaan."
+            "label": "Waar het naartoe trekt",
+            "text": "“{{release}}” Dit is geen belofte: het is een richting."
           },
           {
-            "label": "Waar het naartoe wil",
-            "text": "“{{release}}” De rest van de nacht is uitgetekend om je daar te brengen: drie bedrijven, negen plekken die niemand anders zal doorkruisen."
+            "label": "Met welk middel",
+            "text": "Door te spelen, en met niets anders. Niemand legt je deze spanning uit, of hoe je haar ontwart: wat jij kiest te doen, beslist. Het spel leest elk gebaar van je en bouwt daarop verder."
           },
           {
-            "label": "De uitgang telt",
-            "text": "Wat buiten op je wacht is niet zomaar een niveau erbij. Hoe deze spanning zich hier ontknoopt, werpt licht op hoe hij zich in je leven kan oplossen."
+            "label": "Wat je meeneemt",
+            "text": "De knoop die in de fictie losraakt, is dezelfde als in je leven. Je gaat weg met iets wat je kunt gebruiken, niet met een score."
           }
         ],
-        "closing": "{{quest_artifact}} wacht ergens in de regen op je. Wat je ermee doet is aan jou."
+        "closing": "Aan de andere kant van de sluis is de regen niet opgehouden met vallen. Hij wacht op je stap."
       }
     },
     "limits": {

@@ -444,30 +444,35 @@
       "cta": "Abrir o olho"
     },
     "paywall": {
-      "gate_text": "Sua mão se fecha sobre a alavanca de aço da comporta. O metal está frio. Atrás dela, {{quest_artifact}} espera por você em algum lugar sob a chuva.\n\nA comporta ainda não se abre.",
+      "gate_text": "Sua mão se fecha sobre a alavanca de aço da comporta. O metal está frio. Atrás dela, a chuva e o resto da sua noite.\n\nA comporta ainda não se abre.",
       "cta": "Atravessar a comporta — 10 €",
       "sub_cta": "Desbloqueie a continuação de {{quest_title}}",
       "pitch": {
-        "eyebrow": "O que você está jogando",
+        "eyebrow": "O que está em jogo para você",
+        "generative": {
+          "eyebrow": "Entrelaçamento dinâmico generativo",
+          "title": "Uma noite que ninguém jamais jogou",
+          "text": "Não é um roteiro vestido com o seu nome: não há nada por baixo. Também não é acaso: nada é sorteado. Cada lugar, cada rosto, cada fala, cada imagem é deduzido da sua ficha de admissão e do que você acabou de fazer, e é construído no momento em que você entra. Esta noite acontece uma única vez; não será jogada de novo para ninguém."
+        },
         "points": [
           {
-            "label": "Este mundo é o seu",
-            "text": "O lugar, as pessoas, a missão: tudo foi construído a partir do que você viveu. Nada é genérico, nada será jogado de novo para outra pessoa."
-          },
-          {
             "label": "O que se tensiona em você",
-            "text": "“{{tension}}” O jogo nunca lhe disse isso. Ele fez você atravessar."
+            "text": "“{{tension}}” É o que o jogo leu na sua ficha. Ninguém naquela primeira sala a nomeou: cada um respondeu a ela à sua maneira."
           },
           {
-            "label": "Para onde isso tende",
-            "text": "“{{release}}” O resto da noite foi traçado para levar você até lá: três atos, nove lugares que ninguém mais vai atravessar."
+            "label": "Para onde ela tende",
+            "text": "“{{release}}” Não é uma promessa: é uma direção."
           },
           {
-            "label": "A saída conta",
-            "text": "O que espera por você lá fora não é mais uma fase. O modo como essa tensão se desata aqui ilumina o modo como ela pode se resolver na sua vida."
+            "label": "Por qual meio",
+            "text": "Jogando, e nada mais. Ninguém vai explicar essa tensão a você, nem como desfazê-la: é o que você escolhe fazer que decide. O jogo lê cada gesto seu e constrói o que vem depois a partir dele."
+          },
+          {
+            "label": "O que você leva",
+            "text": "O nó que se desfaz na ficção é o mesmo da sua vida. Você sai com algo que pode usar, não com uma pontuação."
           }
         ],
-        "closing": "{{quest_artifact}} espera por você em algum lugar sob a chuva. O que você fizer com isso é seu."
+        "closing": "Do outro lado da comporta, a chuva não parou de cair. Ela espera o seu passo."
       }
     },
     "limits": {

@@ -453,6 +453,8 @@ export interface PricingConfig {
   input_per_1m_usd: number
   output_per_1m_usd: number
   image_per_call_usd: number
+  /** Taille des images sur la facture qui a fixé `image_per_call_usd`. */
+  image_size_billed?: string
   scene_budget_usd: number
 }
 
@@ -500,21 +502,51 @@ export interface LimitsConfig {
 /** Argumentaire affiché à la sortie : ce que le jeu fait, et pourquoi continuer. */
 export interface PaywallPitch {
   eyebrow: string
+  /** Ce qui rend la suite inédite : tout y est généré pour ce joueur. Sans variable. */
+  generative: { eyebrow: string; title: string; text: string }
   points: Array<{ label: string; text: string }>
   closing: string
 }
 
-/** Hypothèses de prévision. Seuls les prix de PricingConfig sont mesurés. */
+/**
+ * Hypothèses de prévision.
+ *
+ * La forme de la nuit (scènes, gratuité, images) et la taille des prompts n'y
+ * figurent pas : /api/admin/economics les lit dans le script et les mesure.
+ */
 export interface EconomicsConfig {
   note?: string
   eur_usd: number
-  price_eur: number
   conversion_rate_pct: number
+  /** TVA comprise dans le prix affiché. 0 en franchise en base. */
+  vat: { note?: string; pct: number }
   payment: { note?: string; fee_pct: number; fee_fixed_eur: number }
-  /** Forme du produit : combien de scènes, dont combien gratuites. */
-  experience: { note?: string; scenes_total: number; free_scenes: number; turns_per_scene: number }
-  free_visitor: { note?: string; scenes: number; turns: number; images: number }
-  paying_customer: { note?: string; scenes: number; turns: number; images: number }
+  play: {
+    note?: string
+    /** Tours joués en moyenne par scène — le verrou en fixe le plafond. */
+    turns_per_scene: number
+    /** Tours joués à l'auberge par qui ne paie pas. */
+    free_visitor_turns: number
+    /** Part des scènes refusées par la validation, donc générées deux fois. */
+    repair_rate_pct: number
+  }
+  tokens: {
+    note?: string
+    opening_output: number
+    scene_output: number
+    ending_output: number
+    turn_output: number
+    /** Le fil du personnage renvoyé avec chaque tour. */
+    turn_history_input: number
+  }
+  hosting: {
+    note?: string
+    plan_monthly_usd: number
+    /** Crédit d'usage inclus dans le forfait, sur lequel l'Analytics s'impute d'abord. */
+    usage_credit_usd: number
+    analytics_per_1k_events_usd: number
+    events_per_visit: number
+  }
 }
 
 /** Syllabaire construit : chaque syllabe porte un sens, les noms se composent. */

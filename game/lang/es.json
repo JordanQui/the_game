@@ -449,30 +449,35 @@
       "cta": "Abrir el ojo"
     },
     "paywall": {
-      "gate_text": "Tu mano se cierra sobre el asa de acero de la esclusa. El metal está frío. Detrás, {{quest_artifact}} te espera en algún sitio bajo la lluvia.\n\nLa esclusa todavía no se abre.",
+      "gate_text": "Tu mano se cierra sobre el asa de acero de la esclusa. El metal está frío. Detrás, la lluvia y el resto de tu noche.\n\nLa esclusa todavía no se abre.",
       "cta": "Cruzar la esclusa — 10 €",
       "sub_cta": "Desbloquea la continuación de {{quest_title}}",
       "pitch": {
-        "eyebrow": "Lo que estás jugando",
+        "eyebrow": "Lo que está en juego para ti",
+        "generative": {
+          "eyebrow": "Entrelazamiento dinámico generativo",
+          "title": "Una noche que nadie ha jugado nunca",
+          "text": "No es un guion vestido con tu nombre: no hay nada debajo. Tampoco es azar: nada se sortea. Cada lugar, cada rostro, cada réplica, cada imagen se deduce de tu expediente de admisión y de lo que acabas de hacer, y se fabrica en el momento en que entras. Esta noche ocurre una sola vez; no se volverá a jugar para nadie."
+        },
         "points": [
           {
-            "label": "Este mundo es el tuyo",
-            "text": "El lugar, la gente, la misión: todo se ha construido a partir de lo que has vivido. Nada es genérico, nada se volverá a jugar para otra persona."
-          },
-          {
             "label": "Lo que se tensa en ti",
-            "text": "«{{tension}}» El juego nunca te lo dijo. Te lo hizo atravesar."
+            "text": "«{{tension}}» Es lo que el juego leyó en tu expediente. Nadie en esa primera sala la nombró: cada uno le respondió a su manera."
           },
           {
             "label": "Hacia dónde tiende",
-            "text": "«{{release}}» El resto de la noche se trazó para llevarte hasta ahí: tres actos, nueve lugares que nadie más recorrerá."
+            "text": "«{{release}}» No es una promesa: es una dirección."
           },
           {
-            "label": "La salida cuenta",
-            "text": "Lo que te espera fuera no es un nivel más. La manera en que esta tensión se desanuda aquí ilumina la manera en que puede resolverse en tu vida."
+            "label": "Por qué medio",
+            "text": "Jugando, y nada más. Nadie te explicará esta tensión ni cómo deshacerla: lo que eliges hacer es lo que decide. El juego lee cada uno de tus gestos y construye lo que sigue sobre ellos."
+          },
+          {
+            "label": "Lo que te llevas",
+            "text": "El nudo que se deshace en la ficción es el mismo que en tu vida. Te vas con algo que puedes usar, no con una puntuación."
           }
         ],
-        "closing": "{{quest_artifact}} te espera en algún sitio bajo la lluvia. Lo que hagas con ello es tuyo."
+        "closing": "Al otro lado de la esclusa, la lluvia no ha dejado de caer. Espera tu paso."
       }
     },
     "limits": {

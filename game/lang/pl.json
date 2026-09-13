@@ -421,30 +421,35 @@
       "cta": "Otworzyć oko"
     },
     "paywall": {
-      "gate_text": "Twoja dłoń zaciska się na stalowej klamce śluzy. Metal jest zimny. Za nią {{quest_artifact}} czeka na ciebie gdzieś w deszczu.\n\nŚluza jeszcze się nie otwiera.",
+      "gate_text": "Twoja dłoń zaciska się na stalowej klamce śluzy. Metal jest zimny. Za nią deszcz i reszta twojej nocy.\n\nŚluza jeszcze się nie otwiera.",
       "cta": "Przejść przez śluzę — 10 €",
       "sub_cta": "Odblokuj dalszy ciąg {{quest_title}}",
       "pitch": {
-        "eyebrow": "W co właśnie grasz",
+        "eyebrow": "Co jest dla ciebie stawką",
+        "generative": {
+          "eyebrow": "Dynamiczne generatywne splątanie",
+          "title": "Noc, której nikt nigdy nie rozegrał",
+          "text": "To nie jest scenariusz przebrany za twoje imię: pod spodem nic nie ma. To też nie przypadek: nic nie jest losowane. Każde miejsce, każda twarz, każda kwestia, każdy obraz wynika z twojego formularza przyjęcia i z twoich ostatnich kroków, i powstaje w chwili, gdy wchodzisz. Ta noc zdarza się tylko raz; dla nikogo nie zostanie powtórzona."
+        },
         "points": [
           {
-            "label": "Ten świat jest twój",
-            "text": "Miejsce, ludzie, zadanie: wszystko zostało zbudowane z tego, co przeżyłeś. Nic tu nie jest ogólne, nic nie zostanie rozegrane jeszcze raz dla kogoś innego."
-          },
-          {
             "label": "Co się w tobie napina",
-            "text": "„{{tension}}” Gra nigdy ci tego nie powiedziała. Kazała ci przez to przejść."
+            "text": "„{{tension}}” To właśnie gra wyczytała z twojego formularza. Nikt w tej pierwszej sali tego nie nazwał: każdy odpowiedział na to po swojemu."
           },
           {
-            "label": "Dokąd to zmierza",
-            "text": "„{{release}}” Reszta nocy została wytyczona, by cię tam doprowadzić: trzy akty, dziewięć miejsc, przez które nikt inny nie przejdzie."
+            "label": "Ku czemu to zmierza",
+            "text": "„{{release}}” To nie obietnica: to kierunek."
           },
           {
-            "label": "Wyjście się liczy",
-            "text": "To, co czeka na zewnątrz, nie jest kolejnym poziomem. Sposób, w jaki to napięcie rozwiązuje się tutaj, rzuca światło na to, jak może rozwiązać się w twoim życiu."
+            "label": "Jakim sposobem",
+            "text": "Grając, i niczym więcej. Nikt nie wytłumaczy ci tego napięcia ani tego, jak je rozwiązać: decyduje to, co postanowisz zrobić. Gra czyta każdy twój gest i na nim buduje dalszy ciąg."
+          },
+          {
+            "label": "Co z tego wyniesiesz",
+            "text": "Węzeł, który rozplątuje się w fikcji, jest tym samym węzłem co w twoim życiu. Wychodzisz z czymś, czego możesz użyć, a nie z wynikiem punktowym."
           }
         ],
-        "closing": "{{quest_artifact}} czeka na ciebie gdzieś w deszczu. Co z tym zrobisz, należy do ciebie."
+        "closing": "Po drugiej stronie śluzy deszcz nie przestał padać. Czeka na twój krok."
       }
     },
     "limits": {

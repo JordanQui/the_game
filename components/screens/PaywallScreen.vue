@@ -54,9 +54,9 @@ onMounted(async () => {
       style="background: radial-gradient(85% 100% at 50% 100%, rgb(var(--neon-500) / 0.16) 0%, transparent 68%)"
     />
 
-    <div class="relative z-10 w-full max-w-md space-y-8">
+    <div class="relative z-10 w-full max-w-md space-y-9">
 
-      <!-- Narration de la porte -->
+      <!-- Narration de la porte : la dernière ligne de fiction avant le pitch -->
       <div class="text-center space-y-4">
         <div class="neon-rule w-24 mx-auto" />
         <p class="text-ink-100 text-[15px] sm:text-sm leading-relaxed whitespace-pre-line">
@@ -68,10 +68,26 @@ onMounted(async () => {
       </div>
 
       <!--
-        L'argumentaire : ce que le jeu fait de leurs données, et pourquoi la
-        suite vaut la peine. Sans ça, la sortie ressemble à un péage.
+        L'inédit d'abord : ce qu'on achète n'est pas une suite écrite, c'est une
+        nuit qui n'existe pas encore et qui ne sera fabriquée que pour ce joueur.
       -->
-      <div v-if="paywall?.pitch" class="space-y-5 border-y border-neon-600/25 py-6">
+      <div v-if="paywall?.pitch?.generative" class="text-center space-y-3">
+        <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display">
+          {{ paywall.pitch.generative.eyebrow }}
+        </p>
+        <h2 class="text-ink-50 font-display text-lg sm:text-xl uppercase tracking-[0.1em] leading-snug">
+          {{ paywall.pitch.generative.title }}
+        </h2>
+        <p class="text-ink-200/80 text-[13px] leading-relaxed">
+          {{ paywall.pitch.generative.text }}
+        </p>
+      </div>
+
+      <!--
+        Ce qui se joue pour lui : la tension, vers quoi elle tend, et par quels
+        moyens la nuit la dénoue — dit en clair, sans rien laisser deviner.
+      -->
+      <div v-if="paywall?.pitch" class="space-y-5 border-y border-steel-600/40 py-6">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display text-center">
           {{ paywall.pitch.eyebrow }}
         </p>
@@ -98,18 +114,17 @@ onMounted(async () => {
         <p class="neon-text font-display text-3xl tracking-[0.04em]">{{ price }}</p>
       </div>
 
-      <!-- Formulaire Square -->
-      <div class="relative bg-ink-900 border border-neon-600/40 p-4 space-y-4">
-        <span class="absolute inset-[5px] border border-neon-500/12 pointer-events-none" />
-        <p class="relative text-neon-400/70 text-[10px] uppercase tracking-[0.28em] font-display text-center">
+      <!-- Formulaire Square, sans cadre : il se fond dans l'écran -->
+      <div class="space-y-3">
+        <p class="text-steel-400 text-[10px] uppercase tracking-[0.28em] font-display text-center">
           {{ t('paywall.secure') }}
         </p>
         <div v-if="isInitializing" class="h-12 flex items-center justify-center">
           <p class="text-steel-400 text-xs">{{ t('paywall.loading') }}</p>
         </div>
-        <div id="card-container" class="relative" />
+        <div id="card-container" />
 
-        <p v-if="paymentStore.errorMessage" class="relative text-red-400/80 text-xs text-center">
+        <p v-if="paymentStore.errorMessage" class="text-red-400/80 text-xs text-center">
           {{ paymentStore.errorMessage }}
         </p>
       </div>

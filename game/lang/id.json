@@ -403,30 +403,35 @@
       "cta": "Buka mata"
     },
     "paywall": {
-      "gate_text": "Tanganmu menggenggam tuas baja sekat udara. Logamnya dingin. Di baliknya, {{quest_artifact}} menunggumu di suatu tempat di bawah hujan.\n\nSekat udara itu belum terbuka.",
+      "gate_text": "Tanganmu menggenggam tuas baja sekat udara. Logamnya dingin. Di baliknya, hujan, dan sisa malammu.\n\nSekat udara itu belum terbuka.",
       "cta": "Lewati sekat udara — 10 €",
       "sub_cta": "Buka kelanjutan dari {{quest_title}}",
       "pitch": {
-        "eyebrow": "Apa yang sedang kau mainkan",
+        "eyebrow": "Apa yang dipertaruhkan untukmu",
+        "generative": {
+          "eyebrow": "Keterjalinan dinamis generatif",
+          "title": "Malam yang belum pernah dimainkan siapa pun",
+          "text": "Ini bukan naskah yang sekadar dibubuhi namamu: tak ada apa pun di baliknya. Ini juga bukan kebetulan: tak ada yang diundi. Setiap tempat, setiap wajah, setiap ucapan, setiap gambar diturunkan dari berkas pendaftaranmu dan dari apa yang baru saja kau lakukan, lalu dibangun saat kau melangkah masuk. Malam ini hanya terjadi sekali; tak akan dimainkan ulang untuk siapa pun."
+        },
         "points": [
           {
-            "label": "Dunia ini milikmu",
-            "text": "Tempatnya, orang-orangnya, misinya: semuanya dibangun dari apa yang kau alami. Tidak ada yang umum, tidak ada yang akan dimainkan ulang untuk orang lain."
-          },
-          {
             "label": "Yang menegang dalam dirimu",
-            "text": "“{{tension}}” Permainan ini tak pernah mengatakannya padamu. Ia membuatmu melewatinya."
+            "text": "“{{tension}}” Inilah yang dibaca permainan dari berkasmu. Tak seorang pun di ruangan pertama itu menyebutnya: masing-masing menjawabnya dengan caranya sendiri."
           },
           {
-            "label": "Ke mana arahnya",
-            "text": "“{{release}}” Sisa malam ini digambar untuk membawamu ke sana: tiga babak, sembilan tempat yang tak akan dilalui orang lain."
+            "label": "Ke mana ia menarik",
+            "text": "“{{release}}” Ini bukan janji: ini sebuah arah."
           },
           {
-            "label": "Jalan keluarnya penting",
-            "text": "Yang menunggumu di luar bukan satu level tambahan. Cara ketegangan ini terurai di sini menerangi cara ia bisa terselesaikan dalam hidupmu."
+            "label": "Dengan cara apa",
+            "text": "Dengan bermain, tidak lebih. Tak seorang pun akan menjelaskan ketegangan ini kepadamu, atau cara mengurainya: yang menentukan adalah apa yang kau pilih untuk lakukan. Permainan membaca setiap gerakmu dan membangun kelanjutannya di atasnya."
+          },
+          {
+            "label": "Yang kau bawa pulang",
+            "text": "Simpul yang terurai dalam fiksi adalah simpul yang sama dengan yang ada dalam hidupmu. Kau pergi membawa sesuatu yang bisa kau pakai, bukan skor."
           }
         ],
-        "closing": "{{quest_artifact}} menunggumu di suatu tempat di bawah hujan. Apa yang kau lakukan dengannya adalah milikmu."
+        "closing": "Di sisi lain sekat udara, hujan tak pernah berhenti turun. Ia menunggu langkahmu."
       }
     },
     "limits": {

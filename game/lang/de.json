@@ -436,30 +436,35 @@
       "cta": "Das Auge öffnen"
     },
     "paywall": {
-      "gate_text": "Deine Hand schließt sich um den stählernen Griff der Schleuse. Das Metall ist kalt. Dahinter wartet {{quest_artifact}} irgendwo im Regen auf dich.\n\nDie Schleuse öffnet sich noch nicht.",
+      "gate_text": "Deine Hand schließt sich um den stählernen Griff der Schleuse. Das Metall ist kalt. Dahinter der Regen und der Rest deiner Nacht.\n\nDie Schleuse öffnet sich noch nicht.",
       "cta": "Durch die Schleuse — 10 €",
       "sub_cta": "Schalte die Fortsetzung von {{quest_title}} frei",
       "pitch": {
-        "eyebrow": "Was du gerade spielst",
+        "eyebrow": "Was für dich auf dem Spiel steht",
+        "generative": {
+          "eyebrow": "Dynamische generative Verschränkung",
+          "title": "Eine Nacht, die noch nie jemand gespielt hat",
+          "text": "Das ist kein Drehbuch, das bloß deinen Namen trägt: Darunter liegt nichts. Und es ist kein Zufall: Nichts wird ausgelost. Jeder Ort, jedes Gesicht, jede Replik, jedes Bild wird aus deinem Aufnahmebogen und aus dem, was du gerade getan hast, abgeleitet und in dem Moment gebaut, in dem du eintrittst. Diese Nacht gibt es nur einmal; sie wird für niemanden wiederholt."
+        },
         "points": [
           {
-            "label": "Diese Welt ist deine",
-            "text": "Der Ort, die Leute, die Aufgabe: alles wurde aus dem gebaut, was du erlebt hast. Nichts daran ist generisch, nichts davon wird für jemand anderen noch einmal gespielt."
-          },
-          {
             "label": "Was sich in dir spannt",
-            "text": "„{{tension}}“ Das Spiel hat es dir nie gesagt. Es hat dich hindurchgehen lassen."
+            "text": "„{{tension}}“ Das hat das Spiel in deinem Bogen gelesen. Niemand in diesem ersten Raum hat es ausgesprochen: Jeder hat auf seine Weise darauf geantwortet."
           },
           {
             "label": "Wohin es drängt",
-            "text": "„{{release}}“ Der Rest der Nacht wurde gezeichnet, um dich dorthin zu führen: drei Akte, neun Orte, die niemand sonst durchqueren wird."
+            "text": "„{{release}}“ Das ist kein Versprechen: Es ist eine Richtung."
           },
           {
-            "label": "Der Ausgang zählt",
-            "text": "Was draußen auf dich wartet, ist kein weiteres Level. Wie sich diese Spannung hier löst, wirft ein Licht darauf, wie sie sich in deinem Leben lösen kann."
+            "label": "Mit welchem Mittel",
+            "text": "Indem du spielst, mit nichts anderem. Niemand erklärt dir diese Spannung oder wie man sie löst: Was du zu tun wählst, entscheidet. Das Spiel liest jede deiner Gesten und baut darauf, was folgt."
+          },
+          {
+            "label": "Was du mitnimmst",
+            "text": "Der Knoten, der sich in der Fiktion löst, ist derselbe wie in deinem Leben. Du gehst mit etwas, das du brauchen kannst, nicht mit einem Punktestand."
           }
         ],
-        "closing": "{{quest_artifact}} wartet irgendwo im Regen auf dich. Was du damit machst, gehört dir."
+        "closing": "Auf der anderen Seite der Schleuse hat der Regen nicht aufgehört zu fallen. Er wartet auf deinen Schritt."
       }
     },
     "limits": {

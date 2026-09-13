@@ -406,30 +406,35 @@
       "cta": "Open the eye"
     },
     "paywall": {
-      "gate_text": "Your hand closes on the steel handle of the airlock. The metal is cold. Behind it, {{quest_artifact}} is waiting for you somewhere under the rain.\n\nThe airlock does not open yet.",
+      "gate_text": "Your hand closes on the steel handle of the airlock. The metal is cold. Behind it, the rain, and the rest of your night.\n\nThe airlock does not open yet.",
       "cta": "Through the airlock — €10",
       "sub_cta": "Unlock the rest of {{quest_title}}",
       "pitch": {
-        "eyebrow": "What you are playing",
+        "eyebrow": "What is at stake for you",
+        "generative": {
+          "eyebrow": "Dynamic generative entanglement",
+          "title": "A night no one has ever played",
+          "text": "This is not a script dressed up with your name: there is nothing underneath. Nor is it chance: nothing is drawn at random. Every place, every face, every line, every image is deduced from your admission file and from what you did just before, and is built the moment you walk in. This night happens once; it will not be played again for anyone."
+        },
         "points": [
           {
-            "label": "This world is yours",
-            "text": "The place, the people, the quest: all of it was built from what you have lived. Nothing is generic, nothing will be played again for someone else."
-          },
-          {
             "label": "What pulls tight in you",
-            "text": "“{{tension}}” The game never told you. It made you walk through it."
+            "text": "“{{tension}}” This is what the game read in your file. No one in that first room named it: each of them answered it in their own way."
           },
           {
             "label": "Where it is pulling",
-            "text": "“{{release}}” The rest of the night was drawn to lead you there: three acts, nine places no one else will ever cross."
+            "text": "“{{release}}” This is not a promise: it is a direction."
           },
           {
-            "label": "The way out matters",
-            "text": "What waits for you outside is not one more level. The way this tension unknots here throws light on the way it can resolve in your life."
+            "label": "By what means",
+            "text": "By playing, and nothing else. No one will explain this tension to you, or how to undo it: what you choose to do decides it. The game reads every move you make and builds what follows on it."
+          },
+          {
+            "label": "What you take away",
+            "text": "The knot that comes undone in the fiction is the same one as in your life. You leave with something you can use, not with a score."
           }
         ],
-        "closing": "{{quest_artifact}} is waiting for you somewhere under the rain. What you do with it is yours."
+        "closing": "On the other side of the airlock, the rain has not stopped falling. It is waiting for your step."
       }
     },
     "limits": {

@@ -277,6 +277,7 @@ export interface GeneratedScene {
 
 export interface ScenePaywallPitch {
   eyebrow: string
+  generative: { eyebrow: string; title: string; text: string }
   points: Array<{ label: string; text: string }>
   closing: string
 }

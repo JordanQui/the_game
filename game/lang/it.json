@@ -456,30 +456,35 @@
       "cta": "Aprire l'occhio"
     },
     "paywall": {
-      "gate_text": "La tua mano si chiude sulla maniglia d'acciaio della paratia. Il metallo è freddo. Dietro, {{quest_artifact}} ti aspetta da qualche parte sotto la pioggia.\n\nLa paratia non si apre ancora.",
+      "gate_text": "La tua mano si chiude sulla maniglia d'acciaio della paratia. Il metallo è freddo. Dietro, la pioggia e il resto della tua notte.\n\nLa paratia non si apre ancora.",
       "cta": "Varcare la paratia — 10 €",
       "sub_cta": "Sblocca il seguito di {{quest_title}}",
       "pitch": {
-        "eyebrow": "Quello che stai giocando",
+        "eyebrow": "Quello che è in gioco per te",
+        "generative": {
+          "eyebrow": "Intreccio dinamico generativo",
+          "title": "Una notte che nessuno ha mai giocato",
+          "text": "Non è una sceneggiatura vestita con il tuo nome: sotto non c'è niente. E non è nemmeno caso: niente viene estratto a sorte. Ogni luogo, ogni volto, ogni battuta, ogni immagine si deduce dalla tua scheda di ammissione e da ciò che hai appena fatto, e prende forma nel momento in cui entri. Questa notte accade una volta sola; non sarà rigiocata per nessuno."
+        },
         "points": [
           {
-            "label": "Questo mondo è il tuo",
-            "text": "Il luogo, le persone, la missione: tutto è stato costruito a partire da quello che hai vissuto. Niente è generico, niente sarà rigiocato per qualcun altro."
+            "label": "Ciò che si tende in te",
+            "text": "«{{tension}}» È ciò che il gioco ha letto nella tua scheda. Nessuno in quella prima sala l'ha nominata: ognuno le ha risposto a modo suo."
           },
           {
-            "label": "Ciò che in te è teso",
-            "text": "«{{tension}}» Il gioco non te l'ha mai detto. Te l'ha fatta attraversare."
+            "label": "Verso cosa tende",
+            "text": "«{{release}}» Non è una promessa: è una direzione."
           },
           {
-            "label": "Verso dove tende",
-            "text": "«{{release}}» Il resto della notte è stato tracciato per portarti lì: tre atti, nove luoghi che nessun altro attraverserà."
+            "label": "Con quale mezzo",
+            "text": "Giocando, e basta. Nessuno ti spiegherà questa tensione né come scioglierla: è ciò che scegli di fare a deciderlo. Il gioco legge ogni tuo gesto e ci costruisce sopra ciò che segue."
           },
           {
-            "label": "L'uscita conta",
-            "text": "Quello che ti aspetta fuori non è un livello in più. Il modo in cui questa tensione si scioglie qui illumina il modo in cui può risolversi nella tua vita."
+            "label": "Ciò che porti via",
+            "text": "Il nodo che si scioglie nella finzione è lo stesso della tua vita. Ne esci con qualcosa che puoi usare, non con un punteggio."
           }
         ],
-        "closing": "{{quest_artifact}} ti aspetta da qualche parte sotto la pioggia. Quello che ne farai ti appartiene."
+        "closing": "Dall'altra parte della paratia, la pioggia non ha smesso di cadere. Aspetta il tuo passo."
       }
     },
     "limits": {

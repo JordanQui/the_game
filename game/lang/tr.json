@@ -417,30 +417,35 @@
       "cta": "Gözü aç"
     },
     "paywall": {
-      "gate_text": "Elin hava kilidinin çelik kolunu kavrar. Metal soğuk. Arkasında {{quest_artifact}} yağmurun altında bir yerde seni bekliyor.\n\nHava kilidi henüz açılmıyor.",
+      "gate_text": "Elin hava kilidinin çelik kolunu kavrar. Metal soğuk. Arkasında yağmur ve gecenin geri kalanı.\n\nHava kilidi henüz açılmıyor.",
       "cta": "Hava kilidinden geç — 10 €",
       "sub_cta": "{{quest_title}} devamının kilidini aç",
       "pitch": {
-        "eyebrow": "Şu anda ne oynuyorsun",
+        "eyebrow": "Senin için ne söz konusu",
+        "generative": {
+          "eyebrow": "Dinamik üretken dolanıklık",
+          "title": "Hiç kimsenin oynamadığı bir gece",
+          "text": "Bu, adınla süslenmiş bir senaryo değil: altında hiçbir şey yok. Şans da değil: hiçbir şey kurayla seçilmiyor. Her mekân, her yüz, her replik, her görüntü kabul dosyandan ve az önce yaptıklarından çıkarılıyor ve sen içeri girdiğin anda inşa ediliyor. Bu gece yalnızca bir kez yaşanır; kimse için yeniden oynanmayacak."
+        },
         "points": [
           {
-            "label": "Bu dünya senin",
-            "text": "Mekân, insanlar, görev: hepsi yaşadıklarından kuruldu. Hiçbiri genel geçer değil, hiçbiri bir başkası için yeniden oynanmayacak."
-          },
-          {
             "label": "İçinde gerilen şey",
-            "text": "“{{tension}}” Oyun bunu sana hiç söylemedi. Onun içinden geçmeni sağladı."
+            "text": "“{{tension}}” Oyunun dosyanda okuduğu şey bu. O ilk salonda kimse adını koymadı: herkes ona kendi yoluyla karşılık verdi."
           },
           {
-            "label": "Neye doğru uzandığı",
-            "text": "“{{release}}” Gecenin geri kalanı seni oraya götürmek için çizildi: üç perde, başka kimsenin geçmeyeceği dokuz yer."
+            "label": "Nereye çekiyor",
+            "text": "“{{release}}” Bu bir vaat değil: bir yön."
           },
           {
-            "label": "Çıkış önemlidir",
-            "text": "Dışarıda seni bekleyen bir seviye daha değil. Bu gerilimin burada çözülme biçimi, hayatında nasıl çözülebileceğine ışık tutar."
+            "label": "Hangi yolla",
+            "text": "Oynayarak, başka hiçbir şeyle değil. Kimse sana bu gerilimi ya da onu nasıl çözeceğini açıklamayacak: ne yapmayı seçtiğin karar verir. Oyun her hareketini okur ve devamını onun üzerine kurar."
+          },
+          {
+            "label": "Yanında götürdüğün",
+            "text": "Kurguda çözülen düğüm, hayatındakiyle aynı düğüm. Buradan bir puanla değil, işine yarayacak bir şeyle ayrılırsın."
           }
         ],
-        "closing": "{{quest_artifact}} yağmurun altında bir yerde seni bekliyor. Onunla ne yapacağın sana ait."
+        "closing": "Hava kilidinin öbür yanında yağmur hiç dinmedi. Adımını bekliyor."
       }
     },
     "limits": {
