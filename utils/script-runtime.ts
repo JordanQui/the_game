@@ -980,26 +980,54 @@ ${lines}`)
    */
   weldAugmentationName(generated: GeneratedScene): void {
     const item = generated.key_item
-    if (this.scene.objective?.kind !== 'acquire_augmentation' || !item?.name) return
-
-    const welded = item.name
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .split(/[^A-Za-z]+/).filter(Boolean)
-      .map(w => w[0]!.toUpperCase() + w.slice(1))
-      .join('')
-    if (welded === item.name || !AUGMENTATION_NAME_RE.test(welded)) return
+    if (this.scene.objective?.kind !== 'acquire_augmentation' || !item?.name || !generated.scene_text) return
 
     const from = item.name
+    const segments = from
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .split(/[^A-Za-z]+/).filter(Boolean)
+      .flatMap(w => w.match(/[A-Z]?[a-z]+|[A-Z]+(?![a-z])/g) ?? [])
+      .map(w => w[0]!.toUpperCase() + w.slice(1).toLowerCase())
+    const weld = (parts: string[]) => parts.join('')
+
+    // Les segments écrits dans le récit, séparés ou non, accents compris :
+    // « Vise Lueur », « Vise-Lueur », « VISE LUEUR », « ViseLueur ».
+    const ACCENTS: Record<string, string> = {
+      a: 'aàáâäã', c: 'cç', e: 'eéèêë', i: 'iíìîï', n: 'nñ', o: 'oóòôöõ', u: 'uúùûü', y: 'yÿ',
+    }
+    const loose = (parts: string[]) => new RegExp(
+      `(?<!\\p{L})${parts
+        .map(w => [...w.toLowerCase()].map(ch => ACCENTS[ch] ? `[${ACCENTS[ch]}]` : ch).join(''))
+        .join("[\\s\\-'’]*")}(?!\\p{L})`,
+      'giu')
+
+    // Le nom retenu : le nom entier s'il est dans le récit, sinon la plus longue
+    // suite de segments que le récit prononce — c'est elle que le joueur lira,
+    // et la fiche doit dire la même chose que le barman.
+    const candidates: string[][] = [segments]
+    for (let size = segments.length - 1; size >= 2; size--) {
+      for (let i = segments.length - size; i >= 0; i--) candidates.push(segments.slice(i, i + size))
+    }
+    const found = candidates.find(parts =>
+      AUGMENTATION_NAME_RE.test(weld(parts)) && loose(parts).test(generated.scene_text))
+    if (!found) return
+
+    const welded = weld(found)
+    const pattern = loose(found)
     const replace = (value: unknown): unknown => {
-      if (typeof value === 'string') return value.split(from).join(welded)
+      if (typeof value === 'string') return value.split(from).join(welded).replace(pattern, welded)
       if (Array.isArray(value)) return value.map(replace)
       if (value && typeof value === 'object') {
         for (const [k, v] of Object.entries(value)) (value as Record<string, unknown>)[k] = replace(v)
       }
       return value
     }
+    const before = generated.scene_text
     replace(generated)
-    console.warn(`[scene/${this.scene.id}] nom de l'augmentation ressoudé : ${from} → ${welded}`)
+    item.name = welded
+    if (welded !== from || before !== generated.scene_text) {
+      console.warn(`[scene/${this.scene.id}] nom de l'augmentation ressoudé : ${from} → ${welded}`)
+    }
   }
 
   /** Garde-fou : le modèle oublie régulièrement un champ. */
