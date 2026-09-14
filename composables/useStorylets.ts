@@ -246,6 +246,7 @@ export function useStorylets() {
           observation: observationOf(
             playerStore.scene, gameStore.inventory, obj.id,
             playerStore.language, gameStore.revealedInteractableIds),
+          icon: obj.icon,
         })
         gameStore.addNarrativeEntry(
           'system', translate(playerStore.language, 'game.pickup', { label: obj.label }))

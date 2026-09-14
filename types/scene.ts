@@ -58,6 +58,8 @@ export interface SceneNPC {
       label: string
       item_kind?: 'echange' | 'recit'
       observation?: string
+      /** Son pictogramme, déjà reconstruit par le serveur. */
+      icon?: string
     } |sign: { key: string; name: string; element: string; tension: string; resolution: string; adventure: string } | null
     /** L'id d'un interactable `hidden` que cet échange fait exister. */
     reveals_id?: string
@@ -103,6 +105,8 @@ export interface SceneKeyItem {
   why: string
   /** La couleur de la carte, si c'en est une. C'est par elle qu'on la reconnaît. */
   color?: string
+  /** Son pictogramme dans l'inventaire. Voir `utils/item-icon.ts`. */
+  icon?: string
   /** Comment elle se porte : à l'oeil, sous la peau, au poignet. */
   worn?: string
   /** Ce que le détenteur attend du joueur avant de le céder. */
@@ -189,6 +193,13 @@ export interface Interactable {
    * contente d'être examiné : le décor ordinaire ne se déchiffre pas.
    */
   observation?: string
+  /**
+   * Le symbole de ce qu'il signifie, pour un objet qu'on peut PRENDRE.
+   *
+   * Des formes SVG sur une grille de 24, déjà reconstruites par le serveur.
+   * Voir `utils/item-icon.ts`.
+   */
+  icon?: string
 }
 
 /** Le lieu de la scène : auberge, forêt, donjon... */

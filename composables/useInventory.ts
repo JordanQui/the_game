@@ -23,6 +23,8 @@ export interface CarriedThing {
   hex?: string
   from?: string
   observation?: string
+  /** Son pictogramme, tel que le serveur l'a reconstruit. */
+  icon?: string
   /** Son nom a été déchiffré : il s'écrit en clair partout. */
   known: boolean
 }

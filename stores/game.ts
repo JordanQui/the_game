@@ -187,6 +187,11 @@ export const useGameStore = defineStore('game', {
        * transporter.
        */
       observation?: string
+      /**
+       * Son pictogramme, figé au ramassage pour la même raison. Absent des
+       * objets pris avant qu'ils en aient : la grille dessine alors leur nature.
+       */
+      icon?: string
     }>,
     /** PNJ à qui le joueur a déjà parlé — ce qu'il a débloqué. */
     talkedToNpcIds: [] as string[],
@@ -545,6 +550,7 @@ export const useGameStore = defineStore('game', {
       color?: string
       hex?: string
       observation?: string
+      icon?: string
     }) {
       if (this.inventory.some(o => o.id === item.id)) return
       this.inventory.push({ kind: 'lore', ...item })
@@ -563,7 +569,7 @@ export const useGameStore = defineStore('game', {
       grantsAugmentation = false,
       item?: {
         id?: string; name: string; from?: string
-        color?: string; hex?: string; observation?: string
+        color?: string; hex?: string; observation?: string; icon?: string
       },
     ) {
       this.hasKeyItem = true
@@ -585,6 +591,7 @@ export const useGameStore = defineStore('game', {
           color: item.color,
           hex: item.hex,
           observation: item.observation,
+          icon: item.icon,
         })
       }
     },

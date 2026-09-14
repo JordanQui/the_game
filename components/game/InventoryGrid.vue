@@ -95,6 +95,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           class="relative flex flex-col border p-3 gap-2"
           :class="frameOf(o)"
         >
+          <!--
+            Le pictogramme se lit avant le nom. Scellé tant que le nom l'est :
+            il dit ce que l'objet signifie, et le montrer plus tôt reviendrait
+            à le déchiffrer à la place du joueur.
+          -->
+          <ItemIcon
+            :icon="o.icon"
+            :kind="o.kind"
+            :known="o.known"
+            class="w-7 h-7"
+            :class="o.known ? 'text-neon-300' : 'text-steel-600'"
+          />
+
           <div class="flex items-center gap-2 min-w-0">
             <!-- La pastille de couleur : c'est elle qu'on compare à une serrure. -->
             <span

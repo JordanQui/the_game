@@ -23,6 +23,7 @@ import { enforceAccentVisibility } from '~/utils/palette'
 import { enforceNameCaps, fold } from '~/utils/naming'
 import { isTakeable } from '~/utils/interactables'
 import { sanitizeHtml } from '~/utils/sanitize-html'
+import { sanitizeItemIcon } from '~/utils/item-icon'
 import { nightOf, renderJournal, type JournalEntry, type CarriedItem } from '~/utils/journal'
 import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
@@ -630,6 +631,8 @@ ${s.sealed_object
 OBJETS MANIPULABLES
 ${s.interactables.instruction}
 Le verbe de l'objet à prendre s'écrit exactement ainsi : ${this.takeVerbs}.
+
+${this.script.defaults.item_icons.instruction}
 
 TEXTE DE SCÈNE
 ${s.narrative.instruction}
@@ -1263,6 +1266,17 @@ ${lines}`)
       else interactables.push(forced)
     }
 
+    // LE PICTOGRAMME FINIT DANS LE DOM, et c'est le modèle qui l'a écrit. Il est
+    // reconstruit ici, forme par forme, avant de quitter le serveur : ce que le
+    // navigateur garde en stockage local est déjà propre. Un tracé dont rien ne
+    // se sauve disparaît, et l'objet prend le symbole de sa nature.
+    const drawn = <T extends { icon?: string }>(o: T): T =>
+      o.icon === undefined ? o : { ...o, icon: sanitizeItemIcon(o.icon) }
+    const iconed = interactables.map(drawn)
+    const npcs = (scene.npcs ?? []).map(n => n.wants?.reward_item
+      ? { ...n, wants: { ...n.wants, reward_item: drawn(n.wants.reward_item) } }
+      : n)
+
     // La Majuscule de Titre est le seul signal d'interaction du jeu. Le modèle
     // l'applique à la liste `interactables` et l'oublie dans la prose : le même
     // objet y est « un tourniquet de contrôle », donc invisible comme objet.
@@ -1303,7 +1317,8 @@ ${lines}`)
     return {
       ...scene,
       scene_text: naming.text,
-      interactables,
+      interactables: iconed,
+      npcs,
       scene_id: this.scene.id,
       scene_title: this.title,
       exit_label: this.exitLabel,
@@ -1334,7 +1349,7 @@ ${lines}`)
       pacing: this.pacing,
       theme,
       key_item: {
-        ...generated.key_item,
+        ...drawn(generated.key_item),
         exchanges_before_handover: this.scene.key_item.exchanges_before_handover,
         // Comment il s'obtient voyage avec la scène : le client doit savoir
         // qu'ici personne ne le tend, et que c'est le déchiffrage qui le donne.

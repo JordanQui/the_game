@@ -212,7 +212,8 @@
                 "id": "string (identifiant court, sans espace — vide si l'échange ne donne aucun objet)",
                 "label": "string (nom de l'objet remis, en Majuscules de Titre)",
                 "item_kind": "string (\"echange\" si quelqu'un d'autre le voudra à son tour, \"recit\" sinon)",
-                "observation": "string (1 à 2 phrases révélées à la loupe : ce que l'objet EST, puis ce qu'il laisse entendre — jamais son usage)"
+                "observation": "string (1 à 2 phrases révélées à la loupe : ce que l'objet EST, puis ce qu'il laisse entendre — jamais son usage)",
+                "icon": "string (son pictogramme symbolique, voir PICTOGRAMMES DES OBJETS — vide si l'échange ne donne aucun objet)"
               },
               "reveals_id": "string (l'id d'un élément de `interactables` marqué hidden, que ce personnage découvre au joueur — vide si l'échange n'ouvre rien. Jamais l'id de l'objet-clé ni d'une carte. Au plus UN des deux : reward_item ou reveals_id, jamais les deux)"
             }
@@ -236,7 +237,8 @@
             "item_kind": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. \"echange\" si quelqu'un, ici ou plus loin, pourrait vouloir se le procurer — un objet qui a de la valeur pour un autre que le joueur ; \"recit\" si sa valeur est ce qu'il apprend. Dans le doute, \"recit\". Vide pour tout le reste)",
             "hidden": "true UNIQUEMENT pour un élément qu'un échange révèle. Il N'APPARAÎT PAS dans `scene_text` — ni son nom, ni l'endroit où il se trouve : personne ne le voit avant. Il doit être désigné par le `reveals_id` d'un personnage, sinon il est inatteignable. Absent partout ailleurs",
             "lock_color": "string (si cet élément est verrouillé, la couleur affichée par sa serrure ou son lecteur — le joueur saura quelle carte présenter. Vide sinon)",
-            "observation": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. 1 à 2 phrases révélées après analyse à la loupe : ce que l'objet EST précisément, puis ce qu'il laisse entendre de la quête — jamais son usage, jamais une consigne. Vide pour tout ce qui se contente d'être examiné, lu ou écouté)"
+            "observation": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. 1 à 2 phrases révélées après analyse à la loupe : ce que l'objet EST précisément, puis ce qu'il laisse entendre de la quête — jamais son usage, jamais une consigne. Vide pour tout ce qui se contente d'être examiné, lu ou écouté)",
+            "icon": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE : son pictogramme symbolique, voir PICTOGRAMMES DES OBJETS. Vide pour tout le reste)"
           }
         ],
         "game_over": "string (3 à 4 phrases : le lieu se referme, et pourquoi la ville a besoin d'un cycle avant de rouvrir. Voir TEXTE DE FERMETURE)",
@@ -253,7 +255,8 @@
           "informant_hint": "string (2 phrases : ce que l'informateur sait de l'objet sans le nommer précisément)",
           "worn": "string (comment elle se porte : à l'oeil, sous la peau, au poignet — quelques mots)",
           "resolving_action": "string (une phrase : L'ACTE PRÉCIS que le joueur pourra accomplir une fois les noms des choses lisibles, et qui règle ce qui doit l'être. Un geste concret et vérifiable — lire une inscription sur une porte scellée, reconnaître le bon boîtier dans un mur en panne, identifier la marchandise qui ne devrait pas être là. Découle de la MANIÈRE D'AGIR du joueur (NOMBRES) et de la tension de son SIGNE : celui qui absorbe ce que ressentent les autres démasque, celui qui fonce ouvre)",
-          "color": "string (LA COULEUR de la carte, un seul mot en Majuscule : Ambre, Indigo, Vermeil, Cyan... Elle doit correspondre à l'accent de la palette. Vide si l'objet-clé n'est pas une carte)"
+          "color": "string (LA COULEUR de la carte, un seul mot en Majuscule : Ambre, Indigo, Vermeil, Cyan... Elle doit correspondre à l'accent de la palette. Vide si l'objet-clé n'est pas une carte)",
+          "icon": "string (son pictogramme symbolique, voir PICTOGRAMMES DES OBJETS)"
         },
         "sealed_object": {
           "id": "string (identifiant court, sans espace)",
@@ -359,6 +362,10 @@
     "game_over": {
       "note": "Le texte que voit le joueur quand la nuit se referme sans qu'il ait obtenu ce qu'il fallait. Écrit à la génération de la scène, donc gratuit à l'affichage : on ne fait pas attendre 20 secondes quelqu'un à qui on ferme la porte.",
       "instruction": "TEXTE DE FERMETURE (`game_over`)\n3 à 4 phrases, même style que le reste : présent, deuxième personne, phrases courtes et factuelles.\nCE QUI SE PASSE : le joueur n'a pas obtenu ce qu'il fallait ici, et le lieu se referme sur lui. Montre-le par CE QU'IL VOIT — les lumières qui tombent une à une, les gens qui s'en vont sans le regarder, un rideau qui descend, un terminal qui s'éteint.\nPOURQUOI IL DOIT ATTENDRE : la ville se recalibre, elle ne peut pas tenir deux fois la même nuit d'affilée. Dis-le par la fiction — une maintenance, un cycle, une purge des registres —, jamais par la mécanique. N'écris JAMAIS « tu es bloqué », « 24 heures », « reviens demain », ni aucun mot de logiciel.\nLA DERNIÈRE PHRASE laisse une porte : ce qu'il aura appris de cette nuit-là lui servira quand elle rouvrira.\nInterdits : reprocher quoi que ce soit au joueur, expliquer ce qu'il aurait dû faire, poser une question."
+    },
+    "item_icons": {
+      "note": "Les objets sont générés : aucune bibliothèque d'icônes ne peut les couvrir. Le modèle écrit donc avec chaque objet un pictogramme, reconstruit forme par forme par utils/item-icon.ts avant d'atteindre le navigateur. Trait et couleur sont posés par l'interface.",
+      "instruction": "PICTOGRAMMES DES OBJETS (`icon`)\nChaque objet qui peut entrer dans l'inventaire du joueur porte un champ `icon` : l'objet à PRENDRE de `interactables`, le `reward_item` d'un échange, et `key_item`. Rien d'autre n'en a — ce qu'on se contente d'examiner et la sortie laissent `icon` vide.\nCE N'EST PAS UN DESSIN DE L'OBJET. C'est le SYMBOLE de ce qu'il signifie dans la quête : ce qu'il retient, ce qu'il sépare, ce qu'il répare. Un signe de signalétique lisible à 20 pixels, pas une illustration. Une clé ne se dessine pas en clé, une lettre pas en enveloppe : on cherche la forme de l'idée — deux arcs qui ne se rejoignent pas, une ligne qui traverse un cercle, trois barres dont une manque.\nFORMES ÉLÉMENTAIRES SEULEMENT, sur une grille de 24 × 24, coordonnées entre 3 et 21 : path, circle, ellipse, line, polyline, polygon, rect. DE 2 À 6 FORMES, jamais plus. Rien que la géométrie : aucune balise svg, aucun g, aucun texte, aucun attribut de couleur, d'épaisseur ni de style — le trait est posé par le jeu. `fill='currentColor'` est permis pour UN point plein au plus.\nLES ATTRIBUTS S'ÉCRIVENT ENTRE APOSTROPHES SIMPLES, jamais entre guillemets, sans quoi le JSON casse. Exemple de forme attendue : <circle cx='12' cy='12' r='5'/><path d='M5 19 L19 5'/>\nDeux objets de la même scène ne partagent pas le même signe."
     },
     "locks": {
       "note": "Cartes et serrures. Chaque carte a une couleur, chaque serrure affiche la sienne : c'est ainsi que le joueur sait laquelle présenter, sans qu'on le lui dise. Inspiré des clés colorées de DOOM.",

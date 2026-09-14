@@ -101,6 +101,7 @@ function collectItem() {
     // fige ici, sinon la pastille se repeindrait au lieu suivant.
     hex: playerStore.scene?.palette?.accent?.hex,
     observation: playerStore.scene?.key_item?.observation,
+    icon: playerStore.scene?.key_item?.icon,
   })
   gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
 }

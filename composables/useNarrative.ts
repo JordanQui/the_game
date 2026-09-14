@@ -357,6 +357,7 @@ export function useNarrative() {
         from: playerStore.scene?.place?.name,
         kind: gift.item_kind === 'echange' ? 'trade' : 'lore',
         observation: gift.observation,
+        icon: gift.icon,
       })
       gameStore.addNarrativeEntry(
         'system',
