@@ -1060,6 +1060,15 @@ ${lines}`)
     // laissé quelque chose ici » — et les neuf lieux suivants n'ont plus rien
     // qui les tienne ensemble. Seule l'auberge l'écrit, et elle doit être
     // entière : un lieu manquant serait une scène sans décor.
+    //
+    // `exit_label` fait exception : `exitLabel` (plus bas) sait déjà le
+    // reprendre depuis `exit_labels.<id>` du pack de langue — une valeur
+    // curée, garantie présente pour CHAQUE scène par `check-lang.mjs` — dès
+    // que le plan ne l'a pas écrit. C'est le dernier champ du dernier lieu du
+    // JSON le plus lourd de tout le jeu : le modèle l'oublie de temps en
+    // temps sans que rien d'autre manque, et le faire échouer sur CE seul
+    // champ payait une reprise entière pour une valeur qu'on sait déjà
+    // reconstruire à l'identique.
     if (this.isStart) {
       const night = generated.night
       const missing: string[] = []
@@ -1067,10 +1076,11 @@ ${lines}`)
         if (!night?.[f]?.trim()) missing.push(`night.${f}`)
       }
       const planned = new Map((night?.acts ?? []).flatMap(a => a.scenes ?? []).map(sc => [sc.scene_id, sc]))
-      const fields = ['title', 'place', 'focal', 'step', 'requirement', 'exit_label'] as const
+      const fields = ['title', 'place', 'focal', 'step', 'requirement'] as const
       for (const id of this.planIds) {
         const sc = planned.get(id)
-        const empty = fields.filter(f => !sc?.[f]?.trim())
+        if (!sc) { missing.push(`${id} (lieu absent)`); continue }
+        const empty = fields.filter(f => !sc[f]?.trim())
         if (empty.length) missing.push(`${id} (${empty.join(', ')})`)
       }
       if (missing.length) {
