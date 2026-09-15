@@ -295,7 +295,8 @@ export function useGyroEye() {
     } else {
       dwellOn = null
       dwellSpent = false
-      const name = node?.dataset.glitchName ?? null
+      // En conversation l'oeil est masqué : il ne lit rien qu'on ne voie viser.
+      const name = gameStore.eyeHidden ? null : node?.dataset.glitchName ?? null
       if (name !== gameStore.revealing) gameStore.setRevealing(name)
     }
 

@@ -352,7 +352,7 @@
     "oracle.unused_lens_tool": "sana az önce verilen şey",
     "locked.reopen_in": "{{remaining}} sonra yeniden açılıyor",
     "locked.the_end": "Her güzel şeyin bir sonu var",
-    "locked.dev_unlock": "Kilidi kaldır (geliştirme)",
+    "locked.dev_unlock": "Kilidi kaldır (test)",
     "game.replying_to": "{{name}} kişisine cevap veriyorsun…",
     "game.facing": "{{name}} ile",
     "game.facing_hint": "Onunla konuşuyorsun — dönmek için tıkla (Esc)",

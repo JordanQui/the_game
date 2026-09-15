@@ -276,9 +276,19 @@ export function readLock(event: H3Event): LockPass | null {
   return lock
 }
 
-/** Lève le verrou. Réservé au canal de développement. */
-export function clearLock(event: H3Event): void {
+/**
+ * Lève le verrou. Réservé au développement et aux phases de test.
+ *
+ * Effacer le cookie ne suffit pas : `scene_turns` reste plein dans le quota, et
+ * le tour suivant refermerait aussitôt. On rend donc ses tours à la scène.
+ */
+export function clearLock(event: H3Event, limits: LimitsConfig): void {
   deleteCookie(event, LOCK_COOKIE, { path: '/' })
+  const windowHours = readAccess(event) ? limits.paid.window_days * 24 : limits.window_hours
+  const quota = readQuota(event, windowHours)
+  quota.scene_turns = 0
+  delete quota.locked_until
+  writeQuota(event, quota, windowHours)
 }
 
 /**

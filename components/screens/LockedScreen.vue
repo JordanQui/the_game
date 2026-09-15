@@ -28,13 +28,14 @@ onMounted(() => { ticker = setInterval(() => { now.value = Date.now() }, 30_000)
 onUnmounted(() => { if (ticker) clearInterval(ticker) })
 
 /**
- * Rouvrir, en développement seulement.
+ * Rouvrir, en développement et pendant les phases de test.
  *
  * Une fois l'écran affiché, le canal `#` n'est plus accessible : `#ouvre`
  * devient injoignable, et une séance de test condamnait la journée. Le serveur
- * refuse ce geste hors développement — le bouton n'y est même pas rendu.
+ * refuse ce geste quand `lockOverride` est fermé — le bouton n'est alors même
+ * pas rendu.
  */
-const isDev = import.meta.dev
+const canOverride = import.meta.dev || useRuntimeConfig().public.lockOverride
 
 async function reopen() {
   await $fetch('/api/lockout', { method: 'POST', body: { open: true } }).catch(() => null)
@@ -91,7 +92,7 @@ const remaining = computed(() => {
       </p>
 
       <button
-        v-if="isDev"
+        v-if="canOverride"
         class="text-steel-400/60 underline text-[11px] tracking-wide"
         @click="reopen"
       >

@@ -83,6 +83,31 @@ function offerItem(itemId: string) {
 /** La grille de l'inventaire est ouverte : elle recouvre la scène. */
 const inventoryOpen = ref(false)
 
+/** La machine à écrire tape encore la dernière réplique. */
+const narrationTyping = ref(false)
+
+/**
+ * Le bandeau « Prendre » peut paraître.
+ *
+ * Pas à la fin du flux : à la fin de la RÉPLIQUE, une fois le dernier mot tapé
+ * et un temps de silence passé. Affiché plus tôt, il annonçait la remise
+ * pendant que le détenteur en était encore à la préparer.
+ */
+const offerReady = ref(false)
+let offerTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(
+  () => gameStore.pendingKeyItem && !narrationTyping.value && !gameStore.isInputDisabled,
+  (ready) => {
+    if (offerTimer) { clearTimeout(offerTimer); offerTimer = null }
+    if (!ready) { offerReady.value = false; return }
+    offerTimer = setTimeout(() => { offerReady.value = true }, 700)
+  },
+  { immediate: true }
+)
+
+onUnmounted(() => { if (offerTimer) clearTimeout(offerTimer) })
+
 /** Ici, l'objet-clé n'a pas de détenteur : il est inscrit dans le lieu. */
 const isFoundItem = computed(() => playerStore.scene?.key_item?.acquisition === 'found')
 
@@ -130,7 +155,7 @@ function retryImage() {
 <template>
   <div
     class="flex flex-col h-[100dvh] bg-ink-900 tool-cursor"
-    :class="gameStore.activeTool === 'lens' ? 'cursor-lens' : gameStore.eyeActive && 'cursor-eye'"
+    :class="gameStore.activeTool === 'lens' ? 'cursor-lens' : gameStore.eyeActive && !gameStore.eyeHidden && 'cursor-eye'"
   >
     <!--
       L'outil en main EST le curseur, sur toute la surface de jeu.
@@ -198,7 +223,7 @@ function retryImage() {
 
     <!-- Narration. L'historique tient lieu d'inventaire : l'objet scellé y
          reste visible, et l'on y revient avec la loupe. -->
-    <NarrativeText :entries="gameStore.narrativeHistory" />
+    <NarrativeText :entries="gameStore.narrativeHistory" @typing="narrationTyping = $event" />
 
     <!-- Au premier passage à la loupe : ce qu'elle est, et comment s'en servir -->
     <AugmentationPrimer v-if="gameStore.primerOpen" />
@@ -218,7 +243,7 @@ function retryImage() {
     -->
     <Transition name="slide">
       <PickupPrompt
-        v-if="gameStore.pendingKeyItem && playerStore.scene?.key_item"
+        v-if="offerReady && playerStore.scene?.key_item"
         :label="t('game.offered_to_you', { item: playerStore.scene.key_item.name })"
         :action="t('game.action_collect')"
         :slide-label="t('game.slide_collect')"

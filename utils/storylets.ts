@@ -58,17 +58,6 @@ export interface Qualities {
 
   /** Cette scène exige un objet pour être quittée. */
   sceneHasKeyItem: boolean
-  /**
-   * On ne sort pas d'ici sans s'être servi de l'outil qu'on y a reçu.
-   *
-   * Vrai dans la scène qui remet l'augmentation, et seulement si le récit y a
-   * bien mis quelque chose à lire : sans objet porteur d'`observation`, la
-   * condition n'aurait aucun moyen d'être satisfaite et la porte ne s'ouvrirait
-   * plus jamais.
-   */
-  exitNeedsAnalysis: boolean
-  /** Il a ouvert au moins un objet qui avait quelque chose à lui apprendre. */
-  hasAnalysed: boolean
   /** Le joueur le tient. */
   hasKeyItem: boolean
   /** Il lui est déjà tendu : il n'a plus qu'à le prendre. */
@@ -196,20 +185,14 @@ export const DECK: Storylet[] = [
     play: { kind: 'model', mode: 'blocked_exit' },
   },
   {
-    id: 'sortie_sans_analyse',
-    note: "il tient l'outil sans s'en être servi : la porte attend qu'il ait lu quelque chose",
-    // AVANT `sortie`, et c'est tout le mécanisme : récupérer l'augmentation ne
-    // suffit pas à quitter l'auberge, il faut avoir compris ce qu'elle permet.
-    // Ça se comprend en analysant un objet du récit, pas en l'empochant.
-    when: q => q.mentionsExit && q.hasKeyItem && q.exitNeedsAnalysis && !q.hasAnalysed,
-    play: { kind: 'local', say: 'unused_lens' },
-  },
-  {
     id: 'sortie',
     note: 'la porte cède : il a ce qu\'il était venu chercher, et l\'heure est venue',
+    // L'objet en main suffit, sans condition de tour ni de lecture à la loupe.
+    // La porte attendait autrefois qu'il se soit servi de l'augmentation : un
+    // joueur qui la tenait restait bloqué devant le sas sans comprendre
+    // pourquoi. Le nombre de tours ne retient plus que les scènes sans objet.
     when: q => q.mentionsExit
-      && q.turn >= q.exitOpensAtTurn
-      && (!q.sceneHasKeyItem || q.hasKeyItem),
+      && (q.sceneHasKeyItem ? q.hasKeyItem : q.turn >= q.exitOpensAtTurn),
     play: { kind: 'exit' },
   },
   {

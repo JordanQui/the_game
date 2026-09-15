@@ -179,6 +179,15 @@ export default defineNuxtConfig({
         amount: script.paywall.amount_cents / 100,
         currency: script.paywall.currency,
       },
+      /**
+       * Bouton « lever la limite » sur l'écran de fermeture, en production.
+       *
+       * Temporaire, le temps des phases de test : sans lui un testeur qui fait
+       * patiner une scène perd sa journée. Ouvert par défaut ; `LOCK_OVERRIDE=0`
+       * le retire — à poser sur Vercel, puis redéployer (valeur lue au build).
+       * En développement le bouton est toujours là.
+       */
+      lockOverride: process.env.LOCK_OVERRIDE !== '0',
       squareApplicationId: process.env.SQUARE_APPLICATION_ID,
       squareLocationId: process.env.SQUARE_LOCATION_ID,
       squareEnvironment: process.env.SQUARE_ENVIRONMENT || 'sandbox',

@@ -29,6 +29,7 @@ const lensLabel = computed(() => playerStore.scene?.key_item?.name ?? 'Analyse')
 <template>
   <div class="shrink-0 flex items-center gap-1.5 px-4 py-1.5">
     <button
+      v-if="!gameStore.eyeHidden"
       class="p-1.5 -my-0.5 transition-colors"
       :class="gameStore.activeTool === 'eye' ? 'text-neon-400' : 'text-steel-400 hover:text-neon-600'"
       :aria-pressed="gameStore.activeTool === 'eye'"

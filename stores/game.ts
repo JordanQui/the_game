@@ -249,6 +249,12 @@ export const useGameStore = defineStore('game', {
     isInputDisabled: (state) =>
       state.playingSubState === 'narrative_streaming' ||
       state.playingSubState === 'npc_dialogue',
+    /**
+     * L'oeil s'efface pendant une conversation : bouton, réticule, icône et
+     * curseur. On parle à quelqu'un, on ne lit pas la salle ; pour déchiffrer
+     * un autre nom, on se détourne d'abord.
+     */
+    eyeHidden: (state) => state.activeNpcId !== null,
   },
 
   actions: {
@@ -340,6 +346,7 @@ export const useGameStore = defineStore('game', {
 
     setActiveNpc(npcId: string | null) {
       this.activeNpcId = npcId
+      if (npcId && this.activeTool === 'eye') this.revealing = null
     },
 
     /** Le joueur se détourne : ce qu'il tapera ensuite s'adresse au lieu. */

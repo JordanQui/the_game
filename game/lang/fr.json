@@ -374,7 +374,7 @@
     "oracle.unused_lens_tool": "ce qu'on vient de te remettre",
     "locked.reopen_in": "Réouverture dans {{remaining}}",
     "locked.the_end": "Toute bonne chose a une fin",
-    "locked.dev_unlock": "Lever le verrou (développement)",
+    "locked.dev_unlock": "Override limit — lever le verrou (test)",
     "game.replying_to": "Tu réponds à {{name}}…",
     "game.facing": "à {{name}}",
     "game.facing_hint": "Tu lui parles — clique pour te détourner (Échap)",

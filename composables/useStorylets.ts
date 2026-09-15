@@ -7,7 +7,7 @@ import { usePaywall } from '~/composables/usePaywall'
 import { useSceneCommands } from '~/composables/useSceneCommands'
 import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
 import { translate } from '~/utils/languages'
-import { teaching, takeTarget, observationOf } from '~/utils/interactables'
+import { takeTarget, observationOf } from '~/utils/interactables'
 import { matchesKeyword } from '~/utils/text-match'
 
 /**
@@ -27,23 +27,6 @@ export function useStorylets() {
   const { runTurn, interlocutor, addressesNobody, answerLocally } = useNarrative()
   const { openExit } = usePaywall()
   const { isCommand, run: runSceneCommand } = useSceneCommands()
-
-  /**
-   * Les objets du récit qui ont quelque chose à apprendre, et ceux qu'il a lus.
-   *
-   * L'augmentation ne se contente pas de s'obtenir : c'est en ouvrant un objet
-   * qu'on comprend ce qu'elle permet, et c'est ça qui ouvre le sas.
-   */
-  function lessons() {
-    const scene = playerStore.scene
-    const objects = scene
-      ? teaching(scene, playerStore.language, gameStore.revealedInteractableIds)
-      : []
-    return {
-      available: objects.length > 0,
-      read: objects.some(o => gameStore.decryptedObjectIds.includes(o.id)),
-    }
-  }
 
   /**
    * La chose du décor que cette saisie réclame, si elle en réclame une.
@@ -69,7 +52,6 @@ export function useStorylets() {
     return {
       hasKeyItem: gameStore.hasKeyItem,
       talkedToNpcIds: gameStore.talkedToNpcIds,
-      hasAnalysed: lessons().read,
       // Ce qu'il porte déjà : le récapitulatif ne lui signale un objet posé
       // dans la salle que tant qu'il ne l'a pas ramassé.
       carriedIds: gameStore.inventory.map(o => o.id),
@@ -92,7 +74,6 @@ export function useStorylets() {
     // Celui à qui la saisie s'adresse : nommé à l'instant, ou déjà en face de
     // lui depuis le tour d'avant. Le deck n'a jamais à savoir lequel des deux.
     const npc = scene ? interlocutor(input) : undefined
-    const lesson = lessons()
 
     const claim = claimed(input)
 
@@ -126,8 +107,6 @@ export function useStorylets() {
       addressesHolder: Boolean(npc && item && npc.id === item.npc_id),
 
       sceneHasKeyItem: Boolean(item),
-      exitNeedsAnalysis: Boolean(scene?.grants_augmentation) && lesson.available,
-      hasAnalysed: lesson.read,
       hasKeyItem: gameStore.hasKeyItem,
       pendingKeyItem: gameStore.pendingKeyItem,
       informed: gameStore.informedAboutItem,

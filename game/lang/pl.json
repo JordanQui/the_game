@@ -356,7 +356,7 @@
     "oracle.unused_lens_tool": "to, co ci właśnie wręczono",
     "locked.reopen_in": "Ponowne otwarcie za {{remaining}}",
     "locked.the_end": "Wszystko, co dobre, się kończy",
-    "locked.dev_unlock": "Zdjąć blokadę (tryb deweloperski)",
+    "locked.dev_unlock": "Zdjąć blokadę (testy)",
     "game.replying_to": "Odpowiadasz {{name}}…",
     "game.facing": "do {{name}}",
     "game.facing_hint": "Rozmawiasz z nim — kliknij, żeby się odwrócić (Esc)",

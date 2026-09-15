@@ -3,7 +3,7 @@ import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { normalize } from '~/utils/text-match'
 import { pack, translate } from '~/utils/languages'
-import { teaching, isTakeable, visible } from '~/utils/interactables'
+import { isTakeable, visible } from '~/utils/interactables'
 
 /**
  * Répond localement, sans appeler le modèle.
@@ -22,8 +22,6 @@ export type LocalAnswerKind = 'decor' | 'npc_known' | 'guidance' | 'budget_exhau
 export interface OracleState {
   hasKeyItem: boolean
   talkedToNpcIds: string[]
-  /** Il a ouvert un objet qui avait quelque chose à lui apprendre. */
-  hasAnalysed: boolean
   /** Les ids de ce qu'il porte déjà : ce qui est ramassé n'est plus à trouver. */
   carriedIds: string[]
   /** Ce qu'un échange a fait apparaître : avant ça, l'élément n'existe pas. */
@@ -88,19 +86,13 @@ export function buildGuidance(
     }
   } else if (item) {
     lines.push(t('oracle.holding', { item: item.name, why: item.why }))
-    // Le tenir ne suffit pas là où on vient de le recevoir : la porte attend
-    // qu'on s'en soit servi. Ne pas le dire ici enverrait le joueur vers un sas
-    // qui le refuserait — voir le moment `sortie_sans_analyse`.
-    if (scene.grants_augmentation && !state.hasAnalysed && teaching(scene, lang).length) {
-      lines.push(t('oracle.use_lens'))
-    } else {
-      // Le libellé de la sortie plutôt que le premier mot-clé : depuis que les
-      // mots-clés viennent du pack, le premier est un verbe générique
-      // (« sortir », « exit ») et non le nom de la porte de CETTE scène.
-      lines.push(t('oracle.just_exit', {
-        exit: scene.exit_label || scene.paywall.exit_keywords[0] || '',
-      }))
-    }
+    // Le tenir suffit : la porte ne réclame plus qu'on s'en soit servi.
+    // Le libellé de la sortie plutôt que le premier mot-clé : depuis que les
+    // mots-clés viennent du pack, le premier est un verbe générique
+    // (« sortir », « exit ») et non le nom de la porte de CETTE scène.
+    lines.push(t('oracle.just_exit', {
+      exit: scene.exit_label || scene.paywall.exit_keywords[0] || '',
+    }))
   }
 
   // Les gens ne donnent pas tout. Sans cette ligne, le récapitulatif n'envoie

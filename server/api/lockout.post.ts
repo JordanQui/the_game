@@ -17,18 +17,21 @@ import { closeForStalling, clearLock } from '~/server/utils/session-quota'
  *
  * Aucune génération, donc aucun coût.
  *
- * En développement, `{ open: true }` lève le verrou : sans quoi une seule
+ * En développement, et en production tant que `lockOverride` est ouvert
+ * (phases de test), `{ open: true }` lève le verrou : sans quoi une seule
  * séance de test condamnerait la journée.
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ open?: boolean }>(event).catch(() => null)
+  const runtime = await ScriptRuntime.load(requestLang(event))
 
   if (body?.open) {
-    if (!import.meta.dev) throw createError({ statusCode: 403, statusMessage: 'Indisponible' })
-    clearLock(event)
+    if (!import.meta.dev && !useRuntimeConfig().public.lockOverride) {
+      throw createError({ statusCode: 403, statusMessage: 'Indisponible' })
+    }
+    clearLock(event, runtime.limits)
     return { open: true as const }
   }
 
-  const runtime = await ScriptRuntime.load(requestLang(event))
   return closeForStalling(event, runtime.limits)
 })

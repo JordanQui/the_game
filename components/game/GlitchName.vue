@@ -75,6 +75,8 @@ function onEnter() {
   // Oeil fermé, rien ne se lit : c'est le bouton qui l'ouvre, sur desktop
   // comme sur mobile.
   if (!gameStore.eyeActive) return
+  // En conversation l'oeil n'est plus à l'écran : il ne lit rien non plus.
+  if (gameStore.eyeHidden) return
   // Un nom déjà en clair n'a rien à révéler : l'effacement du reste du texte
   // serait une punition sans contrepartie.
   if (known.value) return
@@ -92,6 +94,7 @@ function onLeave() {
  */
 function onTouch() {
   if (known.value) return
+  if (gameStore.eyeHidden) return
   if (!gameStore.eyeActive) gameStore.denyRead()
 }
 </script>
@@ -112,7 +115,7 @@ function onTouch() {
       known
         ? 'is-known'
         : gameStore.activeTool === 'lens' ? 'cursor-lens'
-          : gameStore.eyeActive ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : null,
+          : gameStore.eyeActive && !gameStore.eyeHidden ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : null,
       revealed && 'is-revealed',
     ]"
     :data-glitch-name="known ? undefined : name"

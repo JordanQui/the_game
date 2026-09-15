@@ -341,7 +341,7 @@
     "oracle.unused_lens_tool": "what you have just been handed",
     "locked.reopen_in": "Reopens in {{remaining}}",
     "locked.the_end": "All good things come to an end",
-    "locked.dev_unlock": "Lift the lock (development)",
+    "locked.dev_unlock": "Override limit (testing)",
     "game.replying_to": "You answer {{name}}…",
     "game.facing": "to {{name}}",
     "game.facing_hint": "You are talking to them — click to turn away (Esc)",

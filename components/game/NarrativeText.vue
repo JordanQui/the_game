@@ -48,6 +48,27 @@ const names = computed<Term[]>(() => {
   return [...people, ...things]
 })
 
+const emit = defineEmits<{ typing: [boolean] }>()
+
+/**
+ * L'entrée que la machine à écrire tape encore, ou null.
+ *
+ * Retenue par son id : une entrée qui cesse d'être la dernière perd sa machine
+ * à écrire sans avoir fini, et ne doit pas laisser l'écran croire qu'on tape.
+ */
+const typingEntryId = ref<string | null>(null)
+
+function onTyping(id: string, value: boolean) {
+  if (value) typingEntryId.value = id
+  else if (typingEntryId.value === id) typingEntryId.value = null
+}
+
+watch(
+  () => typingEntryId.value !== null && typingEntryId.value === props.entries[props.entries.length - 1]?.id,
+  value => emit('typing', value),
+  { immediate: true }
+)
+
 const scrollContainer = ref<HTMLElement | null>(null)
 
 function scrollToBottom() {
@@ -91,6 +112,7 @@ watch(
           v-if="entry === entries[entries.length - 1] && ['narration', 'npc_speech'].includes(entry.type)"
           :text="entry.text"
           :names="names"
+          @typing="onTyping(entry.id, $event)"
         />
         <GlitchText v-else :text="entry.text" :names="names" />
       </div>

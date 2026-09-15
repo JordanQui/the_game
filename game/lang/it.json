@@ -391,7 +391,7 @@
     "oracle.unused_lens_tool": "quello che ti hanno appena consegnato",
     "locked.reopen_in": "Riapertura fra {{remaining}}",
     "locked.the_end": "Tutte le cose belle finiscono",
-    "locked.dev_unlock": "Togliere il blocco (sviluppo)",
+    "locked.dev_unlock": "Togliere il blocco (test)",
     "game.replying_to": "Rispondi a {{name}}…",
     "game.facing": "a {{name}}",
     "game.facing_hint": "Gli stai parlando — clicca per voltarti (Esc)",

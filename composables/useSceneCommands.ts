@@ -98,7 +98,7 @@ export function useSceneCommands() {
     },
     {
       name: 'ouvre',
-      help: 'lève le verrou (développement) — sans ça une séance de test condamne la journée',
+      help: 'lève le verrou (développement, phases de test) — sans ça une séance de test condamne la journée',
       run() {
         void $fetch('/api/lockout', { method: 'POST', body: { open: true } })
           .then(() => {

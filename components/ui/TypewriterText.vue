@@ -8,7 +8,7 @@ const props = defineProps<{
   names?: Array<string | Term>
 }>()
 
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits<{ done: []; typing: [boolean] }>()
 
 const displayed = ref('')
 let timer: ReturnType<typeof setInterval> | null = null
@@ -49,6 +49,10 @@ watch(() => props.text, (target) => {
 onUnmounted(stop)
 
 const typing = computed(() => displayed.value.length < props.text.length)
+
+// Ce qui suit une réplique attend qu'elle soit TAPÉE, pas seulement reçue : le
+// flux finit bien avant que le dernier mot s'affiche.
+watch(typing, value => emit('typing', value), { immediate: true })
 </script>
 
 <template>

@@ -46,7 +46,7 @@ const style = computed(() => ({
     <!-- Avant activation : le bouton, partout. Au tactile, c'est aussi le geste
          que la permission d'iOS exige. -->
     <button
-      v-if="!enabled"
+      v-if="!enabled && !gameStore.eyeHidden"
       class="fixed top-3 left-3 z-40 flex items-center gap-2 px-3 py-2
              font-display text-[10px] uppercase tracking-[0.18em]
              text-neon-300 bg-ink-900/90 border border-neon-600/50"
@@ -61,7 +61,7 @@ const style = computed(() => ({
 
     <!-- Actif, au tactile : l'oeil suit l'inclinaison de l'appareil. -->
     <div
-      v-else-if="usesTouch"
+      v-else-if="enabled && usesTouch && (gameStore.activeTool === 'lens' || !gameStore.eyeHidden)"
       class="eye pointer-events-none fixed z-40"
       :class="gameStore.revealing && 'is-locked-on'"
       :style="style"
