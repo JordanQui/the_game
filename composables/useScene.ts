@@ -5,6 +5,7 @@ import type { JournalEntry, CarriedItem } from '~/utils/journal'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useImageGen } from '~/composables/useImageGen'
+import { readSceneImage, storeSceneImage, forgetSceneImage } from '~/utils/scene-image-memory'
 
 /**
  * Une scène de l'auberge prend 50 à 80 s : environ 18 000 jetons de prompt, et
@@ -65,15 +66,18 @@ function memoryDays(): number {
 }
 
 /**
- * Identifiant du build en cours.
+ * Format de ce que le navigateur garde : la scène, sa progression.
  *
- * Nuxt le régénère à chaque compilation : il change donc à chaque déploiement.
- * C'est le repère le plus sûr pour jeter une scène gardée en session — plus sûr
- * qu'une empreinte du script, puisqu'il couvre aussi les changements de code.
+ * Remplace l'identifiant du build, qui changeait à CHAQUE déploiement : tous les
+ * joueurs en pleine partie voyaient alors leur scène jetée, repayée, et leur
+ * monde réécrit sous leurs yeux — pour une retouche de CSS. Le contenu d'une
+ * scène dépend du script, que l'empreinte surveille déjà ; le code, lui, ne
+ * compte que s'il change la FORME de ce qui est gardé.
+ *
+ * À incrémenter à la main quand `SceneTextResponse` ou `SceneProgress` change de
+ * forme au point qu'une copie ancienne casserait l'écran.
  */
-function currentBuild(): string {
-  return useRuntimeConfig().app.buildId
-}
+const MEMORY_FORMAT = 1
 
 /**
  * Empreinte du script servi par ce serveur.
@@ -104,10 +108,8 @@ function readStoredScene(expectedId?: string, lang?: LangCode): SceneTextRespons
       return null
     }
 
-    // Le jeu a été redéployé depuis : cette scène ne le reflète plus. Sans ce
-    // contrôle, un déploiement restait invisible pour tout joueur ayant déjà
-    // une scène en session — on croyait livrer sans effet.
-    if (stored.build_id !== currentBuild()) {
+    // Gardée sous une autre forme que celle que ce code sait lire.
+    if (stored.memory_format !== MEMORY_FORMAT) {
       forgetStoredScene()
       return null
     }
@@ -140,7 +142,7 @@ function readStoredScene(expectedId?: string, lang?: LangCode): SceneTextRespons
 
 function storeScene(scene: SceneTextResponse, lang: LangCode): void {
   try {
-    memory()?.setItem(SCENE_KEY, JSON.stringify({ ...scene, build_id: currentBuild(), lang }))
+    memory()?.setItem(SCENE_KEY, JSON.stringify({ ...scene, memory_format: MEMORY_FORMAT, lang }))
   } catch {
     // Stockage plein ou refusé : on régénérera, c'est tout.
   }
@@ -177,8 +179,123 @@ interface Carry {
    * reste sur la machine du joueur, et disparaît avec le reste de la partie.
    */
   profile?: UserProfile | null
+  /** Les objets cédés : un échange est définitif, un rechargement ne le défait pas. */
+  given?: string[]
+  /** Ce que la partie a coûté au modèle. Les plafonds de rythme s'y lisent. */
+  spend?: { turns: number; usd: number }
   /** Date de la dernière écriture. Au-delà de la fenêtre, tout est oublié. */
   saved_at?: number
+}
+
+type GameStore = ReturnType<typeof useGameStore>
+type PlayerStore = ReturnType<typeof usePlayerStore>
+
+function carryOf(game: GameStore, player: PlayerStore): Carry {
+  return {
+    journal: player.journal,
+    inventory: game.inventory,
+    decrypted: game.decryptedObjectIds,
+    augmentation: game.hasAugmentation,
+    primerSeen: game.primerSeen,
+    profile: player.profile,
+    given: game.givenItemIds,
+    spend: { turns: game.modelTurnsUsed, usd: game.spentUsd },
+  }
+}
+
+/**
+ * Ce qui s'est joué DANS la scène en cours.
+ *
+ * La scène revenait de la mémoire, mais nue : texte d'ouverture, personnages
+ * inconnus, objet-clé à reconquérir. Le serveur, qui compte les tours dans un
+ * cookie, ne les rendait pas — recharger après sept tours laissait trois tours
+ * avant la fermeture de la ville, pour tout refaire.
+ */
+const PROGRESS_KEY = 'tg_progress'
+
+interface SceneProgress {
+  /** L'empreinte de la scène jouée : une autre scène, même de même id, ne la reprend pas. */
+  stamp: string
+  narrative: GameStore['narrativeHistory']
+  turnCount: number
+  activeNpcId: string | null
+  hasKeyItem: boolean
+  keyItemExchanges: number
+  informedAboutItem: boolean
+  pendingKeyItem: boolean
+  talkedToNpcIds: string[]
+  revealedInteractableIds: string[]
+  npcExchanges: Record<string, number>
+  resolved: boolean
+  conversationHistory: GameStore['conversationHistory']
+  npcThreads: GameStore['npcThreads']
+}
+
+/**
+ * L'empreinte d'une scène générée.
+ *
+ * L'id ne suffit pas : une scène régénérée garde son id et change tout le
+ * reste. Une progression ou une image posée sur une autre version de la même
+ * scène parlerait de personnages qui n'y sont plus.
+ */
+export function sceneStamp(scene: SceneTextResponse): string {
+  const source = `${scene.scene_id}|${scene.script_fingerprint ?? ''}|${scene.scene_title}|${scene.scene_text}`
+  let hash = 5381
+  for (let i = 0; i < source.length; i++) hash = ((hash << 5) + hash + source.charCodeAt(i)) | 0
+  return `${scene.scene_id}:${(hash >>> 0).toString(36)}`
+}
+
+function readProgress(stamp: string): SceneProgress | null {
+  try {
+    const raw = memory()?.getItem(PROGRESS_KEY)
+    if (!raw) return null
+    const progress = JSON.parse(raw) as SceneProgress
+    return progress.stamp === stamp ? progress : null
+  } catch {
+    return null
+  }
+}
+
+function forgetProgress(): void {
+  try { memory()?.removeItem(PROGRESS_KEY) } catch { /* sans conséquence */ }
+}
+
+/**
+ * Écrit la partie telle qu'elle est, pendant qu'on joue.
+ *
+ * Appelé par `plugins/run-memory.client.ts` à chaque changement du store. Rien
+ * n'est écrit hors de l'écran de jeu, ni pendant qu'un tour s'écrit : l'entrée
+ * serait à moitié remplie, et la sauvegarde d'avant vaut mieux.
+ */
+export function savePlaying(game: GameStore, player: PlayerStore): void {
+  if (game.currentScreen !== 'playing') return
+  if (game.playingSubState !== 'awaiting_input') return
+  const scene = player.scene
+  if (!scene) return
+
+  storeCarry(carryOf(game, player))
+
+  const progress: SceneProgress = {
+    stamp: sceneStamp(scene),
+    narrative: game.narrativeHistory,
+    turnCount: game.turnCount,
+    activeNpcId: game.activeNpcId,
+    hasKeyItem: game.hasKeyItem,
+    keyItemExchanges: game.keyItemExchanges,
+    informedAboutItem: game.informedAboutItem,
+    pendingKeyItem: game.pendingKeyItem,
+    talkedToNpcIds: game.talkedToNpcIds,
+    revealedInteractableIds: game.revealedInteractableIds,
+    npcExchanges: game.npcExchanges,
+    resolved: game.resolved,
+    conversationHistory: game.conversationHistory,
+    npcThreads: game.npcThreads,
+  }
+  try {
+    memory()?.setItem(PROGRESS_KEY, JSON.stringify(progress))
+  } catch {
+    // Stockage plein ou refusé : on reprendra au début de la scène.
+  }
 }
 
 function storeCarry(carry: Carry): void {
@@ -220,8 +337,11 @@ export function rememberedProfile(): UserProfile | null {
   return readStoredCarry()?.profile ?? null
 }
 
+/** Oublie la scène en cours : son texte, ce qui s'y est joué, son image. */
 export function forgetStoredScene(): void {
   try { memory()?.removeItem(SCENE_KEY) } catch { /* sans conséquence */ }
+  forgetProgress()
+  void forgetSceneImage()
 }
 
 /**
@@ -258,6 +378,8 @@ export function useScene() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
   const { generateSceneImage } = useImageGen()
+  /** Lue ici, dans le contexte du composant : l'image la consulte après des `await`. */
+  const memoryWindowMs = memoryDays() * 86_400_000
 
   const scene = ref<SceneTextResponse | null>(null)
   const isLoadingText = ref(false)
@@ -290,14 +412,7 @@ export function useScene() {
    * joueur son augmentation et tout ce qu'il portait.
    */
   function saveCarry() {
-    storeCarry({
-      journal: playerStore.journal,
-      inventory: gameStore.inventory,
-      decrypted: gameStore.decryptedObjectIds,
-      augmentation: gameStore.hasAugmentation,
-      primerSeen: gameStore.primerSeen,
-      profile: playerStore.profile,
-    })
+    storeCarry(carryOf(gameStore, playerStore))
   }
 
   function restoreCarry() {
@@ -309,6 +424,35 @@ export function useScene() {
     if (carry.augmentation) gameStore.hasAugmentation = true
     if (carry.primerSeen) gameStore.primerSeen = true
     if (!playerStore.profile && carry.profile) playerStore.setProfile(carry.profile)
+    if (!gameStore.givenItemIds.length) gameStore.givenItemIds = carry.given ?? []
+    if (carry.spend && !gameStore.modelTurnsUsed) {
+      gameStore.modelTurnsUsed = carry.spend.turns
+      gameStore.spentUsd = carry.spend.usd
+    }
+  }
+
+  /**
+   * Remet la scène où le joueur l'avait laissée.
+   *
+   * Faux s'il n'y a rien pour CETTE scène : on repart alors de son ouverture.
+   */
+  function restoreProgress(stored: SceneTextResponse): boolean {
+    const progress = readProgress(sceneStamp(stored))
+    if (!progress?.narrative?.length) return false
+    gameStore.narrativeHistory = progress.narrative
+    gameStore.turnCount = progress.turnCount
+    gameStore.activeNpcId = progress.activeNpcId
+    gameStore.hasKeyItem = progress.hasKeyItem
+    gameStore.keyItemExchanges = progress.keyItemExchanges
+    gameStore.informedAboutItem = progress.informedAboutItem
+    gameStore.pendingKeyItem = progress.pendingKeyItem
+    gameStore.talkedToNpcIds = progress.talkedToNpcIds
+    gameStore.revealedInteractableIds = progress.revealedInteractableIds
+    gameStore.npcExchanges = progress.npcExchanges
+    gameStore.resolved = progress.resolved
+    gameStore.conversationHistory = progress.conversationHistory
+    gameStore.npcThreads = progress.npcThreads
+    return true
   }
 
   /** Phase 1. Bloquant : sans texte, pas de scène. */
@@ -347,7 +491,8 @@ export function useScene() {
       interfacePalette.applyScene(stored)
       gameStore.syncAugmentation(stored.scene_id, stored.grants_augmentation)
       playerStore.setScene(stored)
-      gameStore.addNarrativeEntry('narration', stored.scene_text)
+      // Le fil de la scène, tel que le joueur l'a laissé ; à défaut, son ouverture.
+      if (!restoreProgress(stored)) gameStore.addNarrativeEntry('narration', stored.scene_text)
       gameStore.setPlayingSubState('awaiting_input')
       isLoadingText.value = false
       return stored
@@ -371,6 +516,9 @@ export function useScene() {
       scene.value = res
       // L'habillage prend les couleurs de la scène, si elle le demande.
       interfacePalette.applyScene(res)
+      // Une scène neuve : ce qui s'était joué et dessiné pour la précédente ne la concerne pas.
+      forgetProgress()
+      void forgetSceneImage()
       storeScene(res, playerStore.language)
       gameStore.syncAugmentation(res.scene_id, res.grants_augmentation)
       saveCarry()
@@ -419,19 +567,27 @@ export function useScene() {
    * Une scène à illustration figée saute l'étape — rien n'est généré, donc
    * rien n'est facturé, et l'image est là immédiatement.
    */
-  function loadSceneImage(res: SceneTextResponse) {
+  async function loadSceneImage(res: SceneTextResponse): Promise<string | null> {
     if (res.static_image) {
       gameStore.setSceneImage(res.static_image)
       gameStore.finishSceneImage()
-      return Promise.resolve(res.static_image)
+      return res.static_image
     }
 
     // Déjà obtenue pour cette scène : ne pas repayer un remontage ou un renvoi.
-    if (gameStore.currentSceneImageUrl) {
-      return Promise.resolve(gameStore.currentSceneImageUrl)
+    if (gameStore.currentSceneImageUrl) return gameStore.currentSceneImageUrl
+
+    // Rechargement de page : l'image de CETTE scène est déjà dans le navigateur.
+    const stamp = sceneStamp(res)
+    gameStore.startSceneImage()
+    const kept = await readSceneImage(stamp, memoryWindowMs)
+    if (kept) {
+      gameStore.setSceneImage(kept)
+      gameStore.finishSceneImage()
+      return kept
     }
 
-    return generateSceneImage({
+    const image = await generateSceneImage({
       sceneId: res.scene_id,
       placeName: res.place.name,
       palette: res.palette,
@@ -439,6 +595,8 @@ export function useScene() {
       // Le lieu vient du plan de la nuit : c'est lui que l'image dessine.
       planned: res.planned,
     })
+    if (image) void storeSceneImage(stamp, image)
+    return image
   }
 
   /** Le flux complet : texte d'abord, image ensuite, sans attendre. */

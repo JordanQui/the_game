@@ -60,7 +60,7 @@ export interface SceneNPC {
       observation?: string
       /** Son pictogramme, déjà reconstruit par le serveur. */
       icon?: string
-    } |sign: { key: string; name: string; element: string; tension: string; resolution: string; adventure: string } | null
+    } | null
     /** L'id d'un interactable `hidden` que cet échange fait exister. */
     reveals_id?: string
   } | null
@@ -361,8 +361,8 @@ export interface SceneTextResponse extends GeneratedScene {
   interface_palette: 'from_scene' | 'fixed'
   /** Empreinte du script ayant produit cette scène. */
   script_fingerprint?: string
-  /** Build ayant servi la scène. Une scène d'un autre build est jetée. */
-  build_id?: string
+  /** Format de la mémoire du navigateur. Une scène d'un autre format est jetée. */
+  memory_format?: number
   /**
    * La langue dans laquelle cette scène a été écrite.
    *
@@ -392,7 +392,7 @@ export interface SceneTextResponse extends GeneratedScene {
 /** Le thème intime du joueur, résolu côté serveur depuis sa date et son nom. */
 export interface PlayerTheme {
   /** Signe, ou null si la date de naissance manque. */
-  sign: { key: string; name: string; element: string; tension: string; resolution: string } | null
+  sign: { key: string; name: string; element: string; tension: string; resolution: string; adventure: string } | null
   /** Nombres indiens et ce qu'ils portent. Chaque facette peut manquer. */
   numbers: {
     drive: string | null
