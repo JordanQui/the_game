@@ -364,7 +364,6 @@
     "game.offered_to_you": "Te tienden {{item}}.",
     "game.received": "{{label}} pasa a tus manos.",
     "game.exit_opens": "La esclusa se abre",
-    "game.continue_adventure": "Continuar la aventura",
     "game.dawn": "Amanece sobre la ciudad...",
     "game.loading_default": "El destino teje su hilo",
     "seo.title": "Far Night — juego de rol textual",
@@ -401,7 +400,13 @@
     "paywall.loading": "Cargando el formulario...",
     "paywall.fallback_quest": "tu aventura",
     "paywall.fallback_artifact": "lo que estás buscando",
-    "paywall.fallback_place": "el mostrador"
+    "paywall.fallback_place": "el mostrador",
+    "payment_success.eyebrow": "Pago confirmado",
+    "payment_success.title": "La esclusa te reconoce",
+    "payment_success.body": "La luz del cerrojo se pone en verde. Tu acceso está abierto para el resto de la noche: ya nada te retiene en la barra.",
+    "payment_success.mission_label": "Tu misión esta noche",
+    "payment_success.ready": "Todo lo que necesitas para cumplirla ya lo llevas encima. Fuera, la lluvia espera tu paso.",
+    "payment_success.cta": "Abrir la esclusa"
   },
   "script": {
     "error_fallbacks": {

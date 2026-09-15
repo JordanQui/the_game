@@ -332,7 +332,6 @@
     "game.offered_to_you": "{{item}} sana uzatılıyor.",
     "game.received": "{{label}} sana veriliyor.",
     "game.exit_opens": "Hava kilidi açılıyor",
-    "game.continue_adventure": "Maceraya devam et",
     "game.dawn": "Şehrin üzerinde gün doğuyor...",
     "game.loading_default": "Kader ipliğini örüyor",
     "seo.title": "Far Night — metin tabanlı rol yapma oyunu",
@@ -369,7 +368,13 @@
     "paywall.loading": "Form yükleniyor...",
     "paywall.fallback_quest": "senin maceran",
     "paywall.fallback_artifact": "aradığın şey",
-    "paywall.fallback_place": "tezgâh"
+    "paywall.fallback_place": "tezgâh",
+    "payment_success.eyebrow": "Ödeme onaylandı",
+    "payment_success.title": "Hava kilidi seni tanıyor",
+    "payment_success.body": "Kilidin ışığı yeşile dönüyor. Erişimin gecenin geri kalanı için açık: artık hiçbir şey seni tezgâhta tutmuyor.",
+    "payment_success.mission_label": "Bu geceki görevin",
+    "payment_success.ready": "Onu tamamlamak için gereken her şey zaten üzerinde. Dışarıda yağmur adımını bekliyor.",
+    "payment_success.cta": "Hava kilidini aç"
   },
   "script": {
     "error_fallbacks": {

@@ -338,7 +338,6 @@
     "game.offered_to_you": "{{item}} протягивают тебе.",
     "game.received": "{{label}} переходит к тебе.",
     "game.exit_opens": "Шлюз открывается",
-    "game.continue_adventure": "Продолжить приключение",
     "game.dawn": "Над городом занимается день...",
     "game.loading_default": "Судьба прядёт свою нить",
     "seo.title": "Far Night — текстовая ролевая игра",
@@ -375,7 +374,13 @@
     "paywall.loading": "Загрузка формы...",
     "paywall.fallback_quest": "твоё приключение",
     "paywall.fallback_artifact": "то, что ты ищешь",
-    "paywall.fallback_place": "стойка"
+    "paywall.fallback_place": "стойка",
+    "payment_success.eyebrow": "Оплата подтверждена",
+    "payment_success.title": "Шлюз узнаёт тебя",
+    "payment_success.body": "Индикатор замка загорается зелёным. Доступ открыт до конца ночи: ничто больше не держит тебя у стойки.",
+    "payment_success.mission_label": "Твоя миссия этой ночью",
+    "payment_success.ready": "Всё, что нужно, чтобы её выполнить, уже при тебе. Снаружи дождь ждёт твоего шага.",
+    "payment_success.cta": "Открыть шлюз"
   },
   "script": {
     "error_fallbacks": {

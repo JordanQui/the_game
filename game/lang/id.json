@@ -318,7 +318,6 @@
     "game.offered_to_you": "{{item}} disodorkan kepadamu.",
     "game.received": "{{label}} diserahkan kepadamu.",
     "game.exit_opens": "Sekat udara terbuka",
-    "game.continue_adventure": "Lanjutkan petualangan",
     "game.dawn": "Hari mulai terang di atas kota...",
     "game.loading_default": "Takdir sedang memintal benangnya",
     "seo.title": "Far Night — permainan peran berbasis teks",
@@ -355,7 +354,13 @@
     "paywall.loading": "Memuat formulir...",
     "paywall.fallback_quest": "petualanganmu",
     "paywall.fallback_artifact": "apa yang kau cari",
-    "paywall.fallback_place": "meja bar"
+    "paywall.fallback_place": "meja bar",
+    "payment_success.eyebrow": "Pembayaran dikonfirmasi",
+    "payment_success.title": "Pintu kedap mengenalimu",
+    "payment_success.body": "Lampu kunci berubah hijau. Aksesmu terbuka untuk sisa malam ini: tak ada lagi yang menahanmu di meja bar.",
+    "payment_success.mission_label": "Misimu malam ini",
+    "payment_success.ready": "Semua yang kamu perlukan untuk menuntaskannya sudah ada padamu. Di luar, hujan menunggu langkahmu.",
+    "payment_success.cta": "Buka pintu kedap"
   },
   "script": {
     "error_fallbacks": {

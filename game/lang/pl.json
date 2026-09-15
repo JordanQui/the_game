@@ -336,7 +336,6 @@
     "game.offered_to_you": "{{item}} zostaje ci podane.",
     "game.received": "{{label}} trafia w twoje ręce.",
     "game.exit_opens": "Śluza się otwiera",
-    "game.continue_adventure": "Kontynuować przygodę",
     "game.dawn": "Nad miastem wstaje dzień...",
     "game.loading_default": "Los przędzie swoją nić",
     "seo.title": "Far Night — tekstowa gra fabularna",
@@ -373,7 +372,13 @@
     "paywall.loading": "Wczytywanie formularza...",
     "paywall.fallback_quest": "twoja przygoda",
     "paywall.fallback_artifact": "to, czego szukasz",
-    "paywall.fallback_place": "kontuar"
+    "paywall.fallback_place": "kontuar",
+    "payment_success.eyebrow": "Płatność potwierdzona",
+    "payment_success.title": "Śluza cię rozpoznaje",
+    "payment_success.body": "Lampka zamka zmienia kolor na zielony. Twój dostęp jest otwarty na resztę nocy: nic już nie trzyma cię przy barze.",
+    "payment_success.mission_label": "Twoja misja tej nocy",
+    "payment_success.ready": "Wszystko, czego potrzeba, by ją wypełnić, masz już przy sobie. Na zewnątrz deszcz czeka na twój krok.",
+    "payment_success.cta": "Otwórz śluzę"
   },
   "script": {
     "error_fallbacks": {

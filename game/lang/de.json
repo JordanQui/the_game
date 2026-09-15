@@ -351,7 +351,6 @@
     "game.offered_to_you": "{{item}} wird dir hingehalten.",
     "game.received": "{{label}} wird dir überreicht.",
     "game.exit_opens": "Die Schleuse öffnet sich",
-    "game.continue_adventure": "Das Abenteuer fortsetzen",
     "game.dawn": "Der Tag bricht über der Stadt an...",
     "game.loading_default": "Das Schicksal spinnt seinen Faden",
     "seo.title": "Far Night — ein Text-Rollenspiel",
@@ -388,7 +387,13 @@
     "paywall.loading": "Formular wird geladen...",
     "paywall.fallback_quest": "dein Abenteuer",
     "paywall.fallback_artifact": "das, was du suchst",
-    "paywall.fallback_place": "der Tresen"
+    "paywall.fallback_place": "der Tresen",
+    "payment_success.eyebrow": "Zahlung bestätigt",
+    "payment_success.title": "Die Schleuse erkennt dich",
+    "payment_success.body": "Das Licht am Riegel springt auf Grün. Dein Zugang steht für den Rest der Nacht offen: Nichts hält dich mehr am Tresen.",
+    "payment_success.mission_label": "Deine Mission heute Nacht",
+    "payment_success.ready": "Alles, was du dafür brauchst, trägst du schon bei dir. Draußen wartet der Regen auf deinen Schritt.",
+    "payment_success.cta": "Schleuse öffnen"
   },
   "script": {
     "error_fallbacks": {

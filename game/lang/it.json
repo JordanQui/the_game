@@ -371,7 +371,6 @@
     "game.offered_to_you": "{{item}} ti viene teso.",
     "game.received": "{{label}} ti viene consegnato.",
     "game.exit_opens": "La paratia si apre",
-    "game.continue_adventure": "Continuare l'avventura",
     "game.dawn": "Il giorno si leva sulla città...",
     "game.loading_default": "Il destino tesse il suo filo",
     "seo.title": "Far Night — gioco di ruolo testuale",
@@ -408,7 +407,13 @@
     "paywall.loading": "Caricamento del modulo...",
     "paywall.fallback_quest": "la tua avventura",
     "paywall.fallback_artifact": "quello che cerchi",
-    "paywall.fallback_place": "il bancone"
+    "paywall.fallback_place": "il bancone",
+    "payment_success.eyebrow": "Pagamento confermato",
+    "payment_success.title": "La camera stagna ti riconosce",
+    "payment_success.body": "La spia della serratura diventa verde. Il tuo accesso è aperto per il resto della notte: niente ti trattiene più al bancone.",
+    "payment_success.mission_label": "La tua missione stanotte",
+    "payment_success.ready": "Tutto ciò che serve per compierla è già con te. Fuori, la pioggia aspetta il tuo passo.",
+    "payment_success.cta": "Apri la camera stagna"
   },
   "script": {
     "error_fallbacks": {

@@ -321,7 +321,6 @@
     "game.offered_to_you": "{{item}} is held out to you.",
     "game.received": "{{label}} is handed to you.",
     "game.exit_opens": "The airlock opens",
-    "game.continue_adventure": "Continue the adventure",
     "game.dawn": "Day is breaking over the city...",
     "game.loading_default": "Fate is weaving its thread",
     "seo.title": "Far Night — a text role-playing game",
@@ -358,7 +357,13 @@
     "paywall.loading": "Loading the form...",
     "paywall.fallback_quest": "your adventure",
     "paywall.fallback_artifact": "what you are looking for",
-    "paywall.fallback_place": "the counter"
+    "paywall.fallback_place": "the counter",
+    "payment_success.eyebrow": "Payment confirmed",
+    "payment_success.title": "The airlock knows you",
+    "payment_success.body": "The lock's light turns green. Your access is open for the rest of the night: nothing keeps you at the counter any longer.",
+    "payment_success.mission_label": "Your mission tonight",
+    "payment_success.ready": "Everything you need to accomplish it is already on you. Outside, the rain is waiting for your step.",
+    "payment_success.cta": "Open the airlock"
   },
   "script": {
     "error_fallbacks": {

@@ -331,7 +331,6 @@
     "game.offered_to_you": "{{item}} wordt je aangereikt.",
     "game.received": "{{label}} wordt je overhandigd.",
     "game.exit_opens": "De sluis gaat open",
-    "game.continue_adventure": "Het avontuur voortzetten",
     "game.dawn": "De dag breekt aan boven de stad...",
     "game.loading_default": "Het lot spint zijn draad",
     "seo.title": "Far Night — een tekstrollenspel",
@@ -368,7 +367,13 @@
     "paywall.loading": "Formulier wordt geladen...",
     "paywall.fallback_quest": "jouw avontuur",
     "paywall.fallback_artifact": "wat je zoekt",
-    "paywall.fallback_place": "de toog"
+    "paywall.fallback_place": "de toog",
+    "payment_success.eyebrow": "Betaling bevestigd",
+    "payment_success.title": "De sluis herkent je",
+    "payment_success.body": "Het lampje van het slot springt op groen. Je toegang staat open voor de rest van de nacht: niets houdt je nog aan de bar.",
+    "payment_success.mission_label": "Je missie vannacht",
+    "payment_success.ready": "Alles wat je nodig hebt om haar te volbrengen draag je al bij je. Buiten wacht de regen op je stap.",
+    "payment_success.cta": "Open de sluis"
   },
   "script": {
     "error_fallbacks": {

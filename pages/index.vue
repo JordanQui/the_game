@@ -1,26 +1,8 @@
 <script setup lang="ts">
-const { t } = useLang()
-
 import { useGameStore } from '~/stores/game'
-import { usePlayerStore } from '~/stores/player'
 import { usePaymentStore } from '~/stores/payment'
-import { useProgression } from '~/composables/useProgression'
 
 const gameStore = useGameStore()
-const playerStore = usePlayerStore()
-
-const progression = useProgression()
-
-/**
- * Après paiement, on ENTRE dans la scène suivante.
- *
- * Le bouton se contentait de réafficher l'écran de jeu, qui gardait la scène
- * courante : on repayait pour revenir au même comptoir, devant le même sas
- * fermé. Le droit d'accès était accordé, mais rien ne l'utilisait.
- */
-function continueAfterPayment() {
-  if (!progression.advance()) gameStore.setScreen('playing')
-}
 const paymentStore = usePaymentStore()
 
 // Un joueur qui a déjà payé reprend sans repasser par le paywall. L'appel ne
@@ -71,18 +53,7 @@ onMounted(async () => {
       <EndingScreen v-else-if="gameStore.currentScreen === 'ending'" key="ending" />
       <LockedScreen v-else-if="gameStore.currentScreen === 'locked'" key="locked" />
       <LoadingScreen v-else-if="gameStore.currentScreen === 'payment_processing'" key="pay" message="Traitement du paiement..." />
-      <div v-else-if="gameStore.currentScreen === 'payment_success'" key="success" class="min-h-[100dvh] flex items-center justify-center text-center px-6">
-        <div class="space-y-6 max-w-sm">
-          <p class="neon-text font-display uppercase text-2xl sm:text-3xl tracking-[0.05em]">
-            {{ t('game.exit_opens') }}
-          </p>
-          <div class="neon-rule w-24 mx-auto" />
-          <p class="text-ink-200/80 text-sm leading-relaxed">
-            {{ playerStore.quest?.title }} ne fait que commencer.
-          </p>
-          <GlowButton @click="continueAfterPayment">{{ t('game.continue_adventure') }}</GlowButton>
-        </div>
-      </div>
+      <PaymentSuccessScreen v-else-if="gameStore.currentScreen === 'payment_success'" key="success" />
       <LoadingScreen v-else key="init" />
     </Transition>
   </div>

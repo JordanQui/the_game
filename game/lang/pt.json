@@ -359,7 +359,6 @@
     "game.offered_to_you": "{{item}} é estendido para você.",
     "game.received": "{{label}} passa para as tuas mãos.",
     "game.exit_opens": "A comporta se abre",
-    "game.continue_adventure": "Continuar a aventura",
     "game.dawn": "O dia nasce sobre a cidade...",
     "game.loading_default": "O destino tece o seu fio",
     "seo.title": "Far Night — RPG de texto",
@@ -396,7 +395,13 @@
     "paywall.loading": "Carregando o formulário...",
     "paywall.fallback_quest": "sua aventura",
     "paywall.fallback_artifact": "o que você procura",
-    "paywall.fallback_place": "o balcão"
+    "paywall.fallback_place": "o balcão",
+    "payment_success.eyebrow": "Pagamento confirmado",
+    "payment_success.title": "A eclusa reconhece-te",
+    "payment_success.body": "A luz da fechadura fica verde. O teu acesso está aberto para o resto da noite: já nada te prende ao balcão.",
+    "payment_success.mission_label": "A tua missão esta noite",
+    "payment_success.ready": "Tudo o que precisas para a cumprir já está contigo. Lá fora, a chuva espera o teu passo.",
+    "payment_success.cta": "Abrir a eclusa"
   },
   "script": {
     "error_fallbacks": {

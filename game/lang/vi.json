@@ -314,7 +314,6 @@
     "game.offered_to_you": "{{item}} được chìa ra cho bạn.",
     "game.received": "{{label}} được trao cho bạn.",
     "game.exit_opens": "Khoang khí mở ra",
-    "game.continue_adventure": "Tiếp tục cuộc phiêu lưu",
     "game.dawn": "Trời hửng sáng trên thành phố...",
     "game.loading_default": "Định mệnh đang se sợi chỉ của nó",
     "seo.title": "Far Night — trò chơi nhập vai bằng chữ",
@@ -351,7 +350,13 @@
     "paywall.loading": "Đang tải biểu mẫu...",
     "paywall.fallback_quest": "cuộc phiêu lưu của bạn",
     "paywall.fallback_artifact": "thứ bạn đang tìm",
-    "paywall.fallback_place": "quầy rượu"
+    "paywall.fallback_place": "quầy rượu",
+    "payment_success.eyebrow": "Thanh toán đã xác nhận",
+    "payment_success.title": "Cửa khoang nhận ra bạn",
+    "payment_success.body": "Đèn khóa chuyển sang xanh. Quyền truy cập của bạn mở cho suốt phần còn lại của đêm: không còn gì giữ bạn ở quầy nữa.",
+    "payment_success.mission_label": "Nhiệm vụ của bạn đêm nay",
+    "payment_success.ready": "Mọi thứ cần để hoàn thành nó đã ở trên người bạn. Bên ngoài, mưa đang chờ bước chân bạn.",
+    "payment_success.cta": "Mở cửa khoang"
   },
   "script": {
     "error_fallbacks": {

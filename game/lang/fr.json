@@ -354,7 +354,6 @@
     "game.offered_to_you": "{{item}} t'est tendu.",
     "game.received": "{{label}} t'est remis.",
     "game.exit_opens": "Le sas s'ouvre",
-    "game.continue_adventure": "Continuer l'aventure",
     "game.dawn": "Le jour se lève sur la ville...",
     "game.loading_default": "Le destin tisse son fil",
     "seo.title": "La Nuit du Bout du Monde — jeu de rôle textuel",
@@ -391,7 +390,13 @@
     "paywall.loading": "Chargement du formulaire...",
     "paywall.fallback_quest": "votre aventure",
     "paywall.fallback_artifact": "ce que vous cherchez",
-    "paywall.fallback_place": "le comptoir"
+    "paywall.fallback_place": "le comptoir",
+    "payment_success.eyebrow": "Paiement confirmé",
+    "payment_success.title": "Le sas te reconnaît",
+    "payment_success.body": "Le voyant du verrou passe au vert. Ton accès est ouvert pour toute la suite de la nuit : plus rien ne te retient au comptoir.",
+    "payment_success.mission_label": "Ta mission cette nuit",
+    "payment_success.ready": "Tout ce qu'il faut pour l'accomplir est déjà sur toi. Dehors, la pluie attend ton pas.",
+    "payment_success.cta": "Ouvrir le sas"
   },
   "script": {}
 }
