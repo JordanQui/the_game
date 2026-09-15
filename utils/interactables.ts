@@ -87,6 +87,12 @@ export function analyzables(scene: {
   interactables?: Interactable[]
 }, lang: LangCode = DEFAULT_LANG, revealed: string[] = []): Analyzable[] {
   const out: Analyzable[] = []
+  // Le nom de l'augmentation, soudé, pour la reconnaître où que le modèle
+  // l'ait recopiée. Il la glissait parfois aussi dans l'objet scellé ou parmi
+  // les ramassables : le filtre de `key_item` ne servait alors à rien, et le
+  // récit la brouillait par une autre porte.
+  const augmentation = scene.grants_augmentation ? bare(scene.key_item?.name ?? '') : ''
+  const isAugmentation = (label: string) => Boolean(augmentation) && bare(label).includes(augmentation)
   // Le même id que celui que `collectKeyItem` lui donnera : déchiffré dans le
   // récit, il reste déchiffré une fois dans l'inventaire.
   if (scene.key_item?.name && !scene.grants_augmentation) {
@@ -96,7 +102,7 @@ export function analyzables(scene: {
       observation: scene.key_item.observation,
     })
   }
-  if (scene.sealed_object?.name) {
+  if (scene.sealed_object?.name && !isAugmentation(scene.sealed_object.name)) {
     out.push({
       id: scene.sealed_object.id,
       label: scene.sealed_object.name,
@@ -104,7 +110,7 @@ export function analyzables(scene: {
     })
   }
   for (const obj of visible(scene.interactables, revealed)) {
-    if (!obj.label || !isTakeable(obj, lang)) continue
+    if (!obj.label || !isTakeable(obj, lang) || isAugmentation(obj.label)) continue
     out.push({ id: obj.id, label: obj.label, observation: obj.observation })
   }
   return out
@@ -117,6 +123,11 @@ export function teaching(
   revealed: string[] = [],
 ): Analyzable[] {
   return analyzables(scene, lang, revealed).filter(o => o.observation?.trim())
+}
+
+/** Le nom sans casse, sans accent, sans espace ni ponctuation : « Lentille Sel-Racine » = « LentilleSelRacine ». */
+function bare(input: string): string {
+  return normalize(input).replace(/[^\p{L}\p{N}]+/gu, '')
 }
 
 /** Le texte réduit à ses mots, ponctuation comprise comme une séparation. */
