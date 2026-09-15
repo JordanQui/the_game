@@ -130,7 +130,7 @@ function retryImage() {
 <template>
   <div
     class="flex flex-col h-[100dvh] bg-ink-900 tool-cursor"
-    :class="gameStore.activeTool === 'eye' ? 'cursor-eye' : 'cursor-lens'"
+    :class="gameStore.activeTool === 'lens' ? 'cursor-lens' : gameStore.eyeActive && 'cursor-eye'"
   >
     <!--
       L'outil en main EST le curseur, sur toute la surface de jeu.
@@ -138,6 +138,8 @@ function retryImage() {
       joueur ne voyait donc pas ce qu'il tenait tant qu'il n'avait pas trouvé
       quelque chose à lire — alors que sur mobile l'oeil est à l'écran en
       permanence. `tool-cursor` rend leur curseur normal aux commandes.
+      L'oeil fermé, pas de curseur-oeil : il ne lirait rien, et c'est le bouton
+      « Ouvrir l'œil » qui dit ce qu'il fait.
     -->
     <!-- Le cadre reste 16/9 sur les deux tailles. Mobile : il prend toute la
          largeur. Desktop : c'est la hauteur qui le dimensionne, et il se centre
@@ -250,7 +252,7 @@ function retryImage() {
       </div>
     </Transition>
 
-    <!-- L'oeil de visée, sur les appareils sans souris -->
+    <!-- Le bouton de l'oeil, et au tactile son réticule -->
     <HackEye />
 
     <!-- Saisie -->

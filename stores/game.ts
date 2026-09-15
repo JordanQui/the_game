@@ -121,7 +121,10 @@ export const useGameStore = defineStore('game', {
     typing: false,
     /** Depuis quand. Sert de filet si un `blur` se perd. */
     typingSince: 0,
-    /** L'oeil gyroscopique est actif. Sur desktop, la souris le remplace. */
+    /**
+     * L'oeil est ouvert. Fermé, aucun nom ne se lit, à la souris comme au doigt :
+     * c'est le bouton « Ouvrir l'œil » qui l'allume, partout.
+     */
     eyeActive: false,
     /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
     eyePos: { x: 0.5, y: 0.25 },

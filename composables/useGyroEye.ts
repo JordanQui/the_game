@@ -1,14 +1,21 @@
 import { useGameStore } from '~/stores/game'
 import { primeContext, unlockAudio } from '~/composables/useNameChime'
 import { upVector, aimFrom } from '~/utils/gyro-aim'
+import { useInputMode } from '~/composables/useInputMode'
 
 /**
- * L'oeil qu'on déplace en inclinant le téléphone.
+ * L'oeil : ce qui l'ouvre, et au tactile ce qui le déplace.
  *
- * Sur desktop, la souris est déjà un instrument de visée : le survol suffit et
- * il n'y a rien à activer. Sur tactile, il n'existe pas de curseur — d'où cet
- * oeil piloté au gyroscope, qu'on promène au-dessus du texte en inclinant
- * l'appareil. C'est la même geste dans les deux cas : viser, puis lire.
+ * IL S'OUVRE PARTOUT, souris comprise. Sur desktop il ne faisait rien à
+ * activer : le curseur était un oeil dès l'arrivée, et les noms se lisaient
+ * avant que le joueur sache ce qu'était l'oeil. Le geste d'ouverture est aussi
+ * celui dont le contexte audio a besoin, sur desktop comme sur mobile.
+ *
+ * Ouvert, la souris vise d'elle-même et il n'y a rien de plus à faire. Au
+ * tactile, il n'existe pas de curseur — d'où cet oeil piloté au gyroscope,
+ * qu'on promène au-dessus du texte en inclinant l'appareil. Laquelle des deux
+ * technologies sert, c'est `useInputMode` qui le dit, et le capteur qui le
+ * confirme : un gyroscope muet rend la main à la souris.
  *
  * iOS exige une permission explicite, demandée sur un geste utilisateur.
  */
@@ -107,6 +114,15 @@ const POSTURE_RISE_SCALE: Record<string, number> = {
 /** Lissage : le gyroscope est bruité, un oeil qui tremble est illisible. */
 const SMOOTHING = 0.18
 
+/**
+ * Délai au-delà duquel un capteur muet est un capteur absent.
+ *
+ * `DeviceOrientationEvent` existe sur tous les navigateurs de bureau, qui n'ont
+ * rien derrière : sa présence ne prouve rien, seule une mesure le fait. Android
+ * met quelques centaines de millisecondes à livrer la première.
+ */
+const SENSOR_TIMEOUT_MS = 1500
+
 type OrientationEventCtor = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<'granted' | 'denied'>
 }
@@ -117,14 +133,17 @@ export function useGyroEye() {
   const supported = computed(() =>
     import.meta.client && typeof window.DeviceOrientationEvent !== 'undefined')
 
-  /** Vrai sur un appareil sans survol : c'est là que l'oeil sert. */
-  const needsEye = computed(() =>
-    import.meta.client && !window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  const input = useInputMode()
 
   const enabled = ref(false)
   const denied = ref(false)
+  /** Ni capteur qui parle, ni souris pour le remplacer. */
+  const unavailable = ref(false)
 
   let raf: number | null = null
+  /** Une mesure réelle est arrivée depuis l'ouverture. */
+  let sensed = false
+  let watchdog: ReturnType<typeof setTimeout> | null = null
   let target = { x: 0.5, y: POSTURE_NEUTRAL_Y[gameStore.posture] ?? 0.05 }
 
   /**
@@ -139,6 +158,7 @@ export function useGyroEye() {
   function onOrientation(event: DeviceOrientationEvent) {
     const { beta, gamma } = event
     if (beta === null || gamma === null) return
+    sensed = true
 
     const posture = gameStore.posture
     target = aimFrom(
@@ -289,7 +309,8 @@ export function useGyroEye() {
     primeContext()
     void unlockAudio()
 
-    if (!supported.value) return false
+    if (!input.usesTouch.value) return openWithMouse()
+    if (!supported.value) return fallBack()
 
     const ctor = window.DeviceOrientationEvent as OrientationEventCtor
     if (typeof ctor.requestPermission === 'function') {
@@ -304,19 +325,49 @@ export function useGyroEye() {
       }
     }
 
+    input.lock()
+    unavailable.value = false
+    sensed = false
     window.addEventListener('deviceorientation', onOrientation, true)
     enabled.value = true
     gameStore.setEyeActive(true)
     raf = requestAnimationFrame(loop)
+    watchdog = setTimeout(() => {
+      watchdog = null
+      if (sensed) return
+      disable()
+      fallBack()
+    }, SENSOR_TIMEOUT_MS)
     return true
+  }
+
+  /** La souris vise d'elle-même : ouvrir l'oeil, c'est lui donner la main. */
+  function openWithMouse(): boolean {
+    input.lock()
+    unavailable.value = false
+    enabled.value = true
+    gameStore.setEyeActive(true)
+    return true
+  }
+
+  /** Pas de gyroscope. S'il y a une souris quelque part, c'est elle qui vise. */
+  function fallBack(): boolean {
+    if (input.hasMouse()) {
+      input.force('mouse')
+      return openWithMouse()
+    }
+    unavailable.value = true
+    return false
   }
 
   function disable() {
     if (import.meta.client) window.removeEventListener('deviceorientation', onOrientation, true)
+    if (watchdog) { clearTimeout(watchdog); watchdog = null }
     if (raf) { cancelAnimationFrame(raf); raf = null }
     enabled.value = false
     gameStore.setEyeActive(false)
     gameStore.setRevealing(null)
+    input.unlock()
   }
 
   // La posture est relue à chaque mesure : en changer prend effet à la frame
@@ -324,5 +375,5 @@ export function useGyroEye() {
 
   onUnmounted(disable)
 
-  return { supported, needsEye, enabled, denied, enable, disable }
+  return { usesTouch: input.usesTouch, enabled, denied, unavailable, enable, disable }
 }

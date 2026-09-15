@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { useGameStore } from '~/stores/game'
+import { usePlayerStore } from '~/stores/player'
 import { useGyroEye } from '~/composables/useGyroEye'
 
 /**
- * L'oeil de visée tactile.
+ * Le bouton de l'oeil, et au tactile son réticule.
  *
- * Ne s'affiche que sur les appareils sans survol : sur desktop, la souris fait
- * déjà ce travail et un oeil de plus serait un doublon encombrant.
+ * Le bouton et sa fenêtre sont les mêmes partout : tant qu'on ne l'a pas
+ * ouvert, l'oeil ne lit rien, à la souris comme au doigt. Une fois ouvert, le
+ * réticule n'existe qu'au tactile — sur desktop, c'est le curseur qui prend la
+ * forme de l'oeil, et un second oeil à l'écran serait un doublon.
  */
 const gameStore = useGameStore()
-const { needsEye, supported, enabled, denied, enable } = useGyroEye()
+const playerStore = usePlayerStore()
+const { usesTouch, enabled, denied, unavailable, enable } = useGyroEye()
 
 /**
  * On dit d'abord ce que le bouton allume, on l'ouvre ensuite.
@@ -32,14 +36,15 @@ const style = computed(() => ({
 </script>
 
 <template>
-  <div v-if="needsEye">
+  <div>
     <EyePrimer
       v-if="showPrimer"
       @confirm="confirmPrimer"
       @close="showPrimer = false"
     />
 
-    <!-- Avant activation : le bouton de permission, exigé par iOS. -->
+    <!-- Avant activation : le bouton, partout. Au tactile, c'est aussi le geste
+         que la permission d'iOS exige. -->
     <button
       v-if="!enabled"
       class="fixed top-3 left-3 z-40 flex items-center gap-2 px-3 py-2
@@ -51,12 +56,12 @@ const style = computed(() => ({
         <path d="M1 8s4-6.5 11-6.5S23 8 23 8s-4 6.5-11 6.5S1 8 1 8Z" />
         <circle cx="12" cy="8" r="3.4" />
       </svg>
-      {{ denied ? 'Accès refusé' : supported ? 'Ouvrir l\'œil' : 'Indisponible' }}
+      {{ denied ? 'Accès refusé' : unavailable ? 'Indisponible' : playerStore.scene?.eye_primer?.cta ?? 'Ouvrir l\'œil' }}
     </button>
 
-    <!-- Actif : l'oeil suit l'inclinaison de l'appareil. -->
+    <!-- Actif, au tactile : l'oeil suit l'inclinaison de l'appareil. -->
     <div
-      v-else
+      v-else-if="usesTouch"
       class="eye pointer-events-none fixed z-40"
       :class="gameStore.revealing && 'is-locked-on'"
       :style="style"

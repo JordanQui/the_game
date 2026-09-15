@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useInputMode } from '~/composables/useInputMode'
+
 /**
  * Le bandeau qui demande de confirmer qu'on prend un objet.
  *
@@ -32,10 +34,9 @@ defineEmits<{ confirm: [] }>()
 
 /**
  * Vrai sur un appareil sans survol. Même test que la fenêtre de l'augmentation :
- * ce n'est pas la largeur qui décide, c'est le doigt.
+ * ce n'est pas la largeur qui décide, c'est le doigt — voir `useInputMode`.
  */
-const usesTouch = computed(() =>
-  import.meta.client && !window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+const { usesTouch } = useInputMode()
 </script>
 
 <template>

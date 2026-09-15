@@ -70,8 +70,11 @@ watch(revealed, (isRevealed, wasRevealed) => {
 
 onUnmounted(() => { if (revealed.value) stopChime(props.name) })
 
-/** Sur desktop, la souris EST l'instrument : aucun mode à activer. */
+/** Sur desktop, la souris EST l'instrument — une fois l'oeil ouvert. */
 function onEnter() {
+  // Oeil fermé, rien ne se lit : c'est le bouton qui l'ouvre, sur desktop
+  // comme sur mobile.
+  if (!gameStore.eyeActive) return
   // Un nom déjà en clair n'a rien à révéler : l'effacement du reste du texte
   // serait une punition sans contrepartie.
   if (known.value) return
@@ -108,7 +111,8 @@ function onTouch() {
     :class="[
       known
         ? 'is-known'
-        : gameStore.activeTool === 'eye' ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : 'cursor-lens',
+        : gameStore.activeTool === 'lens' ? 'cursor-lens'
+          : gameStore.eyeActive ? (revealed ? 'cursor-eye-open' : 'cursor-eye') : null,
       revealed && 'is-revealed',
     ]"
     :data-glitch-name="known ? undefined : name"

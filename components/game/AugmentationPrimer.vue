@@ -2,6 +2,7 @@
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
 import { interpolate } from '~/utils/prompt-builder'
+import { useInputMode } from '~/composables/useInputMode'
 
 /**
  * La fenêtre qui présente l'augmentation, au premier passage à la loupe.
@@ -29,8 +30,7 @@ const gameStore = useGameStore()
 const primer = computed(() => playerStore.scene?.augmentation_primer ?? null)
 
 /** Vrai sur un appareil sans survol : c'est l'oeil gyroscopique qui vise. */
-const usesGyro = computed(() =>
-  import.meta.client && !window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+const { usesTouch: usesGyro } = useInputMode()
 
 const story = computed(() => {
   const p = primer.value

@@ -9,10 +9,10 @@ import { usePlayerStore } from '~/stores/player'
  * lecture des noms, et le son qui va avec. Son texte est donc FIXE — écrit
  * dans `defaults.eye_primer` —, jamais généré avec la scène.
  *
- * SUR IOS, LE GYROSCOPE N'ÉMET RIEN AVANT LA PERMISSION, et cette fenêtre est
- * précisément ce qui la précède. L'icône se pilote donc au capteur quand il
- * parle déjà — Android, iOS déjà autorisé — et dérive d'elle-même sinon. Dans
- * les deux cas elle dit la même chose : ça se déplace en inclinant.
+ * Elle s'ouvre à la souris comme au doigt, et l'icône suit ce qui visera :
+ * la souris sur desktop, le capteur au tactile. SUR IOS, LE GYROSCOPE N'ÉMET
+ * RIEN AVANT LA PERMISSION, et cette fenêtre est précisément ce qui la précède :
+ * l'icône dérive donc d'elle-même tant que rien ne parle.
  */
 const emit = defineEmits<{ confirm: []; close: [] }>()
 
@@ -50,6 +50,13 @@ function onOrientation(e: DeviceOrientationEvent) {
   }
 }
 
+/** À la souris, l'icône suit le curseur, ramené à l'échelle du carré. */
+function onPointer(e: PointerEvent) {
+  if (e.pointerType !== 'mouse') return
+  live.value = true
+  pos.value = { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight }
+}
+
 function drift() {
   if (!live.value) {
     phase += 0.018
@@ -62,10 +69,12 @@ function drift() {
 
 onMounted(() => {
   window.addEventListener('deviceorientation', onOrientation, true)
+  window.addEventListener('pointermove', onPointer, { passive: true })
   raf = requestAnimationFrame(drift)
 })
 onUnmounted(() => {
   window.removeEventListener('deviceorientation', onOrientation, true)
+  window.removeEventListener('pointermove', onPointer)
   if (raf) cancelAnimationFrame(raf)
 })
 
