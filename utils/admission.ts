@@ -75,7 +75,7 @@ export interface AdmissionForm {
   passions: string[]
   /** Un morceau qui compte. Le titre suffit. */
   anthemTitle: string
-  /** Qui le joue. Facultatif : le titre seul porte déjà genre et époque. */
+  /** Son artiste. Facultatif : le titre seul porte déjà genre et époque. */
   anthemArtist: string
   /** Deux lignes libres, facultatives. */
   turningPoints: string[]
