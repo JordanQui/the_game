@@ -2,6 +2,7 @@
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
 import { emptyAdmissionForm, profileFromAdmission } from '~/utils/admission'
+import { rememberedAdmission, storeAdmission, forgetAdmission } from '~/composables/useScene'
 import type { UserAgreement } from '~/types/user'
 import type { LangCode } from '~/types/i18n'
 
@@ -123,6 +124,64 @@ function enterCity() {
 function cancel() {
   gameStore.setScreen('login')
 }
+
+/**
+ * Les réponses déjà données reviennent dans le formulaire.
+ *
+ * Après le montage : la mémoire du navigateur n'existe pas au rendu serveur. La
+ * langue reste celle qu'on vient de choisir — l'accueil a pu la changer depuis.
+ */
+onMounted(() => {
+  const kept = rememberedAdmission()
+  if (kept) {
+    const empty = emptyAdmissionForm(lang.value)
+    Object.assign(form, empty, kept.form, {
+      language: lang.value,
+      passions: empty.passions.map((_, i) => kept.form.passions?.[i] ?? ''),
+      turningPoints: empty.turningPoints.map((_, i) => kept.form.turningPoints?.[i] ?? ''),
+    })
+    step.value = Math.min(Math.max(kept.step ?? 0, 0), STEPS.value.length - 1)
+  }
+
+  // Écrit à chaque frappe. Un formulaire encore vierge ne laisse aucune trace.
+  watch([form, step], () => {
+    if (isBlank()) forgetAdmission()
+    else storeAdmission(form, step.value)
+  }, { deep: true })
+})
+
+/** Rien n'a été écrit. L'accord et la langue sont des réglages, pas des réponses. */
+function isBlank(): boolean {
+  const { language: _l, agreement: _a, passions, turningPoints, ...texts } = form
+  return [...Object.values(texts), ...passions, ...turningPoints]
+    .every(v => !String(v).trim())
+}
+
+const hasAnswers = computed(() => !isBlank())
+
+/**
+ * Effacer ses réponses : le geste d'oubli annoncé par l'avertissement.
+ *
+ * En deux temps : vingt lignes tapées ne doivent pas disparaître d'un clic
+ * égaré. La confirmation retombe d'elle-même.
+ */
+const confirmingClear = ref(false)
+let clearTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearAnswers() {
+  if (!confirmingClear.value) {
+    confirmingClear.value = true
+    clearTimer = setTimeout(() => { confirmingClear.value = false }, 4000)
+    return
+  }
+  if (clearTimer) clearTimeout(clearTimer)
+  confirmingClear.value = false
+  Object.assign(form, emptyAdmissionForm(lang.value))
+  step.value = 0
+  forgetAdmission()
+}
+
+onUnmounted(() => { if (clearTimer) clearTimeout(clearTimer) })
 
 /**
  * Numéro de dossier. Dérivé du nom, jamais tiré au hasard : deux affichages du
@@ -404,6 +463,17 @@ const displayCity = computed(() => form.currentCity.trim() || t('admission.somew
           <p v-if="step === 0 && !canAdvance" class="relative field-hint text-center">
             {{ t('admission.required_hint') }}
           </p>
+
+          <div v-if="hasAnswers" class="relative text-center">
+            <button
+              type="button"
+              class="font-display text-[10px] uppercase tracking-[0.28em] transition-colors py-1"
+              :class="confirmingClear ? 'text-neon-400' : 'text-steel-500 hover:text-ink-200'"
+              @click="clearAnswers"
+            >
+              {{ confirmingClear ? t('admission.clear_confirm') : t('admission.clear') }}
+            </button>
+          </div>
         </div>
       </template>
 

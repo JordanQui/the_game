@@ -2,6 +2,7 @@ import type { SceneTextResponse } from '~/types/scene'
 import type { LangCode } from '~/types/i18n'
 import type { UserProfile } from '~/types/user'
 import type { JournalEntry, CarriedItem } from '~/utils/journal'
+import type { AdmissionForm } from '~/utils/admission'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useImageGen } from '~/composables/useImageGen'
@@ -335,6 +336,55 @@ function readStoredCarry(): Carry | null {
  */
 export function rememberedProfile(): UserProfile | null {
   return readStoredCarry()?.profile ?? null
+}
+
+/**
+ * Les réponses au formulaire d'admission, telles que le joueur les a tapées.
+ *
+ * Le profil ne suffit pas à les rendre : il est déjà converti, nettoyé,
+ * complété de ce qu'on en déduit. Rouvrir le formulaire le rendait donc vide,
+ * et corriger une ligne demandait de retaper les vingt autres.
+ *
+ * À PART de la partie : `forgetRun` passe à chaque entrée dans le formulaire,
+ * à la démo et à chaque nouvelle nuit — c'est justement là qu'on a besoin de
+ * retrouver ses réponses. Elles s'effacent par le bouton du formulaire, avec
+ * les données du site, ou d'elles-mêmes passé la fenêtre.
+ */
+const ADMISSION_KEY = 'tg_admission'
+
+export interface KeptAdmission {
+  form: AdmissionForm
+  /** L'étape où le joueur s'était arrêté. */
+  step: number
+  saved_at: number
+}
+
+export function rememberedAdmission(): KeptAdmission | null {
+  try {
+    const raw = memory()?.getItem(ADMISSION_KEY)
+    if (!raw) return null
+    const kept = JSON.parse(raw) as KeptAdmission
+    if (!kept?.form || Date.now() - kept.saved_at > memoryDays() * 86_400_000) {
+      forgetAdmission()
+      return null
+    }
+    return kept
+  } catch {
+    return null
+  }
+}
+
+export function storeAdmission(form: AdmissionForm, step: number): void {
+  try {
+    const kept: KeptAdmission = { form, step, saved_at: Date.now() }
+    memory()?.setItem(ADMISSION_KEY, JSON.stringify(kept))
+  } catch {
+    // Stockage plein ou refusé : le joueur retapera, c'est tout.
+  }
+}
+
+export function forgetAdmission(): void {
+  try { memory()?.removeItem(ADMISSION_KEY) } catch { /* sans conséquence */ }
 }
 
 /** Oublie la scène en cours : son texte, ce qui s'y est joué, son image. */
