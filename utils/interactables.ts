@@ -88,9 +88,9 @@ export function analyzables(scene: {
 }, lang: LangCode = DEFAULT_LANG, revealed: string[] = []): Analyzable[] {
   const out: Analyzable[] = []
   // Le nom de l'augmentation, soudé, pour la reconnaître où que le modèle
-  // l'ait recopiée. Il la glissait parfois aussi dans l'objet scellé ou parmi
-  // les ramassables : le filtre de `key_item` ne servait alors à rien, et le
-  // récit la brouillait par une autre porte.
+  // l'ait recopiée. S'il la glisse aussi dans l'objet scellé ou parmi les
+  // ramassables, le filtre de `key_item` ne sert à rien : le récit la
+  // brouillerait par une autre porte.
   const augmentation = scene.grants_augmentation ? bare(scene.key_item?.name ?? '') : ''
   const isAugmentation = (label: string) => Boolean(augmentation) && bare(label).includes(augmentation)
   // Le même id que celui que `collectKeyItem` lui donnera : déchiffré dans le
