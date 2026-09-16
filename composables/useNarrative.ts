@@ -423,6 +423,18 @@ export function useNarrative() {
       gameStore.recordKeyItemExchange()
     }
 
+    // Le détenteur ouvre la piste lui-même. Sans ça, un joueur qui trouvait la
+    // bonne personne SANS passer par l'informateur restait collé à elle —
+    // `interlocutor` maintient l'interlocuteur actif — et aucun de ces tours ne
+    // comptait : il se faisait esquiver jusqu'à la fermeture, au tour 10.
+    // APRÈS l'incrément ci-dessus, jamais avant : le premier échange reste une
+    // esquive, le deuxième porte `hook_story` et la condition, le troisième
+    // remet l'objet. Trouver seul le porteur est la moitié difficile de
+    // l'énigme ; l'informateur reste le raccourci pour qui ne le trouve pas.
+    if (npc && item && npc.id === item.npc_id && !gameStore.informedAboutItem) {
+      gameStore.markInformedAboutItem()
+    }
+
     gameStore.recordModelTurn()
     const text = await streamTurn(input, npc, mode)
     if (!text) return
