@@ -2,7 +2,8 @@
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
 import { useProgression } from '~/composables/useProgression'
-import { forgetRun, rememberedProfile } from '~/composables/useScene'
+import { forgetAdmission, forgetRun, rememberedProfile } from '~/composables/useScene'
+import { forgetSceneImage } from '~/utils/scene-image-memory'
 import type { UserProfile } from '~/types/user'
 import type { LangCode } from '~/types/i18n'
 
@@ -154,6 +155,25 @@ function goOutAgain() {
    */
   playerStore.setProfile({ ...dossier, language: lang.value })
   gameStore.setScreen('scene_build_loading')
+}
+
+/**
+ * Vider la mémoire du jeu, pendant les phases de test.
+ *
+ * Plus radical que « repartir de zéro » : les cookies signés partent aussi —
+ * quota, accès payé, verrou, position. Ils sont `httpOnly`, seul le serveur
+ * peut les effacer. La langue reste. Même garde que la levée du verrou : le
+ * bouton n'est pas rendu quand `lockOverride` est fermé.
+ */
+const canForget = import.meta.dev || useRuntimeConfig().public.lockOverride
+
+async function forgetEverything() {
+  if (!window.confirm(t('login.dev_forget') + ' ?')) return
+  await $fetch('/api/dev/forget', { method: 'POST' }).catch(() => null)
+  forgetRun()
+  forgetAdmission()
+  await forgetSceneImage()
+  window.location.reload()
 }
 
 function openDisclaimer() {
@@ -343,6 +363,16 @@ function acceptAndEnroll() {
         </select>
       </label>
     </div>
+
+    <!-- Test uniquement : vide cookies, mémoire locale et image gardée -->
+    <button
+      v-if="canForget"
+      class="absolute bottom-3 right-3 z-30 font-display text-[9px] uppercase tracking-[0.2em]
+             text-steel-500/50 hover:text-steel-400 transition-colors p-2"
+      @click="forgetEverything"
+    >
+      {{ t('login.dev_forget') }}
+    </button>
 
     <!-- Balayage cathodique, tout au-dessus -->
     <div class="crt-scanlines absolute inset-0 z-20 pointer-events-none opacity-45" />

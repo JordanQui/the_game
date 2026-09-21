@@ -292,6 +292,18 @@ export function clearLock(event: H3Event, limits: LimitsConfig): void {
 }
 
 /**
+ * Oublie tout ce que le serveur a confié au navigateur : quota, accès payé,
+ * verrou, position. Réservé au développement et aux phases de test — c'est le
+ * bouton « vider la mémoire » de l'accueil. La langue reste : c'est un réglage,
+ * pas une partie.
+ */
+export function forgetEverything(event: H3Event): void {
+  for (const name of [COOKIE, ACCESS_COOKIE, LOCK_COOKIE, POSITION_COOKIE]) {
+    deleteCookie(event, name, { path: '/' })
+  }
+}
+
+/**
  * Referme la scène en cours : le game over.
  *
  * Un seul chemin, deux appelants — le client au moment où la nuit se referme à
