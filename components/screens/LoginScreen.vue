@@ -271,7 +271,7 @@ function acceptAndEnroll() {
 
       <!--
         La nuit en cours. En tête et en pleine largeur : pour qui revient, c'est
-        la seule action qui compte — les deux entrées ci-dessous recommencent.
+        la seule action qui compte — l'entrée ci-dessous recommence.
       -->
       <div v-if="resumeScene" class="w-full space-y-4 flex flex-col items-center">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
@@ -296,15 +296,21 @@ function acceptAndEnroll() {
         formulaire : on annonce ce qu'on a retenu, on nomme le dossier, et on
         ouvre la porte. Le formulaire reste accessible dessous, pour qui veut
         repartir sous une autre identité.
+
+        Quand une nuit est en cours, « Continuer » suffit : deux boutons pleine
+        largeur l'un sous l'autre se lisaient comme le même geste. Il ne reste
+        alors ici que l'entrée vers un nouveau dossier.
       -->
       <div v-if="knownDossier" class="w-full space-y-4 flex flex-col items-center">
-        <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
-          {{ t('login.dossier_known') }}
-        </p>
-        <GlowButton class="w-full" @click="goOutAgain">{{ t('login.dossier_cta') }}</GlowButton>
-        <p class="text-ink-200/70 text-[11px] leading-relaxed">
-          {{ t('login.dossier_named', { name: rememberedName ?? '' }) }}
-        </p>
+        <template v-if="!resumeScene">
+          <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.35em] font-display">
+            {{ t('login.dossier_known') }}
+          </p>
+          <GlowButton class="w-full" @click="goOutAgain">{{ t('login.dossier_cta') }}</GlowButton>
+          <p class="text-ink-200/70 text-[11px] leading-relaxed">
+            {{ t('login.dossier_named', { name: rememberedName ?? '' }) }}
+          </p>
+        </template>
         <button
           class="font-display text-[10px] uppercase tracking-[0.28em] text-steel-400
                  hover:text-ink-200 transition-colors pt-1"
