@@ -59,6 +59,10 @@ function onSolved() {
     playerStore.scene, gameStore.inventory, target.id,
     playerStore.language, gameStore.revealedInteractableIds)
   if (observation) gameStore.addNarrativeEntry('narration', observation)
+  // Un objet porté qui tient un morceau de l'énigme d'ici le livre à la même
+  // lecture : le déchiffrer, c'est enfin pouvoir le regarder.
+  const carriedClue = playerStore.scene?.puzzle?.clues.find(c => c.item_id === target.id)?.text
+  if (carriedClue) gameStore.addNarrativeEntry('narration', carriedClue)
 
   // LÀ OÙ L'OBJET N'EST SUR PERSONNE, LE LIRE L'OUVRE. Une fréquence affichée
   // par un terminal, un code gravé sur une plaque : il n'y a rien à recevoir

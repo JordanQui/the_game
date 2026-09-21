@@ -111,6 +111,8 @@ export default defineEventHandler(async () => {
       { id: 'locks', title: 'Cartes et serrures', ...note(d.locks) },
       { id: 'game_over', title: 'La fermeture', ...note(d.game_over) },
       { id: 'deep_theme', title: 'Le thème profond', ...note(d.deep_theme) },
+      { id: 'touchstones', title: 'Le moment, le film, l\'animal', ...note(d.touchstones) },
+      { id: 'touchstones_ending', title: 'Les trois repères à l\'aube', note: '', instruction: d.touchstones.ending },
       { id: 'continuity', title: 'La continuité entre scènes', note: d.continuity.note ?? '', instruction: d.continuity.prompt },
     ],
   }

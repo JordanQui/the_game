@@ -29,39 +29,16 @@
 
   "trajectory": {
     "turning_points": [
-      "A quitté une ville portuaire de l'ouest pour une ville de fleuves à l'intérieur des terres",
-      "A abandonné l'étude du passé pour la fabrication d'images",
-      "Dirige aujourd'hui un atelier après avoir été exécutante pendant quatre ans"
+      "A lâché l'étude du passé pour la fabrication d'images",
+      "A quitté Saint-Malo pour Lyon"
     ]
   },
 
-  "passions": [
-    {
-      "theme": "cartographie et vieux livres",
-      "intensity": "high",
-      "evidence": ["Cartes anciennes", "Bibliothèque nationale de France", "Atlas Maior"]
-    },
-    {
-      "theme": "musique folk et instruments à cordes",
-      "intensity": "high",
-      "evidence": ["Fleet Foxes", "Alela Diane", "luthiers"]
-    },
-    {
-      "theme": "voile et navigation",
-      "intensity": "medium",
-      "evidence": ["Route du Rhum", "Éric Tabarly", "Vieux gréements"]
-    },
-    {
-      "theme": "cuisine fermentée",
-      "intensity": "medium",
-      "evidence": ["Pain au levain", "Miso", "Noma"]
-    },
-    {
-      "theme": "jeux de rôle sur table",
-      "intensity": "low",
-      "evidence": ["Donjons & Dragons"]
-    }
-  ],
+  "touchstones": {
+    "moment": "le port à marée basse avec mon père, six heures du matin, le thermos de café entre nous",
+    "fear_film": "Shining",
+    "animal": "le goéland"
+  },
 
   "anthem": {
     "title": "Blue Ridge Mountains",

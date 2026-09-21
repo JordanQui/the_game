@@ -1,5 +1,5 @@
 import type { DecorElement, Interactable, ScenePuzzle, PuzzleKind, PuzzleClue } from '~/types/scene'
-import type { CarriedItem } from '~/utils/journal'
+import type { CarriedItem, JournalEntry } from '~/utils/journal'
 import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { pack, translate } from '~/utils/languages'
@@ -101,6 +101,41 @@ function spread(texts: string[], surfaces: Surface[], rand: () => number): Puzzl
   return texts.map((text, i) => ({ on: order[i % order.length]!.label, text }))
 }
 
+/**
+ * Un morceau de l'énigme voyage dans la poche du joueur.
+ *
+ * Dans Zork, on ramassait tout parce que tout pouvait servir dix pièces plus
+ * loin. Ici, un indice de CE lieu est posé sur un objet ramassé AVANT —
+ * un objet qui éclaire, jamais une carte ni un objet d'échange : le premier
+ * n'a rien à voir avec une inscription, le second peut quitter la poche au
+ * premier troc, et l'énigme deviendrait insoluble.
+ *
+ * LE TIRAGE PART DE CE QU'IL PORTE VRAIMENT, et c'est ce qui évite l'impasse
+ * des vieux jeux : on ne revient pas en arrière ici, alors l'énigme ne réclame
+ * jamais un objet qu'il n'a pas ramassé. Sans objet qui éclaire, l'indice
+ * reste dans le lieu, comme avant.
+ *
+ * Le plus récent est évité quand il y a le choix : c'est la distance qui fait
+ * le plaisir du rapprochement.
+ */
+function carryOne(
+  clues: PuzzleClue[],
+  carried: CarriedItem[] | undefined,
+  rand: () => number,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+): PuzzleClue[] {
+  const lore = (carried ?? []).filter(c => c.kind === 'lore' && c.label)
+  if (!lore.length || !clues.length) return clues
+  const pool = lore.length > 1 ? lore.slice(0, -1) : lore
+  const holder = pool[Math.floor(rand() * pool.length)]!
+  const at = Math.floor(rand() * clues.length)
+  return clues.map((c, i) => i !== at ? c : {
+    on: holder.label,
+    item_id: holder.id,
+    text: t('carried_mark', { clue: c.text }),
+  })
+}
+
 export interface PuzzleSource {
   scene_id: string
   scene_text: string
@@ -120,7 +155,7 @@ export interface PuzzleSource {
 export function drawPuzzle(
   kind: PuzzleKind | undefined,
   scene: PuzzleSource,
-  opts: { lang?: LangCode; carried?: CarriedItem[] } = {},
+  opts: { lang?: LangCode; carried?: CarriedItem[]; journal?: JournalEntry[] } = {},
 ): ScenePuzzle | null {
   if (!kind) return null
   const lang = opts.lang ?? DEFAULT_LANG
@@ -149,11 +184,11 @@ export function drawPuzzle(
         solution,
         min: 10,
         max: 99,
-        clues: spread([
+        clues: carryOne(spread([
           t('freq_range', { lo, hi }),
           t(even ? 'freq_even' : 'freq_odd'),
           t('freq_sum', { sum }),
-        ], surfaces, rand),
+        ], surfaces, rand), opts.carried, rand, t),
       }
     }
     return null
@@ -174,11 +209,11 @@ export function drawPuzzle(
     return {
       kind,
       solution: `${pad(first)}${pad(second)}`,
-      clues: spread([
+      clues: carryOne(spread([
         t('code_fragment', { digits: pad(a) }),
         t('code_fragment', { digits: pad(b) }),
         t(lowFirst ? 'code_order_low' : 'code_order_high'),
-      ], surfaces, rand),
+      ], surfaces, rand), opts.carried, rand, t),
     }
   }
 
@@ -196,7 +231,7 @@ export function drawPuzzle(
       kind,
       steps: display.map(i => steps[i]!),
       solution: steps.map((_, i) => display.indexOf(i)),
-      clues: spread(shuffle(clues, rand), surfaces, rand),
+      clues: carryOne(spread(shuffle(clues, rand), surfaces, rand), opts.carried, rand, t),
     }
   }
 
@@ -211,11 +246,19 @@ export function drawPuzzle(
     if (cards.length < 2) return null
     const card = cards[Math.floor(rand() * cards.length)]!
     const focal = surfaces.find(s => s.id === 'decor:focal') ?? surfaces[0]!
+    // LE LECTEUR DÉCRIT, IL NE NOMME PAS. Ce que le joueur a vu dominer ce
+    // lieu-là, s'il reste au journal ; sinon le nom du lieu, comme avant. Le
+    // rapprochement, c'est à lui de le faire : le jeu ne se souvient pas à sa
+    // place de l'endroit où il a pris quoi.
+    const seen = opts.journal?.find(e => e.place_name === card.from)?.focal
     return {
       kind,
       card_id: card.id,
       place: card.from!,
-      clues: [{ on: focal.label, text: t('lock_clue', { place: card.from! }) }],
+      clues: [{
+        on: focal.label,
+        text: seen ? t('lock_clue_recall', { focal: seen }) : t('lock_clue', { place: card.from! }),
+      }],
     }
   }
 

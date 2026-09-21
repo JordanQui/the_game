@@ -111,7 +111,7 @@ function fit(hex: string, band: { min: number; max: number }, satMin: number, sa
 
 /**
  * Teinte de l'accent. Conservée quand elle porte du sens — elle vient de la
- * passion du joueur. Remplacée seulement si la couleur d'origine est grise,
+ * lumière du moment auquel le joueur tient. Remplacée seulement si la couleur d'origine est grise,
  * auquel cas on prend la teinte la plus éloignée des deux autres.
  */
 function accentHue(original: string, dominant: string, secondary: string): number {

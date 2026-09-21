@@ -75,31 +75,37 @@ export function describeUser(user: UserProfile): string {
     lines.push(`Tournants de vie :\n${user.trajectory.turning_points.map(t => `  - ${t}`).join('\n')}`)
   }
 
-  if (user.passions.length) {
+  // Les trois repères. Ce qu'ils font dans la nuit est écrit une fois, dans
+  // `defaults.touchstones` ; ici ne voyage que l'interdit propre à chacun, collé
+  // à la donnée comme pour le morceau — c'est là qu'il tient le mieux.
+  const marks = user.touchstones
+  if (marks?.moment) lines.push(`Un moment auquel il tient : ${marks.moment}`)
+  if (marks?.fear_film) {
     lines.push(
-      `Passions (par intensité) :\n${user.passions
-        .map(p => `  - [${p.intensity}] ${p.theme}${p.evidence.length ? ` (${p.evidence.join(', ')})` : ''}`)
-        .join('\n')}`
-    )
+      `Le film qui lui a fait le plus peur : « ${marks.fear_film} » — n'en cite jamais le titre, `
+      + `ni un personnage, ni une réplique, ni une scène connue. N'en garde que la MANIÈRE dont il fait peur.`)
   }
+  if (marks?.animal) lines.push(`Son animal préféré : ${marks.animal}`)
 
   const imprints = user.imprints
   if (imprints?.keepsake) lines.push(`Objet auquel il tient : ${imprints.keepsake}`)
   if (imprints?.refuge) lines.push(`Où il va quand ça ne va pas : ${imprints.refuge}`)
   if (imprints?.ally) lines.push(`Quelqu'un qui compte pour lui : ${imprints.ally}`)
-  if (imprints?.aversion) lines.push(`Ce qu'il ne supporte pas : ${imprints.aversion}`)
+  // Ce n'est pas une peur — la peur, c'est le film. On le dit ici, collé à la
+  // donnée, parce que le modèle fond volontiers les deux en une seule menace.
+  if (imprints?.aversion) {
+    lines.push(`Ce qu'il ne supporte pas : ${imprints.aversion} — pas une peur : ce qui le fait bouillir.`)
+  }
 
-  // Le morceau est un REGISTRE, jamais une citation. Le modèle connaît les
-  // paroles des titres un peu connus mais ne doit pas les rendre : la consigne
-  // voyage collée à la donnée plutôt que perdue dans une instruction lointaine,
-  // c'est là qu'elle tient le mieux.
+  // Le morceau a un rôle dans la nuit — haché dehors, entier au dernier lieu —,
+  // écrit dans `defaults.touchstones`. Ici ne voyage que l'interdit : le modèle
+  // connaît les paroles des titres un peu connus et ne doit pas les rendre, et
+  // la consigne tient mieux collée à la donnée que perdue plus loin.
   if (user.anthem) {
     const by = user.anthem.artist ? ` de ${user.anthem.artist}` : ''
     lines.push(
-      `Un morceau qui compte pour lui : « ${user.anthem.title} »${by} — ÉLÉMENT SECONDAIRE : `
-      + `n'en cite jamais un vers ni le titre, ne bâtis rien dessus. N'en garde que l'atmosphère, `
-      + `et de préférence dans la bouche d'un personnage : une musique derrière une porte, `
-      + `ce que quelqu'un fredonne sans qu'on l'entende bien.`)
+      `Un morceau qui compte pour lui : « ${user.anthem.title} »${by} — n'en cite jamais un vers, `
+      + `ni le titre, ni l'artiste. On l'entend, on ne le lit pas : un tempo, une voix, un instrument.`)
   }
 
   // Les nuits sans sommeil, et le rêve. Le joueur s'y déclare à la première
@@ -433,6 +439,7 @@ export class SceneRuntime {
 PROFIL DU JOUEUR
 ${describeUser(user)}
 ${this.describeResolution(theme, nightOf(journal))}
+${this.describeTouchstones(user, true)}
 
 TOUTE SA NUIT, DANS L'ORDRE
 ${journal.length ? renderJournal(journal, journal.length) : "Il n'a traversé aucune scène : reste sur ce que dit son profil."}
@@ -468,6 +475,23 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
    * tenus par le script : sans eux le modèle glisse vers l'horoscope ou vers le
    * développement personnel, deux registres que tout le reste refuse.
    */
+  /**
+   * Ce que la nuit fait des repères du dossier : le moment, le film, l'animal,
+   * le morceau, et ce qu'il ne supporte pas.
+   *
+   * Rien si le joueur n'en a donné aucun — la consigne décrirait des réponses
+   * absentes. Le rôle de chacun est écrit une fois dans le script ; l'épilogue a
+   * sa propre version, parce que c'est le seul moment où ils se retrouvent tous.
+   */
+  private describeTouchstones(user: UserProfile, ending = false): string {
+    const marks = user.touchstones
+    const any = marks?.moment || marks?.fear_film || marks?.animal
+      || user.anthem || user.imprints?.aversion
+    if (!any) return ''
+    const t = this.script.defaults.touchstones
+    return `\nSES REPÈRES\n${ending ? t.ending : t.instruction}\n`
+  }
+
   private describeCounsel(): string {
     const s = this.scene
     const counsel = s.counsel
@@ -600,6 +624,7 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
 PROFIL DU JOUEUR
 ${describeUser(user)}
 ${themeBlock}
+${this.describeTouchstones(user)}
 ${story}
 
 LA QUÊTE DE LA NUIT
@@ -1272,6 +1297,7 @@ ${lines}`)
     generated: GeneratedScene,
     theme: PlayerTheme | null = null,
     carried: CarriedItem[] = [],
+    journal: JournalEntry[] = [],
   ): SceneTextResponse {
     const exit = this.scene.exits[0]
 
@@ -1303,10 +1329,25 @@ ${lines}`)
     // se sauve disparaît, et l'objet prend le symbole de sa nature.
     const drawn = <T extends { icon?: string }>(o: T): T =>
       o.icon === undefined ? o : { ...o, icon: sanitizeItemIcon(o.icon) }
-    const iconed = interactables.map(drawn)
-    const npcs = (scene.npcs ?? []).map(n => n.wants?.reward_item
-      ? { ...n, wants: { ...n.wants, reward_item: drawn(n.wants.reward_item) } }
-      : n)
+    // UN IDENTIFIANT DÉJÀ EN POCHE NE SE REPREND PAS. L'inventaire dédoublonne
+    // par id et le déchiffrage s'en souvient par id : le « carnet » d'ici, si
+    // le joueur en porte un de l'auberge, ne se ramasserait pas et passerait
+    // pour déjà lu. Plus il y a d'objets à prendre, plus le modèle réemploie
+    // les mêmes mots — on renomme ce qui entre en collision, et ce qui le
+    // désigne dans la scène avec. `wants.item_id`, lui, vise ce qu'il PORTE.
+    const worn = new Set(carried.map(c => c.id))
+    const fresh = (id: string) => (id && worn.has(id) ? `${id}_${this.scene.id}` : id)
+    const iconed = interactables.map(i => drawn({ ...i, id: fresh(i.id) }))
+    const npcs = (scene.npcs ?? []).map(n => !n.wants ? n : {
+      ...n,
+      wants: {
+        ...n.wants,
+        reveals_id: n.wants.reveals_id ? fresh(n.wants.reveals_id) : n.wants.reveals_id,
+        reward_item: n.wants.reward_item
+          ? drawn({ ...n.wants.reward_item, id: fresh(n.wants.reward_item.id) })
+          : n.wants.reward_item,
+      },
+    })
 
     // La Majuscule de Titre est le seul signal d'interaction du jeu. Le modèle
     // l'applique à la liste `interactables` et l'oublie dans la prose : le même
@@ -1387,7 +1428,7 @@ ${lines}`)
         decor: scene.decor,
         interactables: iconed,
         key_item: generated.key_item,
-      }, { lang: this.lang, carried }),
+      }, { lang: this.lang, carried, journal }),
       key_item: {
         ...drawn(generated.key_item),
         exchanges_before_handover: this.scene.key_item.exchanges_before_handover,

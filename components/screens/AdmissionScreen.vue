@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePlayerStore } from '~/stores/player'
 import { useGameStore } from '~/stores/game'
-import { emptyAdmissionForm, profileFromAdmission } from '~/utils/admission'
+import { emptyAdmissionForm, profileFromAdmission, type AdmissionForm } from '~/utils/admission'
 import { rememberedAdmission, storeAdmission, forgetAdmission } from '~/composables/useScene'
 import type { UserAgreement } from '~/types/user'
 import type { LangCode } from '~/types/i18n'
@@ -71,10 +71,24 @@ const agreementChoices = computed(() => AGREEMENTS.map(value => ({
   example: t(`admission.agreement_ex_${value}`),
 })))
 
-/** Les amorces des trois lignes de passions. Elles n'entrent jamais au dossier. */
-const passionFields = computed(() => [1, 2, 3].map(n => ({
-  label: t(`admission.passion${n}`),
-  placeholder: t(`admission.passion_ph${n}`),
+/**
+ * Les trois repères : un moment, un film, un animal.
+ *
+ * Ils ont remplacé les trois lignes de passions, dont la première — « ce à
+ * quoi vous tenez le plus » — reposait la question de l'objet des empreintes.
+ * Chacun a son rôle dans la nuit (`defaults.touchstones`, script.json) ; l'amorce
+ * n'entre jamais au dossier.
+ */
+const TOUCHSTONES = [
+  { key: 'moment', id: 'moment' },
+  { key: 'fearFilm', id: 'fear_film' },
+  { key: 'animal', id: 'animal' },
+] as const
+const touchstoneFields = computed(() => TOUCHSTONES.map(({ key, id }) => ({
+  key,
+  label: t(`admission.${id}`),
+  placeholder: t(`admission.${id}_ph`),
+  hint: t(`admission.${id}_hint`),
 })))
 
 const step = ref(0)
@@ -134,11 +148,17 @@ function cancel() {
 onMounted(() => {
   const kept = rememberedAdmission()
   if (kept) {
+    // Champ par champ, et seulement ceux qui existent encore : un dossier gardé
+    // d'avant le 2026-09-21 porte des passions et deux bascules. Les passions
+    // se perdent — elles ne répondaient pas aux mêmes questions —, la première
+    // bascule reste.
     const empty = emptyAdmissionForm(lang.value)
-    Object.assign(form, empty, kept.form, {
+    const old = kept.form as Partial<AdmissionForm> & { turningPoints?: string[] }
+    const known = Object.fromEntries(
+      Object.keys(empty).filter(k => k in old).map(k => [k, old[k as keyof AdmissionForm]]))
+    Object.assign(form, empty, known, {
       language: lang.value,
-      passions: empty.passions.map((_, i) => kept.form.passions?.[i] ?? ''),
-      turningPoints: empty.turningPoints.map((_, i) => kept.form.turningPoints?.[i] ?? ''),
+      turningPoint: old.turningPoint ?? old.turningPoints?.[0] ?? '',
     })
     step.value = Math.min(Math.max(kept.step ?? 0, 0), STEPS.value.length - 1)
   }
@@ -152,9 +172,8 @@ onMounted(() => {
 
 /** Rien n'a été écrit. L'accord et la langue sont des réglages, pas des réponses. */
 function isBlank(): boolean {
-  const { language: _l, agreement: _a, passions, turningPoints, ...texts } = form
-  return [...Object.values(texts), ...passions, ...turningPoints]
-    .every(v => !String(v).trim())
+  const { language: _l, agreement: _a, ...texts } = form
+  return Object.values(texts).every(v => !String(v).trim())
 }
 
 const hasAnswers = computed(() => !isBlank())
@@ -319,36 +338,34 @@ const displayCity = computed(() => form.currentCity.trim() || t('admission.somew
             </label>
           </div>
 
-          <!-- 3. PASSIONS -->
+          <!--
+            3. REPÈRES — un moment, un film, un animal. Trois questions qui se
+            répondent en trois secondes et jamais deux fois pareil, et qui ne
+            reposent pas celle de l'objet : chacune a son rôle dans la nuit.
+          -->
           <div v-else-if="step === 2" class="relative space-y-4">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
-              {{ t('admission.passions_intro') }}
+              {{ t('admission.touchstones_intro') }}
             </p>
-            <!--
-              Trois lignes libres, et plus une seule touche : « musique et
-              concerts » vaut pour un million de personnes, ce que le joueur
-              tape n'en désigne qu'une. Les anciens thèmes servent de
-              placeholders — ils amorcent, ils ne répondent pas.
-            -->
             <div class="space-y-4">
-              <label v-for="(field, i) in passionFields" :key="i" class="block space-y-2">
+              <label v-for="field in touchstoneFields" :key="field.key" class="block space-y-2">
                 <span class="field-label">{{ field.label }}</span>
                 <input
-                  v-model="form.passions[i]"
+                  v-model="form[field.key]"
                   type="text"
                   class="field"
                   :placeholder="field.placeholder"
                 >
+                <span class="field-hint">{{ field.hint }}</span>
               </label>
             </div>
 
             <div class="h-px bg-neon-600/20" />
 
             <!--
-              Le morceau. Élément SECONDAIRE, et tenu comme tel : il ne sera
-              jamais cité — ni ses paroles, ni son titre — et le récit ne se
-              bâtit pas dessus. Il sert de registre aux personnages, pour ce
-              qu'on entend derrière une porte. Voir describeUser().
+              Le morceau : le son de la nuit. Jamais cité — ni ses paroles, ni
+              son titre —, il s'entend à l'auberge, revient haché dehors et
+              passe en entier au dernier lieu. Voir `defaults.touchstones`.
             -->
             <div class="grid grid-cols-2 gap-3">
               <label class="block space-y-2">
@@ -363,18 +380,14 @@ const displayCity = computed(() => form.currentCity.trim() || t('admission.somew
             <span class="field-hint">{{ t('admission.anthem_hint') }}</span>
           </div>
 
-          <!-- 4. TOURNANTS -->
+          <!-- 4. LA BASCULE — une seule : deux, c'était trop -->
           <div v-else-if="step === 3" class="relative space-y-5">
             <p class="text-ink-200/70 text-[12px] leading-relaxed">
               {{ t('admission.turning_intro') }}
             </p>
             <label class="block space-y-2">
               <span class="field-label">{{ t('admission.turning1') }}</span>
-              <input v-model="form.turningPoints[0]" type="text" class="field" :placeholder="t('admission.turning1_ph')">
-            </label>
-            <label class="block space-y-2">
-              <span class="field-label">{{ t('admission.turning2') }}</span>
-              <input v-model="form.turningPoints[1]" type="text" class="field" :placeholder="t('admission.turning2_ph')">
+              <input v-model="form.turningPoint" type="text" class="field" :placeholder="t('admission.turning1_ph')">
             </label>
           </div>
 

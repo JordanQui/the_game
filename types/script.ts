@@ -222,6 +222,11 @@ export interface ScriptDefaults {
   puzzles: { note?: string; turn_rules: Record<import('~/types/scene').PuzzleKind, string>; scene_rule: string }
   /** Ce que le récit vise à restaurer, sous la quête apparente. */
   deep_theme: { note?: string; instruction: string }
+  /**
+   * Le moment, le film, l'animal : ce que la nuit fait de chacun. `instruction`
+   * vaut pour les scènes, `ending` pour l'épilogue.
+   */
+  touchstones: { note?: string; instruction: string; ending: string }
   /** Ce que le modèle écrit pour la nuit qui se referme sans objet. */
   game_over: { note?: string; instruction: string }
   /** Cartes et serrures : la couleur dit laquelle présenter. */

@@ -81,6 +81,9 @@ export function buildGuidance(
       // L'énigme dit sa nature, pas sa solution : où regarder, et ce que
       // coûte de s'en passer.
       lines.push(t(`oracle.puzzle_${scene.puzzle.kind}`))
+      // Un morceau n'est pas dans le lieu. On dit qu'il voyage avec lui, jamais
+      // sur quoi : le rapprochement lui revient.
+      if (scene.puzzle.clues.some(c => c.item_id)) lines.push(t('oracle.puzzle_carried'))
     } else if (item.acquisition === 'found') {
       lines.push(t('oracle.found_item'))
     } else if (others.length) {
@@ -145,7 +148,9 @@ export function resolveLocally(
     // nomme, ils viennent avec sa description quand on la regarde. Sur le
     // décor ou sur une chose qu'on examine sans la prendre — le premier nom
     // reconnu décide, pour ne pas mêler les indices de deux endroits.
-    const clues = scene.puzzle?.clues ?? []
+    // Ceux que porte un objet de l'inventaire ne se lisent pas ici : ils se
+    // lisent en l'observant, une fois son nom déchiffré.
+    const clues = (scene.puzzle?.clues ?? []).filter(c => !c.item_id)
     const on = element?.name
       ?? clues.find(c => namedIn(text, c.on, lang))?.on
     const here = on ? clues.filter(c => c.on === on).map(c => c.text) : []

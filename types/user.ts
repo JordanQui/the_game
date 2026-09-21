@@ -44,17 +44,20 @@ export interface UserImprints {
   refuge?: string
   /** Quelqu'un qui compte. Prénom seul. */
   ally?: string
-  /** Ce qu'il ne supporte pas. */
+  /**
+   * Ce qu'il ne supporte pas. PAS une peur — la peur, c'est le film : ceci est
+   * la règle qu'on lui oppose dans chaque acte et qu'il refuse à l'acte III.
+   */
   aversion?: string
 }
 
 /**
  * Un morceau qui compte pour le joueur.
  *
- * Élément SECONDAIRE, et qui doit le rester : le récit ne se bâtit jamais
- * dessus. Il sert de REGISTRE — une musique derrière une porte, ce qu'un
- * personnage fredonne, la façon dont un PNJ en parle comme d'un truc à lui.
- * Jamais les paroles : le prompt interdit déjà toute reprise littérale, et un
+ * Le SON DE LA NUIT (depuis le 2026-09-21) : entendu sans être reconnu à
+ * l'auberge, haché en boucles dehors, joué en entier au dernier lieu et à
+ * l'aube — une chanson dure, et c'est ce que la ville ne laisse plus finir.
+ * Voir `defaults.touchstones`. Jamais les paroles : le prompt interdit déjà toute reprise littérale, et un
  * modèle sommé de restituer un texte protégé répond mal ou refuse. L'artiste
  * est facultatif — le titre seul porte déjà un genre et une époque, ce qui
  * suffit à choisir la musique d'un lieu.
@@ -89,6 +92,30 @@ export interface UserNights {
   awake_note?: string
   /** Le rêve qui revient, dans ses mots. */
   dream_note?: string
+}
+
+/**
+ * Trois repères, qui remplacent les trois lignes de passions (2026-09-21).
+ *
+ * Les passions demandaient « ce à quoi vous tenez » et rentraient en conflit
+ * avec l'objet des empreintes : deux fois la même question, deux fois la même
+ * réponse. Ces trois-là ne se recouvrent pas, parce que chacune tient un RÔLE
+ * différent dans la nuit — voir `defaults.touchstones` dans script.json :
+ *   - le moment est ce que la nuit rend : un morceau de temps vécu, dans une
+ *     ville qui l'a découpé (voir le thème profond) ;
+ *   - le film donne la forme de la menace — sa MÉCANIQUE de peur, jamais le
+ *     film lui-même ;
+ *   - l'animal traverse toute la nuit avec lui, une silhouette par lieu.
+ * Aucun ne demande au joueur de s'analyser : un moment, un titre, une bête, ça
+ * se répond en trois secondes et ça ne se répond jamais pareil.
+ */
+export interface UserTouchstones {
+  /** Un moment auquel il tient, dans ses mots. */
+  moment?: string
+  /** Le film qui lui a fait le plus peur. Le titre suffit. */
+  fear_film?: string
+  /** Son animal préféré. */
+  animal?: string
 }
 
 export interface UserProfile {
@@ -140,7 +167,13 @@ export interface UserProfile {
   trajectory: {
     turning_points: string[]
   }
-  passions: UserPassion[]
+  /**
+   * Les anciennes passions. Le formulaire ne les demande plus et le récit ne
+   * les lit plus : le champ ne reste que pour l'extraction Meta, débranchée.
+   */
+  passions?: UserPassion[]
+  /** Un moment, un film qui fait peur, un animal. Voir UserTouchstones. */
+  touchstones?: UserTouchstones
   /** Un morceau, tenu en registre. Voir UserAnthem : jamais de paroles. */
   anthem?: UserAnthem
   imprints?: UserImprints

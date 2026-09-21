@@ -234,7 +234,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const assembled = {
-    ...scene.assembleText(generated, resolveTheme(user, runtime.script), body.carried ?? []),
+    ...scene.assembleText(generated, resolveTheme(user, runtime.script), body.carried ?? [], body.journal ?? []),
     // La quête voyage avec chaque scène : c'est de là que le journal la reprend.
     night: generated.night ?? plan,
     // Permet au client de jeter une scène gardée en session dès que le script

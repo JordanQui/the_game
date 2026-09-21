@@ -21,6 +21,15 @@ export interface JournalEntry {
   /** Ce qu'il en a emporté. */
   carried: string | null
   /**
+   * La chose qui dominait le lieu, telle que le joueur l'a lue.
+   *
+   * C'est par elle que le jeu se souvient d'un lieu, plus tard — le lecteur de
+   * carte ne dit pas « la carte de tel endroit », il décrit ce qu'on y a vu.
+   * N'entre pas dans le prompt : zéro token. Absente des journaux d'avant ce
+   * champ, et l'indice retombe alors sur le nom du lieu.
+   */
+  focal?: string
+  /**
    * La quête de la nuit, fixée à l'auberge : le but et le plan sur lesquels
    * toutes les scènes se construisent. Optionnelle, les journaux d'avant ce
    * champ n'en ont pas.
@@ -39,6 +48,7 @@ export function entryFrom(scene: SceneTextResponse): JournalEntry {
     what_changed: scene.quest?.objective ?? '',
     who_mattered: who,
     carried: scene.key_item?.name ?? null,
+    focal: scene.decor?.find(d => d.slot_id === 'focal')?.name?.slice(0, 80) || undefined,
     // Le titre et l'horizon sont figés avec le plan : les scènes suivantes les
     // recopient au lieu d'en inventer, et le sas les promet tels quels.
     night: scene.night

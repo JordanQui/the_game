@@ -27,6 +27,11 @@ export interface CarriedThing {
   icon?: string
   /** Son nom a été déchiffré : il s'écrit en clair partout. */
   known: boolean
+  /**
+   * Ce qu'il dit de l'énigme du lieu où l'on est, s'il en porte un morceau.
+   * Voir `carryOne` dans utils/puzzles.ts.
+   */
+  clue?: string
 }
 
 export function useInventory() {
@@ -36,6 +41,7 @@ export function useInventory() {
   const items = computed<CarriedThing[]>(() => gameStore.inventory.map(o => ({
     ...o,
     known: gameStore.decryptedObjectIds.includes(o.id),
+    clue: playerStore.scene?.puzzle?.clues.find(c => c.item_id === o.id)?.text,
   })))
 
   /** Le personnage à qui l'on parle. Sans lui, rien ne se donne. */
@@ -48,9 +54,9 @@ export function useInventory() {
    * Un seul par objet, et il change avec l'état : tant que le nom est scellé,
    * il n'y a rien d'autre à en faire que le lire.
    */
-  function actionFor(o: { known: boolean; observation?: string }): ItemAction {
+  function actionFor(o: { known: boolean; observation?: string; clue?: string }): ItemAction {
     if (!o.known) return gameStore.hasAugmentation ? 'read' : 'locked'
-    return o.observation?.trim() ? 'observe' : 'none'
+    return o.observation?.trim() || o.clue ? 'observe' : 'none'
   }
 
   function activate(o: CarriedThing) {
@@ -66,8 +72,11 @@ export function useInventory() {
       gameStore.requestChallenge(o.id, o.label)
       return
     }
-    if (action === 'observe' && o.observation) {
-      gameStore.addNarrativeEntry('narration', o.observation)
+    if (action === 'observe') {
+      // L'indice vient APRÈS ce qu'on savait déjà de l'objet : c'est la même
+      // chose, revue sous la lumière de ce lieu.
+      const text = [o.observation?.trim(), o.clue].filter(Boolean).join('\n\n')
+      if (text) gameStore.addNarrativeEntry('narration', text)
     }
   }
 

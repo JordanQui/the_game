@@ -153,6 +153,13 @@ export interface PuzzleClue {
   /** Le nom de la chose, tel que le récit l'écrit en Majuscule. */
   on: string
   text: string
+  /**
+   * L'objet porté qui tient cet indice, quand il n'est pas dans le lieu.
+   *
+   * Il se lit en OBSERVANT l'objet dans l'inventaire, une fois son nom
+   * déchiffré — jamais en regardant le décor. Voir `utils/puzzles.ts`.
+   */
+  item_id?: string
 }
 
 /**

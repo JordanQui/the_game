@@ -15,8 +15,10 @@
  *   identity.agreement ......... accord des participes dans toute la narration
  *   origin.hometown ............ ville d'origine
  *   origin.current_location .... ville actuelle
- *   trajectory.turning_points .. tournants de vie
- *   passions ................... passions, par intensité
+ *   trajectory.turning_points .. LE tournant de vie — une seule ligne depuis le
+ *                                2026-09-21, deux c'était trop
+ *   touchstones ................ un moment auquel il tient, le film qui lui a
+ *                                fait le plus peur, son animal préféré
  *   anthem ..................... un morceau, tenu en registre — jamais ses paroles
  *   imprints ................... quatre traces à remettre en décor
  *   nights ..................... les nuits sans sommeil, et le rêve qui revient
@@ -29,6 +31,14 @@
  * de décor et la couleur secondaire qui en dépendaient tirent désormais sur
  * `imprints`.
  *
+ * LES PASSIONS ONT ÉTÉ RETIRÉES le 2026-09-21. La première ligne demandait « ce
+ * à quoi vous tenez le plus » et l'empreinte « un objet auquel vous tenez » :
+ * deux fois la même question, et le joueur répondait deux fois la même chose.
+ * Trois questions les remplacent, qui ne se recouvrent ni entre elles ni avec
+ * les empreintes, parce que chacune a un rôle écrit dans la nuit
+ * (`defaults.touchstones`, script.json) : le moment est ce que la nuit rend, le
+ * film la forme de la menace, l'animal ce qui la traverse avec lui.
+ *
  * TOUT SE SAISIT AU CLAVIER, sauf l'accord. Les grilles de touches — passions,
  * nuits, rêves — ont été retirées le 2026-09-09 : une touche est un mot que le
  * joueur n'a pas écrit, et le générateur ne peut rien transposer d'un
@@ -38,7 +48,7 @@
  * réglage : trois valeurs, et le code les consomme telles quelles.
  */
 
-import type { UserProfile, UserPassion, UserAgreement, UserNights } from '~/types/user'
+import type { UserProfile, UserAgreement, UserNights } from '~/types/user'
 import type { LangCode } from '~/types/i18n'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { translate } from '~/utils/languages'
@@ -64,21 +74,18 @@ export interface AdmissionForm {
   agreement: UserAgreement
   hometown: string
   currentCity: string
-  /**
-   * Trois lignes libres, DANS L'ORDRE : la première pèse le plus.
-   *
-   * Ce fut une grille de quatorze touches. Une touche est un mot que le joueur
-   * n'a pas écrit : « musique et concerts » vaut pour un million de personnes,
-   * « les vinyles de mon père que je n'ose pas jouer » n'en désigne qu'une, et
-   * c'est de celle-là que la nuit a besoin.
-   */
-  passions: string[]
+  /** Un moment auquel il tient. Ce que la nuit rend. */
+  moment: string
+  /** Le film qui lui a fait le plus peur. La forme de la menace. */
+  fearFilm: string
+  /** Son animal préféré. Ce qui traverse la nuit avec lui. */
+  animal: string
   /** Un morceau qui compte. Le titre suffit. */
   anthemTitle: string
   /** Son artiste. Facultatif : le titre seul porte déjà genre et époque. */
   anthemArtist: string
-  /** Deux lignes libres, facultatives. */
-  turningPoints: string[]
+  /** Une ligne libre, facultative. Il y en eut deux : c'était trop. */
+  turningPoint: string
   /** Quatre traces personnelles, que la scène remettra en décor. */
   keepsake: string
   refuge: string
@@ -99,10 +106,12 @@ export function emptyAdmissionForm(lang: LangCode = DEFAULT_LANG): AdmissionForm
     agreement: 'masculin',
     hometown: '',
     currentCity: '',
-    passions: ['', '', ''],
+    moment: '',
+    fearFilm: '',
+    animal: '',
     anthemTitle: '',
     anthemArtist: '',
-    turningPoints: ['', ''],
+    turningPoint: '',
     keepsake: '',
     refuge: '',
     ally: '',
@@ -113,31 +122,10 @@ export function emptyAdmissionForm(lang: LangCode = DEFAULT_LANG): AdmissionForm
 }
 
 /**
- * L'accord et les amorces de passions ont quitté ce fichier.
- *
- * Ils vivaient ici en dur, en français : trois libellés d'accord avec leur
- * exemple, trois lignes d'amorce sous les passions. Ce sont des textes
- * AFFICHÉS, et leur formulation change complètement d'une langue à l'autre —
- * l'exemple d'accord surtout, qui porte un participe en français, un pronom en
- * anglais et une forme d'adresse en turc. Ils sont donc dans les packs de
- * langue, sous `admission.agreement_*` et `admission.passion_ph*`, et
- * `AdmissionScreen.vue` les y prend.
+ * Les libellés, amorces et exemples ne vivent pas ici : ce sont des textes
+ * AFFICHÉS, et leur formulation change d'une langue à l'autre. Ils sont dans
+ * les packs de langue, sous `admission.*`, et `AdmissionScreen.vue` les y prend.
  */
-
-export const MAX_PASSIONS = 3
-
-/**
- * Intensité d'une passion, d'après le rang de sa ligne.
- *
- * Le joueur ne note pas ses passions une par une — ce serait trois questions
- * de plus. C'est l'ORDRE des lignes qui les classe : les deux premières
- * comptent le plus.
- */
-function intensityAt(rank: number): UserPassion['intensity'] {
-  if (rank < 2) return 'high'
-  if (rank < 4) return 'medium'
-  return 'low'
-}
 
 /** Âge révolu. Retourne undefined si la date est absente ou illisible. */
 export function ageFrom(birthday: string): number | undefined {
@@ -173,12 +161,12 @@ const clean = (s: string) => s.trim().replace(/\s+/g, ' ')
 /**
  * Ce qui a fait bifurquer le joueur.
  *
- * Les deux lignes libres passent en premier — c'est lui qui parle. Le
+ * Sa ligne passe en premier — c'est lui qui parle. Le
  * déménagement est DÉDUIT : sans lui, un dossier rempli à la va-vite ne
  * donnerait aucune trajectoire au modèle.
  */
 function turningPoints(form: AdmissionForm): string[] {
-  const points = form.turningPoints.map(clean).filter(Boolean)
+  const points = [clean(form.turningPoint)].filter(Boolean)
 
   const hometown = clean(form.hometown)
   const city = clean(form.currentCity)
@@ -211,10 +199,25 @@ function imprints(form: AdmissionForm): UserProfile['imprints'] {
 }
 
 /**
+ * Les trois repères, et rien si l'étape a été traversée sans rien écrire.
+ *
+ * Une ligne chacun, gardée telle quelle : c'est `describeUser` qui y colle la
+ * consigne, et `defaults.touchstones` (script.json) qui dit à quoi chacun sert
+ * dans la nuit.
+ */
+function touchstones(form: AdmissionForm): UserProfile['touchstones'] {
+  const declared = {
+    moment: clean(form.moment) || undefined,
+    fear_film: clean(form.fearFilm) || undefined,
+    animal: clean(form.animal) || undefined,
+  }
+  return Object.values(declared).some(Boolean) ? declared : undefined
+}
+
+/**
  * Le morceau, s'il en a donné un.
  *
- * Sans titre, pas de champ : un artiste seul ne dit rien qu'une passion ne
- * dise déjà mieux.
+ * Sans titre, pas de champ : un artiste seul ne dit rien de plus qu'un genre.
  */
 function anthem(form: AdmissionForm): UserProfile['anthem'] {
   const title = clean(form.anthemTitle)
@@ -259,21 +262,6 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
   const hometown = clean(form.hometown)
   const city = clean(form.currentCity)
 
-  // Les lignes vides sautent, et le classement se resserre : qui n'écrit que
-  // la troisième ligne a une passion haute, pas une passion basse.
-  const passions: UserPassion[] = form.passions
-    .map(clean)
-    .filter(Boolean)
-    .slice(0, MAX_PASSIONS)
-    .map((theme, i) => ({
-      theme,
-      intensity: intensityAt(i),
-      // Les `evidence` venaient de la grille de touches : c'est le prix de la
-      // ligne libre, et il est mince. Le joueur écrit déjà en concret, et
-      // `describeUser` saute la parenthèse quand elle est vide.
-      evidence: [],
-    }))
-
   return {
     // La langue voyage AVEC le dossier, pas seulement dans le cookie : une
     // partie reprise depuis un autre appareil garde ainsi la sienne.
@@ -293,7 +281,7 @@ export function profileFromAdmission(form: AdmissionForm): UserProfile {
     trajectory: {
       turning_points: turningPoints(form),
     },
-    passions,
+    touchstones: touchstones(form),
     anthem: anthem(form),
     imprints: imprints(form),
     nights: nights(form),
