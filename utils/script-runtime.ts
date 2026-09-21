@@ -1277,9 +1277,18 @@ ${lines}`)
         + '— le joueur ne pourrait s\'adresser à personne')
     }
 
+    // Le bloc manquant en entier, c'est presque toujours un JSON que le modèle a
+    // refermé trop tôt : on dit ce qu'il a rendu, sans quoi rien ne distingue
+    // un bloc oublié d'un champ rangé sous un autre nom.
     const item = generated.key_item
-    if (!item?.name || !item?.npc_id) {
-      throw new Error('Scène invalide : key_item.name ou key_item.npc_id manquant')
+    if (!item) {
+      console.error(`[scene/${this.scene.id}] key_item absent, clés rendues :`, Object.keys(generated).join(', '))
+      throw new Error('Scène invalide : le bloc `key_item` manque en entier — écris-le, complet')
+    }
+    const missing = (['name', 'npc_id'] as const).filter(k => !item[k]?.trim())
+    if (missing.length) {
+      console.error(`[scene/${this.scene.id}] key_item incomplet, champs rendus :`, Object.keys(item).join(', '))
+      throw new Error(`Scène invalide : key_item.${missing.join(' et key_item.')} manquant`)
     }
 
     // L'AUGMENTATION SEULE porte un nom soudé, et le récit doit le prononcer
