@@ -2,6 +2,7 @@ import type { SceneNPC, TurnContext, TurnMode, TurnUsage } from '~/types/scene'
 import type { StoryletEffect } from '~/utils/storylets'
 import { useGameStore } from '~/stores/game'
 import { usePlayerStore } from '~/stores/player'
+import { useNightClock } from '~/composables/useNightClock'
 import { normalize, matchesKeyword } from '~/utils/text-match'
 import { pack, translate } from '~/utils/languages'
 
@@ -25,6 +26,9 @@ const STALL_TIMEOUT_MS = 20_000
 export function useNarrative() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
+  // Pris ici, pas au fil du tour : après un `await`, le contexte de Nuxt n'est
+  // plus garanti, et l'horloge en a besoin pour connaître l'ordre des scènes.
+  const night = useNightClock()
 
   function buildContext(): TurnContext | null {
     const scene = playerStore.scene
@@ -124,6 +128,7 @@ export function useNarrative() {
     return {
       address: input.address,
       leave: input.leave,
+      exitStrict: input.exit_strict,
       // Manipuler, examiner, ramasser : tout ce qui vise une chose et non
       // quelqu'un. Les trois listes sont reunies parce que `turnsAway` ne fait
       // pas la difference - s'emparer d'un objet detourne autant que l'ouvrir.
@@ -153,8 +158,10 @@ export function useNarrative() {
     const text = normalize(input)
     if (verbs.value.leave.some(phrase => text.includes(normalize(phrase)))) return true
 
-    const exits = playerStore.scene?.paywall.exit_keywords ?? []
-    if (exits.length && matchesKeyword(input, exits)) return true
+    // Les départs sans équivoque seulement : on n'appelle `turnsAway` que
+    // lorsqu'une conversation est ouverte, et ses réponses sont pleines de
+    // « suis », de « va » et de « la nuit ».
+    if (matchesKeyword(input, verbs.value.exitStrict)) return true
 
     return matchesKeyword(input, verbs.value.world) && namesDecor(text)
   }
@@ -177,6 +184,25 @@ export function useNarrative() {
     if (!active) return undefined
 
     return turnsAway(input) ? undefined : active
+  }
+
+  /**
+   * Le joueur parle-t-il de sortir ?
+   *
+   * Seul face au décor, la liste large de la scène : verbes de mouvement et
+   * mots du libellé. Face à quelqu'un, les départs explicites seulement — sans
+   * quoi la réponse à une question du détenteur se lisait comme un départ, la
+   * conversation se refermait et il la reposait au tour suivant.
+   */
+  function mentionsExit(input: string): boolean {
+    const scene = playerStore.scene
+    if (!scene) return false
+    // `interlocutor` a déjà tranché : s'il s'est détourné — « je te laisse » —
+    // la conversation est finie et la liste large reprend ses droits.
+    const words = interlocutor(input)
+      ? verbs.value.exitStrict
+      : scene.paywall.exit_keywords
+    return matchesKeyword(input, words)
   }
 
   /** Le joueur s'adresse à quelqu'un sans le nommer : il lui manque l'outil. */
@@ -417,22 +443,23 @@ export function useNarrative() {
       gameStore.markInformedAboutItem()
     }
 
-    // Les échanges ne comptent qu'une fois la piste connue : avant, le
-    // détenteur ne parle pas de l'objet, ça ne fait pas avancer.
-    if (npc && item && npc.id === item.npc_id && gameStore.informedAboutItem && !gameStore.hasKeyItem) {
-      gameStore.recordKeyItemExchange()
-    }
-
     // Le détenteur ouvre la piste lui-même. Sans ça, un joueur qui trouvait la
     // bonne personne SANS passer par l'informateur restait collé à elle —
     // `interlocutor` maintient l'interlocuteur actif — et aucun de ces tours ne
     // comptait : il se faisait esquiver jusqu'à la fermeture, au tour 10.
-    // APRÈS l'incrément ci-dessus, jamais avant : le premier échange reste une
-    // esquive, le deuxième porte `hook_story` et la condition, le troisième
-    // remet l'objet. Trouver seul le porteur est la moitié difficile de
-    // l'énigme ; l'informateur reste le raccourci pour qui ne le trouve pas.
+    // AVANT l'incrément ci-dessous : ce premier échange porte déjà la question
+    // du détenteur — le prompt se construit après, piste ouverte. Compté après
+    // coup, il laissait passer un tour de plus, où il reposait sa question à
+    // un joueur qui venait d'y répondre. Le rythme est désormais celui qu'on
+    // veut : il demande, le joueur répond, il commente et il cède.
     if (npc && item && npc.id === item.npc_id && !gameStore.informedAboutItem) {
       gameStore.markInformedAboutItem()
+    }
+
+    // Les échanges ne comptent qu'une fois la piste connue : avant, le
+    // détenteur ne parle pas de l'objet, ça ne fait pas avancer.
+    if (npc && item && npc.id === item.npc_id && gameStore.informedAboutItem && !gameStore.hasKeyItem) {
+      gameStore.recordKeyItemExchange()
     }
 
     gameStore.recordModelTurn()
@@ -441,6 +468,10 @@ export function useNarrative() {
 
     gameStore.incrementTurn(input, text, npc?.id)
     applyEffects(after)
+    // Une réplique facturée coûte la nuit — seulement celle qui a abouti : un
+    // tour en échec ne doit rien coûter au joueur. APRÈS les effets, pour
+    // qu'une remise arrachée au dernier moment ne se perde pas dans l'aube.
+    night.spend('turn')
     // Refus, ou tour qui n'était pas un don : la proposition retombe. Sans ça
     // l'objet resterait tendu et le tour suivant repartirait en échange.
     if (!after.includes('consume_given_item')) gameStore.clearPendingGive()
@@ -466,5 +497,5 @@ export function useNarrative() {
     await runTurn(input, gameStore.lastMode ?? undefined, gameStore.lastEffects)
   }
 
-  return { runTurn, retryLastTurn, answerLocally, streamTurn, interlocutor, addressesNobody }
+  return { runTurn, retryLastTurn, answerLocally, streamTurn, interlocutor, addressesNobody, mentionsExit }
 }

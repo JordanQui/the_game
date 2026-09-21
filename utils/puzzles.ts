@@ -1,0 +1,287 @@
+import type { DecorElement, Interactable, ScenePuzzle, PuzzleKind, PuzzleClue } from '~/types/scene'
+import type { CarriedItem } from '~/utils/journal'
+import type { LangCode } from '~/types/i18n'
+import { DEFAULT_LANG } from '~/types/i18n'
+import { pack, translate } from '~/utils/languages'
+import { normalize, matchesKeyword } from '~/utils/text-match'
+import { fold } from '~/utils/naming'
+import { isTakeable } from '~/utils/interactables'
+
+/**
+ * Une énigme par mécanique.
+ *
+ * Toutes les scènes où l'objet-clé « se trouve » se jouaient pareil : lire son
+ * nom à la loupe, et c'était fini. La fréquence, le code, la séquence, la carte
+ * cachée ou délivrée ne différaient que par le mot. Chacune a désormais sa
+ * propre épreuve, et elle se résout SUR L'APPAREIL :
+ *
+ * - `frequency` : un cadran à régler, les indices bornent la valeur ;
+ * - `code` : quatre chiffres en deux morceaux, et une consigne d'ordre ;
+ * - `sequence` : les gestes du dénouement à remettre dans l'ordre ;
+ * - `lock` : le lecteur ne prend que la carte d'un lieu déjà traversé ;
+ * - `search` : la carte est cachée, et ce que montre chaque endroit innocente
+ *   un autre — on déduit avant de fouiller, parce que fouiller coûte la nuit.
+ *
+ * LE MODÈLE N'Y EST POUR RIEN, sauf les libellés de la séquence. La solution et
+ * ses indices sont tirés ICI, à l'assemblage, d'une graine propre à la scène :
+ * un modèle qui écrit lui-même un code et ses fragments se contredit une fois
+ * sur trois, et chaque contradiction serait une scène insoluble. Les indices
+ * sont des phrases du pack de langue, posées sur les choses que le récit nomme
+ * en Majuscule — le joueur les lit en REGARDANT, ce qui ne coûte aucun tour.
+ *
+ * Zéro requête : la vérification d'une réponse est une comparaison locale.
+ */
+
+/** Graine → générateur. mulberry32 : court, stable d'un moteur JS à l'autre. */
+function rng(seed: string): () => number {
+  let h = 1779033703 ^ seed.length
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353)
+    h = (h << 13) | (h >>> 19)
+  }
+  let a = h >>> 0
+  return () => {
+    a = (a + 0x6D2B79F5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function shuffle<T>(list: T[], rand: () => number): T[] {
+  const out = [...list]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1))
+    ;[out[i], out[j]] = [out[j]!, out[i]!]
+  }
+  return out
+}
+
+/** Une chose que le récit nomme et qu'on peut regarder. */
+interface Surface {
+  id: string
+  label: string
+  /** L'élément du décor lointain : on le regarde, on ne le fouille pas. */
+  far: boolean
+}
+
+/**
+ * Ce qui peut porter un indice : le décor et les choses qu'on examine sans
+ * les prendre, pourvu que le récit les nomme.
+ *
+ * Un indice posé sur une chose absente du texte serait introuvable : le joueur
+ * ne sait regarder que ce qu'il a lu. Les objets qu'on ramasse sont exclus —
+ * ils quittent la scène avec lui, et leur analyse a déjà son texte.
+ */
+function surfacesOf(
+  scene: { scene_text: string; decor?: DecorElement[]; interactables?: Interactable[] },
+  lang: LangCode,
+): Surface[] {
+  const written = fold(scene.scene_text)
+  const named = (label: string) => label.length > 2 && written.includes(fold(label))
+  const decor = (scene.decor ?? [])
+    .filter(d => d.name && named(d.name))
+    .map(d => ({ id: `decor:${d.slot_id}`, label: d.name, far: d.slot_id === 'lointain' }))
+  const objects = (scene.interactables ?? [])
+    .filter(o => o.label && !o.hidden && !o.triggers_paywall && !isTakeable(o, lang) && named(o.label))
+    .map(o => ({ id: o.id, label: o.label, far: false }))
+  // Un même nom déclaré deux fois ne fait qu'une surface.
+  const seen = new Set<string>()
+  return [...decor, ...objects].filter(s => {
+    const key = fold(s.label)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+/** Répartit les indices sur les surfaces, une par indice tant qu'il y en a. */
+function spread(texts: string[], surfaces: Surface[], rand: () => number): PuzzleClue[] {
+  const order = shuffle(surfaces, rand)
+  return texts.map((text, i) => ({ on: order[i % order.length]!.label, text }))
+}
+
+export interface PuzzleSource {
+  scene_id: string
+  scene_text: string
+  decor?: DecorElement[]
+  interactables?: Interactable[]
+  key_item?: { name?: string; steps?: string[] } | null
+}
+
+/**
+ * L'énigme d'une scène, tirée une fois pour toutes à l'assemblage.
+ *
+ * Null quand la scène n'a pas de quoi la porter — trop peu de choses nommées,
+ * une séquence sans ses gestes, pas assez de cartes en poche. Le jeu retombe
+ * alors sur la lecture à la loupe, qui a toujours marché : une énigme
+ * impossible coûterait bien plus cher qu'une énigme absente.
+ */
+export function drawPuzzle(
+  kind: PuzzleKind | undefined,
+  scene: PuzzleSource,
+  opts: { lang?: LangCode; carried?: CarriedItem[] } = {},
+): ScenePuzzle | null {
+  if (!kind) return null
+  const lang = opts.lang ?? DEFAULT_LANG
+  const t = (key: string, vars?: Record<string, string | number>) => translate(lang, `puzzle.${key}`, vars)
+  const rand = rng(`${scene.scene_id}|${scene.scene_text}`)
+  const surfaces = surfacesOf(scene, lang)
+  if (!surfaces.length) return null
+
+  if (kind === 'frequency') {
+    // Un nombre de deux chiffres, et trois indices qui n'en laissent qu'un :
+    // une fourchette, la parité, la somme des chiffres. On retire tant que les
+    // trois ensemble ne suffisent pas — c'est rare, et borné.
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const solution = 20 + Math.floor(rand() * 80)
+      const lo = Math.max(10, solution - Math.floor(rand() * 20))
+      const hi = Math.min(99, lo + 20)
+      const even = solution % 2 === 0
+      const sum = Math.floor(solution / 10) + (solution % 10)
+      let fits = 0
+      for (let v = lo; v <= hi; v++) {
+        if (v % 2 === (even ? 0 : 1) && Math.floor(v / 10) + (v % 10) === sum) fits++
+      }
+      if (fits !== 1) continue
+      return {
+        kind,
+        solution,
+        min: 10,
+        max: 99,
+        clues: spread([
+          t('freq_range', { lo, hi }),
+          t(even ? 'freq_even' : 'freq_odd'),
+          t('freq_sum', { sum }),
+        ], surfaces, rand),
+      }
+    }
+    return null
+  }
+
+  if (kind === 'code') {
+    // Deux morceaux de deux chiffres, différents, et la seule consigne qui
+    // dise lequel vient d'abord. Chaque morceau seul ne sert à rien.
+    let a = 0
+    let b = 0
+    while (a === b) {
+      a = Math.floor(rand() * 100)
+      b = Math.floor(rand() * 100)
+    }
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const lowFirst = rand() < 0.5
+    const [first, second] = lowFirst ? [Math.min(a, b), Math.max(a, b)] : [Math.max(a, b), Math.min(a, b)]
+    return {
+      kind,
+      solution: `${pad(first)}${pad(second)}`,
+      clues: spread([
+        t('code_fragment', { digits: pad(a) }),
+        t('code_fragment', { digits: pad(b) }),
+        t(lowFirst ? 'code_order_low' : 'code_order_high'),
+      ], surfaces, rand),
+    }
+  }
+
+  if (kind === 'sequence') {
+    // Les gestes viennent du modèle — ce sont ceux du dénouement de CE joueur.
+    // L'ordre, lui, se donne par paires : chaque consigne ne lie que deux
+    // gestes voisins, et il faut les trois pour tout remettre en place.
+    const steps = (scene.key_item?.steps ?? []).map(s => s?.trim()).filter((s): s is string => Boolean(s))
+    if (steps.length < 3 || steps.length > 5 || new Set(steps.map(fold)).size !== steps.length) return null
+    let display = shuffle(steps.map((_, i) => i), rand)
+    // Présentée déjà dans l'ordre, elle serait résolue avant d'être lue.
+    if (display.every((v, i) => v === i)) display = [...display.slice(1), display[0]!]
+    const clues = steps.slice(1).map((later, i) => t('seq_after', { later, earlier: steps[i]! }))
+    return {
+      kind,
+      steps: display.map(i => steps[i]!),
+      solution: steps.map((_, i) => display.indexOf(i)),
+      clues: spread(shuffle(clues, rand), surfaces, rand),
+    }
+  }
+
+  if (kind === 'lock') {
+    // LA CARTE D'UN LIEU DÉJÀ TRAVERSÉ. C'est tout le sens d'un inventaire qui
+    // voyage : la serrure d'ici répond à une carte prise plus tôt. Il en faut
+    // au moins deux — avec une seule, il n'y a rien à choisir.
+    // Une fréquence ou un code sont aussi des objets qui ouvrent, mais ils
+    // n'ont pas de couleur : seules les cartes entrent dans un lecteur.
+    const cards = (opts.carried ?? [])
+      .filter(c => c.kind === 'key' && c.id !== 'cle_auberge' && c.from && c.color)
+    if (cards.length < 2) return null
+    const card = cards[Math.floor(rand() * cards.length)]!
+    const focal = surfaces.find(s => s.id === 'decor:focal') ?? surfaces[0]!
+    return {
+      kind,
+      card_id: card.id,
+      place: card.from!,
+      clues: [{ on: focal.label, text: t('lock_clue', { place: card.from! }) }],
+    }
+  }
+
+  if (kind === 'search') {
+    // Chaque endroit, regardé, en innocente un AUTRE. Aucun ne se désigne
+    // lui-même : il faut en avoir lu plusieurs pour savoir où plonger la main.
+    // Le lointain se regarde mais ne se fouille pas.
+    const spots = shuffle(surfaces.filter(s => !s.far), rand).slice(0, 4)
+    if (spots.length < 3) return null
+    const solution = spots[Math.floor(rand() * spots.length)]!
+    const empty = spots.filter(s => s !== solution)
+    const clues: PuzzleClue[] = empty.map((spot, i) => ({
+      on: spot.label,
+      text: t('search_still', { spot: empty[(i + 1) % empty.length]!.label }),
+    }))
+    clues.push({ on: solution.label, text: t('search_still', { spot: empty[0]!.label }) })
+    return {
+      kind,
+      spots: spots.map(s => ({ id: s.id, label: s.label })),
+      solution: solution.id,
+      clues,
+    }
+  }
+
+  return null
+}
+
+/** La réponse est-elle la bonne ? La forme dépend de l'énigme. */
+export function isSolved(puzzle: ScenePuzzle, answer: string | number | number[]): boolean {
+  switch (puzzle.kind) {
+    case 'frequency': return Number(answer) === puzzle.solution
+    case 'code': return String(answer) === puzzle.solution
+    case 'sequence':
+      return Array.isArray(answer)
+        && answer.length === puzzle.solution.length
+        && answer.every((v, i) => v === puzzle.solution[i])
+    case 'lock': return String(answer) === puzzle.card_id
+    case 'search': return String(answer) === puzzle.solution
+  }
+}
+
+/**
+ * L'endroit que cette saisie fouille, s'il en fouille un.
+ *
+ * Le verbe doit y être — « regarder le Comptoir » lit l'indice, « fouiller le
+ * Comptoir » y plonge la main, et seul le second coûte la nuit. Le nom le plus
+ * long d'abord, pour que « la Trappe Grise » ne se fasse pas coiffer par « la
+ * Trappe ».
+ */
+export function searchedSpot(
+  input: string,
+  puzzle: ScenePuzzle | null | undefined,
+  lang: LangCode = DEFAULT_LANG,
+): { id: string; label: string } | null {
+  if (puzzle?.kind !== 'search') return null
+  const p = pack(lang)
+  if (!matchesKeyword(input, p.input.search)) return null
+  const text = ` ${normalize(input).replace(/[^\p{L}\p{N}]+/gu, ' ')} `
+  const stop = p.input.stopwords.map(normalize)
+  const score = (label: string) => normalize(label)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(w => w.length > 3 && !stop.includes(w))
+    .filter(w => text.includes(` ${w} `)).length
+  const ranked = puzzle.spots
+    .map(s => ({ s, n: score(s.label) }))
+    .filter(x => x.n > 0)
+    .sort((x, y) => y.n - x.n || y.s.label.length - x.s.label.length)
+  return ranked[0]?.s ?? null
+}

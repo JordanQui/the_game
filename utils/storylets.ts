@@ -38,6 +38,9 @@ export interface Qualities {
   /** Tours déjà joués. Celui qu'on est en train de jouer n'y est pas encore. */
   turn: number
 
+  /** L'aube s'est levée : la nuit du joueur est finie, où qu'il en soit. */
+  dawn: boolean
+
   /** La commande emploie les mots de la sortie, quel qu'en soit le moment. */
   mentionsExit: boolean
   /** Tour à partir duquel la porte accepte de s'ouvrir. */
@@ -90,6 +93,14 @@ export interface Qualities {
   /** Il réclame une chose dont le nom est encore brouillé pour lui. */
   takesUnreadObject: boolean
 
+  /**
+   * Il fouille un des endroits où la carte peut être cachée.
+   *
+   * Seulement là où l'énigme est une fouille et tant que la carte manque :
+   * fouiller ailleurs, ou après coup, n'est qu'un geste d'ambiance.
+   */
+  searchesSpot: boolean
+
   /** Le joueur TEND un objet de son inventaire à quelqu'un. */
   offersItem: boolean
   /** Et cette personne attendait précisément celui-là. */
@@ -108,7 +119,9 @@ export type StoryletPlay =
   /** La porte s'ouvre : le texte de sortie, puis l'écran. */
   | { kind: 'exit' }
   /** Une réponse déjà écrite quelque part. Aucun appel, aucun token. */
-  | { kind: 'local'; say: 'oracle' | 'nobody' | 'unused_lens' | 'unread_object' | 'exhausted' | 'game_over' }
+  | { kind: 'local'; say: 'oracle' | 'nobody' | 'unused_lens' | 'unread_object' | 'exhausted' | 'game_over' | 'dawn' | 'blocked_exit' }
+  /** Il plonge la main quelque part. Aucun appel : ça ne coûte que la nuit. */
+  | { kind: 'search' }
   /** Il prend ce qu'il a nommé. Un geste, pas un tour : rien ne part au modèle. */
   | { kind: 'pickup' }
   /** Un tour facturé. `mode` cadre le prompt côté serveur. */
@@ -163,6 +176,15 @@ export const DECK: Storylet[] = [
     play: { kind: 'command' },
   },
   {
+    id: 'aube',
+    note: "l'aube s'est levée : plus rien ne se joue, la nuit passe à l'épilogue",
+    // Juste après le canal '#' : une fois le jour levé, aucune réplique, aucune
+    // porte, aucune énigme. Ne se tire qu'au rechargement ou pendant la courte
+    // pause qui précède l'épilogue — l'aube elle-même ferme la saisie.
+    when: q => q.dawn,
+    play: { kind: 'local', say: 'dawn' },
+  },
+  {
     id: 'fermeture',
     note: 'la nuit se referme : toute la scène passée sans obtenir ce qu\'il fallait',
     // Juste après le canal '#', et avant tout le reste : au tour de la
@@ -180,9 +202,14 @@ export const DECK: Storylet[] = [
   },
   {
     id: 'sortie_bloquee',
-    note: "il veut sortir mais l'objet lui manque : on le renvoie vers son détenteur",
+    note: "il veut sortir mais l'objet lui manque : la porte ne cède pas, et c'est tout",
+    // LOCAL, ET MUET SUR LA SUITE. C'était un tour facturé dont le prompt
+    // nommait l'objet et celui qui le garde : vouloir partir suffisait à se
+    // faire désigner ce qu'il restait à faire. Une porte fermée est déjà une
+    // information ; ce qui manque, le joueur le cherche lui-même — ou le
+    // demande (« je fais quoi ? »), et l'oracle répond.
     when: q => q.mentionsExit && q.sceneHasKeyItem && !q.hasKeyItem,
-    play: { kind: 'model', mode: 'blocked_exit' },
+    play: { kind: 'local', say: 'blocked_exit' },
   },
   {
     id: 'sortie',
@@ -206,6 +233,14 @@ export const DECK: Storylet[] = [
     note: "il aborde quelqu'un sans le nommer : l'oeil, pas un tour d'ambiance facturé",
     when: q => q.addressesNobody,
     play: { kind: 'local', say: 'nobody' },
+  },
+  {
+    id: 'fouille',
+    note: "il fouille un endroit où la carte peut être : un geste qui ne coûte que la nuit",
+    // Avant le ramassage : « fouiller » n'est pas « prendre », et l'endroit
+    // n'est pas un objet qu'on emporte.
+    when: q => q.searchesSpot && !q.hasKeyItem,
+    play: { kind: 'search' },
   },
   {
     id: 'ramassage',

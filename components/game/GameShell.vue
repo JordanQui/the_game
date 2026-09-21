@@ -7,6 +7,8 @@ import { useNarrative } from '~/composables/useNarrative'
 import { useStorylets } from '~/composables/useStorylets'
 import { useImageGen } from '~/composables/useImageGen'
 import { observationOf } from '~/utils/interactables'
+import { usePuzzle } from '~/composables/usePuzzle'
+import { useNightClock } from '~/composables/useNightClock'
 
 const gameStore = useGameStore()
 const playerStore = usePlayerStore()
@@ -15,6 +17,8 @@ const { generateSceneImage } = useImageGen()
 // Une saisie n'entre plus par une cascade de `if` : elle tire un moment dans
 // le deck, dont l'ordre de priorité se lit d'un bloc dans `utils/storylets.ts`.
 const { play } = useStorylets()
+const puzzle = usePuzzle()
+const night = useNightClock()
 
 /**
  * Ouvert par défaut : le joueur doit voir tout de suite avec qui parler, c'est
@@ -56,12 +60,12 @@ function onSolved() {
     playerStore.language, gameStore.revealedInteractableIds)
   if (observation) gameStore.addNarrativeEntry('narration', observation)
 
-  // LÀ OÙ L'OBJET N'EST SUR PERSONNE, LE LIRE EST L'OBTENIR. Une fréquence
-  // affichée par un terminal, un code gravé sur une plaque : il n'y a rien à
-  // recevoir des mains de quelqu'un, et la remise — seul chemin vers
-  // `hasKeyItem` — ne se déclenchait jamais. La scène se refermait donc sur un
-  // joueur qui avait tout fait juste.
-  if (isFoundItem.value && target.id === `cle_${playerStore.scene?.scene_id}`) collectItem()
+  // LÀ OÙ L'OBJET N'EST SUR PERSONNE, LE LIRE L'OUVRE. Une fréquence affichée
+  // par un terminal, un code gravé sur une plaque : il n'y a rien à recevoir
+  // des mains de quelqu'un. Sans énigme, le lire suffit à l'obtenir ; avec
+  // une énigme, le lire montre le cadran, le clavier, le lecteur — et il
+  // reste à trouver la réponse. Voir `usePuzzle`.
+  if (isFoundItem.value && target.id === puzzle.keyId.value && !gameStore.hasKeyItem) puzzle.keyItemRead()
 }
 
 /**
@@ -113,23 +117,15 @@ const isFoundItem = computed(() => playerStore.scene?.key_item?.acquisition === 
 
 /** Le joueur prend l'objet que le détenteur lui tend. */
 function collectItem() {
-  const item = playerStore.scene?.key_item
-  if (!item) return
-  gameStore.collectKeyItem(playerStore.scene?.grants_augmentation ?? false, {
-    // Toujours le même id que celui sous lequel le récit l'a chiffré : déchiffré
-    // dans le texte, il doit rester déchiffré dans l'inventaire.
-    id: `cle_${playerStore.scene?.scene_id}`,
-    name: playerStore.scene?.key_item?.name ?? '',
-    from: playerStore.scene?.place?.name,
-    color: playerStore.scene?.key_item?.color,
-    // La couleur de la carte EST l'accent de la scène où on la prend : on la
-    // fige ici, sinon la pastille se repeindrait au lieu suivant.
-    hex: playerStore.scene?.palette?.accent?.hex,
-    observation: playerStore.scene?.key_item?.observation,
-    icon: playerStore.scene?.key_item?.icon,
-  })
-  gameStore.addNarrativeEntry('system', `Tu tiens maintenant ${item.name}.`)
+  puzzle.collect()
 }
+
+/**
+ * L'énigme est ouverte, pas résolue, et son panneau est refermé : un bandeau
+ * permet d'y revenir sans relire l'objet à la loupe.
+ */
+const puzzleWaiting = computed(() =>
+  gameStore.puzzleUnlocked && !gameStore.puzzleOpen && !gameStore.hasKeyItem && Boolean(puzzle.puzzle.value))
 
 function retryImage() {
   const scene = playerStore.scene
@@ -184,6 +180,14 @@ function retryImage() {
       <p class="flex-1 min-w-0 truncate text-neon-400/90 font-display uppercase tracking-[0.14em] text-[11px]">
         {{ playerStore.place?.name ?? playerStore.scene?.scene_title }}
       </p>
+      <!-- L'heure de la nuit. Elle ne bouge qu'avec ce qui coûte : une
+           réplique, une énigme ratée, un endroit fouillé, un trajet. -->
+      <span
+        v-if="night.running.value"
+        class="shrink-0 font-mono tabular-nums text-[11px] tracking-[0.08em]"
+        :class="night.urgent.value ? 'text-neon-200 animate-pulse' : 'text-neon-500/80'"
+        :title="t('night.clock_title', { dawn: night.config.value?.dawn ?? '', left: night.duration(night.left.value.total) })"
+      >{{ night.clock.value }}</span>
       <button
         v-if="playerStore.npcs.length"
         class="shrink-0 text-xs text-neon-600/80 hover:text-neon-400 transition-colors py-1 px-2 -my-1"
@@ -236,6 +240,30 @@ function retryImage() {
       @solved="onSolved"
       @close="closeTest"
     />
+
+    <!-- L'énigme de la scène : cadran, clavier, séquence ou lecteur -->
+    <PuzzlePanel
+      v-if="gameStore.puzzleOpen && puzzle.puzzle.value"
+      :puzzle="puzzle.puzzle.value"
+      :name="playerStore.scene?.key_item?.name ?? ''"
+      :submit="puzzle.submit"
+      @close="gameStore.setPuzzleOpen(false)"
+    />
+
+    <Transition name="slide">
+      <div
+        v-if="puzzleWaiting"
+        class="shrink-0 flex items-center gap-3 mx-4 mb-2 px-3 py-2 border border-neon-700/40 bg-ink-900/80"
+      >
+        <p class="flex-1 min-w-0 text-[11px] text-neon-300/90 font-mono truncate">
+          {{ t('puzzle.waiting', { name: playerStore.scene?.key_item?.name ?? '' }) }}
+        </p>
+        <button
+          class="shrink-0 text-[10px] uppercase tracking-[0.2em] font-display text-neon-300 hover:text-neon-100 border border-neon-600/50 px-2 py-1"
+          @click="gameStore.setPuzzleOpen(true)"
+        >{{ t('puzzle.reopen') }}</button>
+      </div>
+    </Transition>
 
     <!--
       L'objet est TENDU, pas donné : c'est la fin de la conversation avec celui

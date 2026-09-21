@@ -132,7 +132,7 @@ export function useSceneCommands() {
     },
   ]
 
-  /** Les dix scènes, dans l'ordre, telles que le build les a inscrites. */
+  /** Les scènes, dans l'ordre, telles que le build les a inscrites. */
   const sceneIndex = progression.scenes
 
   /**

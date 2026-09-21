@@ -3,7 +3,7 @@ import type { NightPlan, PlannedScene, SceneTextResponse } from '~/types/scene'
 /**
  * Ce qu'une scène laisse à la suivante.
  *
- * L'histoire n'est pas générée d'un bloc au départ : dix scènes demanderaient
+ * L'histoire n'est pas générée d'un bloc au départ : toute la nuit demanderait
  * 26 000 tokens de sortie pour un plafond de 16 384, et ça figerait tout avant
  * que le joueur ait joué. Chaque scène naît donc à son tour, avec ce résumé.
  *

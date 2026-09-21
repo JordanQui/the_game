@@ -133,7 +133,7 @@ const NAV = [
           <p class="text-ink-200/85 text-sm leading-relaxed max-w-3xl">
             Aucun décor n’est écrit d’avance. Le script fixe la <strong class="text-ink-100">mécanique</strong> :
             l’ordre des {{ data.scenes.length }} scènes, ce qu’on obtient dans chacune, comment on l’obtient et à
-            quelle condition on sort. Le reste — le but de la nuit, les neuf lieux, les personnages, les noms des
+            quelle condition on sort. Le reste — le but de la nuit, les six lieux, les personnages, les noms des
             objets — est écrit par le modèle pour chaque joueur, à partir de son dossier d’admission.
           </p>
           <div class="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.14em]">

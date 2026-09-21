@@ -30,6 +30,7 @@ import { DEFAULT_LANG } from '~/types/i18n'
 import { agreementFor, overlayValue, pack } from '~/utils/languages'
 import { zodiacKey } from '~/utils/zodiac'
 import { numerologyOf } from '~/utils/numerology'
+import { drawPuzzle } from '~/utils/puzzles'
 
 // Les JSON sont importés, pas lus sur le disque : en serverless (Vercel) le
 // process ne voit que le bundle, jamais l'arborescence du repo. L'import les
@@ -357,6 +358,10 @@ export class SceneRuntime {
       budget_usd: this.script.pricing.scene_budget_usd,
       price_input_per_1m_usd: this.script.pricing.input_per_1m_usd,
       price_output_per_1m_usd: this.script.pricing.output_per_1m_usd,
+      // L'horloge est la même pour toute la nuit : elle voyage avec chaque
+      // scène pour que le client n'ait jamais à la connaître d'avance. La note
+      // et la consigne d'épilogue restent ici — elles parlent au modèle.
+      night_clock: (({ note: _n, dawn_ending: _d, ...clock }) => clock)(this.script.defaults.night_clock),
     }
   }
 
@@ -375,6 +380,16 @@ export class SceneRuntime {
     // arrive par le journal : la réécrire coûterait un millier de jetons par
     // scène, et chaque réécriture pourrait la faire dériver.
     if (!this.isStart) delete schema.night
+
+    // LA SÉQUENCE est la seule énigme dont le modèle écrit un morceau : les
+    // gestes du dénouement, qui sont ceux de CE joueur. Réclamés ici et nulle
+    // part ailleurs — ailleurs ce serait une sortie payée que personne ne lit.
+    if (this.scene.key_item.puzzle === 'sequence' && schema.key_item) {
+      schema.key_item = {
+        ...(schema.key_item as Record<string, unknown>),
+        steps: ["string (4 gestes COURTS, 2 à 5 mots chacun, à l'impératif, DANS L'ORDRE où ils s'accomplissent — ils décomposent resolving_action)"],
+      }
+    }
 
     // UN ÉLÉMENT CACHÉ NE SE DÉCOUVRE QUE PAR UN ÉCHANGE, et un échange n'existe
     // que si le joueur porte quelque chose de troquable. Le schéma proposait
@@ -404,6 +419,8 @@ export class SceneRuntime {
     user: UserProfile,
     journal: JournalEntry[] = [],
     carried: CarriedItem[] = [],
+    /** L'aube l'a rattrapé avant le dernier lieu : la fin le dit. */
+    dawn = false,
   ): string {
     const s = this.scene
     const theme = resolveTheme(user, this.script)
@@ -423,7 +440,7 @@ ${journal.length ? renderJournal(journal, journal.length) : "Il n'a traversé au
 ${this.describeCarried(carried, true)}
 
 ${this.script.defaults.deep_theme.instruction}
-
+${dawn ? `\n${this.script.defaults.night_clock.dawn_ending}\n` : ''}
 ${this.describeCounsel()}
 
 DIRECTION ARTISTIQUE
@@ -621,7 +638,7 @@ ${questFields}
 
 
 OBJET-CLÉ
-${s.key_item.instruction}
+${s.key_item.instruction}${s.key_item.puzzle ? `\n${this.script.defaults.puzzles.scene_rule}` : ''}
 
 ${this.script.defaults.locks.instruction}
 
@@ -710,9 +727,9 @@ ${list(o.posture)}`
   /**
    * La quête de la nuit : le but, et la ville que ce joueur va traverser.
    *
-   * Le script ne fixe que la mécanique — trois actes de trois lieux, ce qu'on
+   * Le script ne fixe que la mécanique — trois actes de deux lieux, ce qu'on
    * obtient dans chacun. À l'auberge, le modèle écrit d'abord le but, puis
-   * invente les neuf lieux depuis le profil ; ensuite le plan voyage par le
+   * invente les six lieux depuis le profil ; ensuite le plan voyage par le
    * journal et chaque scène se bâtit sur le sien. Une scène qui en inventerait
    * un autre défait tout ce qui précède.
    */
@@ -1057,7 +1074,7 @@ ${lines}`)
 
     // LA QUÊTE DE LA NUIT. C'est la racine de toute la partie : sans elle, le
     // modèle construit l'ouverture sur l'objet à récupérer — « Vadim t'a
-    // laissé quelque chose ici » — et les neuf lieux suivants n'ont plus rien
+    // laissé quelque chose ici » — et les six lieux suivants n'ont plus rien
     // qui les tienne ensemble. Seule l'auberge l'écrit, et elle doit être
     // entière : un lieu manquant serait une scène sans décor.
     //
@@ -1251,7 +1268,11 @@ ${lines}`)
   }
 
   /** Fusionne la sortie du modèle avec les parties statiques du script. */
-  assembleText(generated: GeneratedScene, theme: PlayerTheme | null = null): SceneTextResponse {
+  assembleText(
+    generated: GeneratedScene,
+    theme: PlayerTheme | null = null,
+    carried: CarriedItem[] = [],
+  ): SceneTextResponse {
     const exit = this.scene.exits[0]
 
     // Le modèle produit des couleurs qui ne tiennent pas la hiérarchie Dark Deco.
@@ -1358,6 +1379,15 @@ ${lines}`)
       interface_palette: this.scene.interface_palette?.mode ?? 'from_scene',
       pacing: this.pacing,
       theme,
+      // Tirée APRÈS le recalage des majuscules : les indices se posent sur les
+      // noms tels que le joueur les lira.
+      puzzle: drawPuzzle(this.scene.key_item.puzzle, {
+        scene_id: this.scene.id,
+        scene_text: naming.text,
+        decor: scene.decor,
+        interactables: iconed,
+        key_item: generated.key_item,
+      }, { lang: this.lang, carried }),
       key_item: {
         ...drawn(generated.key_item),
         exchanges_before_handover: this.scene.key_item.exchanges_before_handover,
@@ -1447,13 +1477,19 @@ ${lines}`)
       ? `${base}\n\n${interpolate(t.agreement_rule, { agreement: ctx.player_agreement })}`
       : base
 
+    // Une énigme se lit dans le lieu : personne ne la résout à la place du
+    // joueur, et surtout personne n'invente un chiffre que le jeu n'a pas tiré.
+    const puzzleRule = this.scene.key_item.puzzle
+      ? `\n\n${this.script.defaults.puzzles.turn_rules[this.scene.key_item.puzzle] ?? ''}`
+      : ''
+
     const withItem = ctx.key_item
-      ? `${agreed}\n\n${interpolate(this.itemIsFound ? t.key_item_context_found : t.key_item_context, {
+      ? `${agreed}${puzzleRule}\n\n${interpolate(this.itemIsFound ? t.key_item_context_found : t.key_item_context, {
           item_name: ctx.key_item.name,
           item_description: ctx.key_item.description,
           item_why: ctx.key_item.why,
           item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
-          item_handover_hint: ctx.key_item.handover_hint || "qu'on l'écoute vraiment",
+          item_handover_hint: ctx.key_item.handover_hint || "ce qu'il est vraiment sorti chercher cette nuit",
           item_holder: ctx.npcs.find(n => n.id === ctx.key_item?.npc_id)?.name ?? 'un habitué',
           exit_label: this.exitLabel,
         })}`
@@ -1595,6 +1631,9 @@ ${lines}`)
         npc_personality: npc.personality,
         player_input: input,
         item_name: ctx.key_item.name,
+        // La question qu'il avait posée : sa réplique commente la réponse
+        // avant de remettre l'objet, elle ne la redemande pas.
+        item_handover_hint: ctx.key_item.handover_hint || "ce qu'il est vraiment sorti chercher cette nuit",
         item_description: ctx.key_item.description,
         item_why: ctx.key_item.why,
         item_action: ctx.key_item.resolving_action || ctx.quest.restoration || ctx.quest.objective,
@@ -1680,8 +1719,9 @@ ${lines}`)
         npc_knows: npc.knows,
         player_input: input,
         item_name: ctx.key_item.name,
-        item_handover_hint: ctx.key_item.handover_hint || "qu'on l'écoute vraiment",
+        item_handover_hint: ctx.key_item.handover_hint || "ce qu'il est vraiment sorti chercher cette nuit",
         item_hook_story: ctx.key_item.hook_story || ctx.quest.hook,
+        quest_title: ctx.quest.title,
       })
     }
 

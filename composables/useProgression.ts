@@ -3,6 +3,7 @@ import { usePlayerStore } from '~/stores/player'
 import { forgetStoredScene } from '~/composables/useScene'
 import { DEFAULT_LANG } from '~/types/i18n'
 import { overlayValue } from '~/utils/languages'
+import { inNight, nightLength } from '~/utils/night-clock'
 
 /**
  * Le passage d'une scène à la suivante.
@@ -70,7 +71,24 @@ export function useProgression() {
    * la copie gardée en session est oubliée, sans quoi l'écran de construction
    * reposerait l'ancienne au lieu d'en demander une neuve.
    */
-  function goTo(scene: SceneRef) {
+  function goTo(target: SceneRef) {
+    let scene = target
+    // LE TRAJET COÛTE LA NUIT, et l'aube peut tomber en chemin : on arrive
+    // alors à l'épilogue plutôt qu'au lieu suivant. Lu sur la scène qu'on
+    // quitte — la suivante n'est pas encore là. Le premier lieu de la nuit ne
+    // coûte rien : c'est là que l'horloge part. Une aube déjà levée ne laisse
+    // plus entrer nulle part ailleurs.
+    const clock = playerStore.scene?.pacing?.night_clock
+    const ending = scenes().find(s => s.kind === 'ending')
+    if (scene.kind !== 'ending' && ending) {
+      if (gameStore.dawnBroke) {
+        scene = ending
+      } else if (clock && scene.id !== clock.starts_at_scene && inNight(scene.id, scenes(), clock)
+        && gameStore.spendNight(clock.minutes.arrival, nightLength(clock)).dawn) {
+        scene = ending
+      }
+    }
+
     playerStore.closeScene()
     gameStore.startNewScene(scene.id)
     forgetStoredScene()

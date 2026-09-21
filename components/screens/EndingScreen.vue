@@ -38,6 +38,9 @@ onMounted(async () => {
           kind: o.kind,
           color: o.color,
         })),
+        // L'aube l'a rattrapé avant le dernier lieu : la fin ne racontera pas
+        // un geste qu'il n'a pas eu le temps de faire.
+        dawn: gameStore.dawnBroke,
       },
     })
     // L'aube a sa propre palette : l'interface la prend aussi.
@@ -74,6 +77,12 @@ onMounted(async () => {
 
     <div class="sheet">
       <p v-if="error" class="text-neon-300 font-mono text-sm">{{ error }}</p>
+      <!-- L'aube l'a rattrapé : ça se dit d'abord, en clair, avant le texte
+           généré — la fin ne doit pas pouvoir se lire comme une réussite. -->
+      <p
+        v-if="gameStore.dawnBroke && ending && !error"
+        class="mb-6 text-center font-display uppercase tracking-[0.24em] text-[12px] text-neon-300"
+      >{{ t('night.failed_title') }}</p>
       <!-- Réduit aux balises <h2> <p> <em> <strong> par le serveur. -->
       <!-- eslint-disable-next-line vue/no-v-html -->
       <article v-else-if="ending" class="prose" v-html="ending.ending_html" />

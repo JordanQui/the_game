@@ -30,6 +30,8 @@ export default defineEventHandler(async (event) => {
     journal?: JournalEntry[]
     /** Ce que le joueur porte. La scène doit pouvoir bâtir son puzzle dessus. */
     carried?: CarriedItem[]
+    /** Épilogue seulement : l'aube l'a rattrapé avant le dernier lieu. */
+    dawn?: boolean
   }>(event) ?? {}
 
   // La langue vient du dossier quand il est là, du cookie sinon : c'est elle
@@ -68,7 +70,7 @@ export default defineEventHandler(async (event) => {
   // repayer la même génération à chaque relance. `?fresh=1` la renouvelle.
   // La langue entre dans la clé : deux langues ne partagent pas une scène en
   // cache, sinon le rechargement d'après en servirait une dans l'autre langue.
-  const key = mockKey(scene.id, `${lang}|${user.identity.name}|${user.identity.birthday ?? ''}|${body.journal?.length ?? 0}|${body.carried?.length ?? 0}`, scriptFingerprint(runtime.script))
+  const key = mockKey(scene.id, `${lang}|${user.identity.name}|${user.identity.birthday ?? ''}|${body.journal?.length ?? 0}|${body.carried?.length ?? 0}|${body.dawn ? 'aube' : ''}`, scriptFingerprint(runtime.script))
   if (import.meta.dev && !wantsFresh(event)) {
     const cached = await readMock<SceneTextResponse>('scene', key)
     if (cached) {
@@ -97,7 +99,7 @@ export default defineEventHandler(async (event) => {
     {
       role: 'user',
       content: isEnding
-        ? scene.buildEndingPrompt(user, body.journal ?? [], body.carried ?? [])
+        ? scene.buildEndingPrompt(user, body.journal ?? [], body.carried ?? [], body.dawn === true)
         : scene.buildGenerationPrompt(user, body.journal ?? [], body.carried ?? []),
     },
   ]
@@ -232,7 +234,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const assembled = {
-    ...scene.assembleText(generated, resolveTheme(user, runtime.script)),
+    ...scene.assembleText(generated, resolveTheme(user, runtime.script), body.carried ?? []),
     // La quête voyage avec chaque scène : c'est de là que le journal la reprend.
     night: generated.night ?? plan,
     // Permet au client de jeter une scène gardée en session dès que le script

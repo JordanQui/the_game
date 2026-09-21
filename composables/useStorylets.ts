@@ -8,7 +8,8 @@ import { useSceneCommands } from '~/composables/useSceneCommands'
 import { resolveLocally, buildGuidance } from '~/utils/scene-oracle'
 import { translate } from '~/utils/languages'
 import { takeTarget, observationOf } from '~/utils/interactables'
-import { matchesKeyword } from '~/utils/text-match'
+import { usePuzzle } from '~/composables/usePuzzle'
+import { useNightClock } from '~/composables/useNightClock'
 
 /**
  * Le seul chemin par lequel une saisie entre dans le jeu.
@@ -24,9 +25,11 @@ import { matchesKeyword } from '~/utils/text-match'
 export function useStorylets() {
   const gameStore = useGameStore()
   const playerStore = usePlayerStore()
-  const { runTurn, interlocutor, addressesNobody, answerLocally } = useNarrative()
+  const { runTurn, interlocutor, addressesNobody, answerLocally, mentionsExit } = useNarrative()
   const { openExit } = usePaywall()
   const { isCommand, run: runSceneCommand } = useSceneCommands()
+  const puzzle = usePuzzle()
+  const night = useNightClock()
 
   /**
    * La chose du décor que cette saisie réclame, si elle en réclame une.
@@ -97,9 +100,12 @@ export function useStorylets() {
 
       turn: gameStore.turnCount,
 
+      dawn: gameStore.dawnBroke,
+
       // Les mots-clés viennent de la scène servie, donc du pack de langue :
-      // le client et le serveur testent la MÊME liste.
-      mentionsExit: scene ? matchesKeyword(input, scene.paywall.exit_keywords) : false,
+      // le client et le serveur testent la MÊME liste. En conversation, une
+      // liste plus étroite : voir `mentionsExit`.
+      mentionsExit: mentionsExit(input),
       exitOpensAtTurn: scene?.paywall.min_turns_before_trigger ?? 0,
 
       addressesNobody: scene ? addressesNobody(input) : false,
@@ -118,6 +124,8 @@ export function useStorylets() {
       takesReadableObject: Boolean(claim) && gameStore.decryptedObjectIds.includes(claim!.id),
       takesUnreadObject: Boolean(claim) && !gameStore.decryptedObjectIds.includes(claim!.id),
 
+      searchesSpot: Boolean(scene) && Boolean(puzzle.spotOf(input)),
+
       offersItem: Boolean(give),
       offersWantedItem: Boolean(give) && wanted,
 
@@ -128,7 +136,7 @@ export function useStorylets() {
 
   /** Le texte d'une réponse qui ne passe pas par le modèle. */
   function localText(
-    say: 'oracle' | 'nobody' | 'unused_lens' | 'unread_object' | 'exhausted',
+    say: 'oracle' | 'nobody' | 'unused_lens' | 'unread_object' | 'exhausted' | 'blocked_exit',
     q: Qualities,
   ): string {
     const scene = playerStore.scene
@@ -138,6 +146,13 @@ export function useStorylets() {
     if (say === 'oracle') return q.localAnswer?.text ?? ''
     if (say === 'nobody') return t('oracle.no_name')
     if (say === 'unread_object') return t('oracle.unread_object')
+    // Deux tournures, en alternance : la même phrase deux fois de suite se lit
+    // comme un message d'erreur.
+    if (say === 'blocked_exit') {
+      return t(q.turn % 2 ? 'oracle.exit_blocked_2' : 'oracle.exit_blocked', {
+        exit: scene?.exit_label ?? '',
+      })
+    }
     if (say === 'unused_lens') {
       return t('oracle.unused_lens', {
         tool: scene?.key_item?.name ?? t('oracle.unused_lens_tool'),
@@ -234,7 +249,17 @@ export function useStorylets() {
       return
     }
 
+    if (moment.play.kind === 'search') {
+      puzzle.search(input)
+      if (!gameStore.dawnBroke) gameStore.setPlayingSubState('awaiting_input')
+      return
+    }
+
     if (moment.play.kind === 'local') {
+      if (moment.play.say === 'dawn') {
+        night.breakDawn()
+        return
+      }
       // La nuit se referme. Le texte a été écrit à la génération de la scène :
       // on ne fait pas patienter vingt secondes quelqu'un à qui on ferme la
       // porte, et la fermeture ne coûte pas un tour de plus.
@@ -247,7 +272,8 @@ export function useStorylets() {
       // Idem pour l'outil jamais employé : il lui manque un geste, pas un tour.
       if (moment.play.say === 'nobody'
         || moment.play.say === 'unused_lens'
-        || moment.play.say === 'unread_object') {
+        || moment.play.say === 'unread_object'
+        || moment.play.say === 'blocked_exit') {
         gameStore.addNarrativeEntry('system', localText(moment.play.say, q))
         gameStore.setPlayingSubState('awaiting_input')
         return

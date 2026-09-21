@@ -14,17 +14,39 @@
       "auberge",
       "a1s1",
       "a1s2",
-      "a1s3",
       "a2s1",
       "a2s2",
-      "a2s3",
       "a3s1",
       "a3s2",
-      "a3s3",
       "fin"
     ]
   },
   "defaults": {
+    "night_clock": {
+      "note": "L'horloge de la nuit, façon Prince of Persia : l'aube à heure fixe, et chaque geste qui la rapproche. Elle ne tourne qu'à partir de `starts_at_scene` — l'auberge est hors du temps. Seul ce qui COÛTE avance l'horloge : une réplique facturée, une énigme ratée, un endroit fouillé, le trajet d'un lieu au suivant. Regarder, lire un nom, ramasser sont gratuits. À l'aube, la partie passe à l'épilogue, qui reçoit `dawn_ending`. Réglage : 300 minutes (01:00 → 06:00), dont 25 de trajets, laissent ~45 tours facturés sur 6 lieux — un peu plus que la moyenne de 6 par scène, moins que le plafond. C'est la seule mécanique qui fait BAISSER le nombre moyen de tours.",
+      "starts_at_scene": "a1s1",
+      "start": "01:00",
+      "dawn": "06:00",
+      "minutes": {
+        "arrival": 5,
+        "turn": 6,
+        "wrong_answer": 10,
+        "search": 10
+      },
+      "urgent_minutes": 45,
+      "dawn_ending": "L'AUBE L'A RATTRAPÉ. La nuit a fini avant lui : il n'a pas atteint le dernier lieu, et le geste vers lequel toute la nuit tendait n'a pas eu lieu. Le journal s'arrête là où l'aube l'a pris — ne raconte rien au-delà. L'épilogue le dit sans le punir et sans le consoler, et il le dit EN CLAIR — le joueur doit comprendre qu'il a échoué : le soleil se lève sur la ville, mais pour lui la nuit ne s'est pas levée. Le jour se lève quand même, la ville reprend son compte, et ce qu'il a traversé reste vrai. N'écris JAMAIS qu'il a accompli ce qu'il était sorti chercher."
+    },
+    "puzzles": {
+      "note": "Une énigme par mécanique d'objet trouvé (voir utils/puzzles.ts). La solution et les indices sont tirés par le JEU à l'assemblage et posés sur les choses que le récit nomme ; le modèle n'écrit que les gestes d'une séquence. `scene_rule` s'ajoute à la section OBJET-CLÉ de la génération, `turn_rules` au prompt de tour de la scène concernée.",
+      "scene_rule": "ÉNIGME — les indices de cette scène sont posés par le JEU, pas par toi, sur les éléments du décor et les choses à examiner que le texte nomme en Majuscule. Nomme donc dans `scene_text` CHACUN des éléments de `decor`, avec son nom exact, et au moins deux choses à examiner sans les prendre. N'écris jamais de solution, jamais de chiffre de code ou de fréquence, jamais d'ordre de gestes.",
+      "turn_rules": {
+        "frequency": "ÉNIGME DU LIEU — une fréquence. Personne ici ne la connaît, et aucun personnage ne cite jamais un nombre. Interrogé, il renvoie à ce que le lieu montre à qui prend le temps de regarder, sans dire quoi ni où.",
+        "code": "ÉNIGME DU LIEU — un code. Personne ici ne le connaît, et aucun personnage ne cite jamais un chiffre. Interrogé, il renvoie à ce que le lieu montre à qui prend le temps de regarder, sans dire quoi ni où.",
+        "sequence": "ÉNIGME DU LIEU — l'ordre des gestes. Personne ici ne le connaît, et aucun personnage ne dit quel geste vient avant l'autre. Interrogé, il renvoie à ce que le lieu montre à qui prend le temps de regarder.",
+        "lock": "ÉNIGME DU LIEU — un lecteur de carte. Personne ne dit quelle carte présenter. Tout au plus : il ne prend qu'une carte gagnée plus tôt dans la nuit, et sa couleur dit laquelle.",
+        "search": "ÉNIGME DU LIEU — une carte cachée. Personne ne sait où elle est, et aucun personnage ne désigne un endroit. Tout au plus : fouiller au hasard coûte du temps, et la nuit n'en a plus beaucoup."
+      }
+    },
     "art_direction": {
       "render": "1990s Dark Deco animated series cel painting, with the flat polygonal backdrops of the 1992 video game Flashback",
       "tonal_ratio": {
@@ -105,11 +127,11 @@
       "exit_nudge_prompt": "Le joueur évoque la sortie : « {{player_input}} ». Il n'est pas encore prêt à franchir {{exit_label}}.\nÉcris 1 à 2 phrases de narration à la deuxième personne qui ramènent l'attention vers le sas de façon détournée : la pluie qui bat contre le battant, une sirène qui passe dans la rue, un habitué qui jette un regard vers lui, la lueur d'un néon qui filtre par l'interstice.\nRappelle que ce sas est le seul chemin vers {{quest_artifact}}.\nInterdits absolus : ne dis jamais au joueur quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions. Suggère l'envie, jamais la marche à suivre.",
       "steer_after_turns": 5,
       "steer_instruction": "ORIENTATION VERS LA SORTIE — le joueur traîne, il a déjà joué plusieurs tours sans partir.\nÀ partir de maintenant, termine CHAQUE réponse en rendant la sortie plus présente : ce que le joueur a appris et qui rend le départ nécessaire, ce qu'un habitué laisse entendre sur ce qui l'attend dehors, ou un signe concret venu du sas. Sois de plus en plus direct à chaque tour.\nTu peux nommer explicitement ce qu'il faut faire — franchir le sas — mais jamais la commande à taper : n'emploie ni « tape », ni « écris », ni « commande », et ne cite aucun verbe entre guillemets. Tu décris le monde, tu ne pilotes pas le joueur.",
-      "key_item_context": "OBJET-CLÉ DE LA SCÈNE : {{item_name}} — {{item_description}}\nDétenu par {{item_holder}}. Il permet de rétablir : {{item_why}}\nUne fois les noms lisibles, le joueur pourra : {{item_action}}\nCe personnage attend d'abord ceci du joueur : {{item_handover_hint}}\nTant que le joueur ne l'a pas, franchir {{exit_label}} ne sert à rien, et tous les personnages le savent. Ne remets jamais l'objet de ta propre initiative : on te dira quand.",
-      "handover_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}.\nLe joueur t'a dit : « {{player_input}} ».\n{{reply_rule}}\n{{thread_rule}}\nIl t'a assez parlé : tu lui remets MAINTENANT {{item_name}} ({{item_description}}).\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Dis pourquoi tu t'en sépares, et ce qu'il doit en faire : {{item_why}} — concrètement, {{item_action}}. Termine en le poussant vers {{exit_label}}. Tu parles, tu ne décris pas ton geste à la troisième personne.\n{{beyond_rule}}",
+      "key_item_context": "OBJET-CLÉ DE LA SCÈNE : {{item_name}} — {{item_description}}\nDétenu par {{item_holder}}. Il permet de rétablir : {{item_why}}\nUne fois les noms lisibles, le joueur pourra : {{item_action}}\nAvant de le céder, son détenteur pose au joueur une seule question, sur sa quête : {{item_handover_hint}}\nTant que le joueur ne l'a pas, franchir {{exit_label}} ne sert à rien, et tous les personnages le savent. Ne remets jamais l'objet de ta propre initiative : on te dira quand.",
+      "handover_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}.\nLe joueur t'a dit : « {{player_input}} ».\n{{reply_rule}}\n{{thread_rule}}\nTu lui avais posé une question sur sa quête — {{item_handover_hint}} — et ce qu'il vient de dire est sa réponse, même mal, même de travers. Il n'y a pas de mauvaise réponse : tu ne la reposes pas, tu ne la discutes pas, tu ne la mets pas à l'épreuve.\nTu lui remets MAINTENANT {{item_name}} ({{item_description}}).\nRéponds en 3 à 5 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. D'abord UNE phrase qui commente ce qu'il vient de répondre — ce que ça t'apprend de lui, ce que ça te rappelle, pourquoi c'est assez. Puis dis pourquoi tu t'en sépares, et ce qu'il doit en faire : {{item_why}} — concrètement, {{item_action}}. Termine en le poussant vers {{exit_label}}. Tu parles, tu ne décris pas ton geste à la troisième personne.\n{{beyond_rule}}",
       "blocked_exit_prompt": "Le joueur veut franchir {{exit_label}} : « {{player_input}} ». Il n'a pas encore {{item_name}}, et sans cet objet, sortir ne servirait à rien.\nÉcris 1 à 2 phrases de narration à la deuxième personne : il approche du sas, et quelque chose le retient — il lui manque ce que {{npc_name}} garde encore.\nInterdits absolus : ne dis jamais quelle commande taper, n'emploie ni « tape », ni « écris », ni « commande », ne cite aucun verbe entre guillemets, ne donne aucune liste d'actions.",
       "steer_instruction_missing_item": "AIDE ACTIVE — le joueur sait qui détient {{item_name}} mais n'avance pas.\nÀ CHAQUE réponse, termine par un signe concret venu de {{npc_name}} : il cherche le regard du joueur, l'appelle, laisse tomber une phrase qui le concerne. Une réplique adressée, pas une ambiance.\nSois de plus en plus direct : au bout de deux tours, {{npc_name}} demande ouvertement au joueur de venir lui parler.\nNe pousse PAS vers le sas : sans l'objet, sortir ne mène nulle part. Ne dis jamais quelle commande taper.",
-      "holder_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\n{{reply_rule}}\n{{thread_rule}}\nTu détiens {{item_name}}, mais tu ne le nommes PAS encore et tu ne le proposes pas. Ce que tu attends du joueur d'abord : {{item_handover_hint}}. TU NE LE DEMANDES QU'UNE FOIS. S'il t'a déjà répondu là-dessus, même mal, même de travers, tu ne reposes pas la question : tu prends sa réponse pour ce qu'elle est, tu lui dis ce que tu en penses, et la conversation avance. Un homme qui redemande la même chose à chaque phrase ne garde rien, il radote.\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Raconte-lui ceci, à ta manière —\n{{item_hook_story}}\nCette histoire est la raison pour laquelle tu gardes quelque chose, et elle doit lui donner envie de te demander quoi.\nTERMINE par une relance qui appelle une réponse — une question, ou une phrase laissée en suspens. Ne dis jamais au joueur quelle commande taper.\n{{beyond_rule}}",
+      "holder_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\n{{reply_rule}}\n{{thread_rule}}\nTu détiens {{item_name}}, mais tu ne le nommes PAS encore et tu ne le proposes pas. Avant de céder, tu lui poses UNE question, une seule, et elle porte sur SA quête — {{quest_title}}, ce qu'il est sorti chercher cette nuit : {{item_handover_hint}}. Tu la poses dans cette réplique-ci, tu ne la reposes jamais : sa prochaine réponse, quelle qu'elle soit, suffira.\nRéponds en 2 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant. Raconte-lui ceci, à ta manière —\n{{item_hook_story}}\nCette histoire est la raison pour laquelle tu gardes quelque chose, et elle doit lui donner envie de te demander quoi.\nTERMINE par cette question. Ne dis jamais au joueur quelle commande taper.\n{{beyond_rule}}",
       "autonomous_notice": "Tu as fait le tour de ce que cette salle avait à dire.",
       "hard_turn_cap": 12,
       "informant_prompt": "Tu incarnes {{npc_name}}, {{npc_archetype}}. Personnalité : {{npc_personality}}. Ce personnage sait : {{npc_knows}}.\nLe joueur te dit : « {{player_input}} ».\n{{reply_rule}}\n{{thread_rule}}\nVous avez assez parlé pour que tu lui lâches ce que tu sais : {{item_informant_hint}}\nLE NOM DE {{item_holder}} DOIT FIGURER dans ta réponse — sans lui, il ne saura pas vers qui aller, et la scène s'arrête là. Mais il arrive DANS TA PHRASE, pas comme une consigne : tu l'évoques parce que ça vient dans ce que tu racontes, parce que tu te souviens de quelque chose, parce que tu concèdes enfin un nom à quelqu'un que tu commences à jauger.\nTu ne lui dis PAS d'aller le voir. Tu dis ce que tu sais de cette personne, et c'est ce que tu en dis qui doit lui donner envie d'y aller.\nTu peux évoquer l'objet, pas le décrire : tu ne l'as jamais eu en main.\nRéponds en 3 à 4 phrases, uniquement ta réplique, sans guillemets et sans ton nom devant.\n{{beyond_rule}}\n{{wants_rule}}",
@@ -249,7 +271,7 @@
           "description": "string (à quoi il ressemble, une phrase)",
           "observation": "string (3 à 4 phrases révélées quand le joueur a déchiffré le nom de l'objet : ce qu'il est précisément, ce qu'il a à voir avec lui, ce qu'il révèle de la quête. Jamais un mode d'emploi. Vide si la section OBJET-CLÉ n'en demande pas)",
           "why": "string (ce que cette augmentation permet de percevoir dehors, et pourquoi on ne peut pas s'en passer — une phrase)",
-          "handover_hint": "string (ce que ce personnage attend d'abord du joueur, une phrase)",
+          "handover_hint": "string (la question que le détenteur pose au joueur avant de céder, une phrase : elle porte sur ce qu'il est sorti chercher cette nuit, et n'importe quelle réponse sincère y répond)",
           "hook_story": "string (2 phrases : l'histoire de quelqu'un qui a affronté la même tension, racontée par le détenteur)",
           "informant_npc_id": "string (l'id d'un AUTRE npc, différent de npc_id)",
           "informant_hint": "string (2 phrases : ce que l'informateur sait de l'objet sans le nommer précisément)",
@@ -295,7 +317,7 @@
       }
     },
     "continuity": {
-      "note": "Comment une scène sait ce qui a précédé. L'histoire n'est PAS générée d'un bloc au départ : chaque scène naît à son tour, avec un résumé borné des précédentes. Générer les dix d'un coup demanderait 26 000 tokens de sortie pour un plafond de 16 384 — c'est impossible, et ça figerait l'histoire avant que le joueur ait joué.",
+      "note": "Comment une scène sait ce qui a précédé. L'histoire n'est PAS générée d'un bloc au départ : chaque scène naît à son tour, avec un résumé borné des précédentes. Générer toute la nuit d'un coup demanderait 26 000 tokens de sortie pour un plafond de 16 384 — c'est impossible, et ça figerait l'histoire avant que le joueur ait joué.",
       "max_entries": 6,
       "entry_fields": [
         "scene_title",
@@ -308,7 +330,7 @@
       "empty": "C'est la première scène : le joueur ne vient de nulle part."
     },
     "quest": {
-      "note": "Les champs que toute quête doit renseigner. Partagé par les dix scènes : c'est un schéma, pas du contenu.",
+      "note": "Les champs que toute quête doit renseigner. Partagé par toutes les scènes : c'est un schéma, pas du contenu.",
       "structure": {
         "title": "Titre court et tranchant, 2 à 5 mots",
         "hook": "Deux phrases qui plantent l'urgence",
@@ -321,13 +343,13 @@
       }
     },
     "night": {
-      "note": "La quête de la nuit. Les trois actes ne sont plus fixés d'avance : une rue, des hauteurs ou une tour peuvent y figurer, mais seulement si ce joueur y mène. Le script fixe la MÉCANIQUE — trois actes de trois lieux, ce que chaque acte met à l'épreuve, ce qu'on obtient dans chaque lieu. Le dossier d'admission fixe le reste : la date de naissance donne le signe, le prénom et le nom donnent les nombres, et de là sortent un but, une tension à montrer au paiement, et neuf lieux inventés pour ce joueur. Écrits en premier par la génération de l'auberge, portés par le journal, jamais régénérés : chaque scène suivante se construit sur son lieu.",
+      "note": "La quête de la nuit. Les trois actes ne sont plus fixés d'avance : une rue, des hauteurs ou une tour peuvent y figurer, mais seulement si ce joueur y mène. Le script fixe la MÉCANIQUE — trois actes de deux lieux, ce que chaque acte met à l'épreuve, ce qu'on obtient dans chaque lieu. Le dossier d'admission fixe le reste : la date de naissance donne le signe, le prénom et le nom donnent les nombres, et de là sortent un but, une tension à montrer au paiement, et six lieux inventés pour ce joueur. Écrits en premier par la génération de l'auberge, portés par le journal, jamais régénérés : chaque scène suivante se construit sur son lieu.",
       "instruction": "CE QUE LE JOUEUR SORT CONQUÉRIR CETTE NUIT — `night.goal`, le premier champ que tu écris, parce que toute la partie se construit dessus. C'est le but de la NUIT ENTIÈRE, pas celui d'un lieu. Une phrase, telle qu'il se la dirait lui-même.\nIL SE CALCULE, IL NE SE CHOISIT PAS. Il se compose depuis le bloc L'AVENTURE CALCULÉE, qui suit — la tension de son SIGNE et ses NOMBRES, rien d'autre. Deux joueurs différents ne partent jamais pour la même aventure.\nC'EST SA GRANDE AVENTURE À LUI. Le héros et celui qui gagne, c'est lui : ce qu'il tient à l'aube, il le tient pour sa propre vie — une place, une preuve, une vérité, une liberté, une œuvre, une victoire. Jamais pour quelqu'un d'autre : ni offrir, ni sauver, ni venger, ni retrouver, ni exaucer le rêve d'un proche.\nLES EMPREINTES DU DOSSIER NE SONT PAS LE BUT. La personne qui compte, l'objet auquel il tient, son refuge, son rêve meublent le monde et les personnages, jamais `night.goal`. Si le prénom de quelqu'un de son entourage apparaît dans la phrase, elle est fausse. Le reste du dossier — son métier, ses passions, ses tournants — sert seulement à ancrer l'aventure dans SA vie, pour qu'il s'y reconnaisse.\nÇA DOIT DONNER ENVIE D'Y ALLER : une épopée qu'il raconterait comme un film — « cette nuit, je vais… ». Un verbe d'action fort, une chose précise à conquérir, et ce que ça change dans sa vie. À L'ÉCHELLE DE LA VILLE : il ne s'accomplit dans aucune salle, aucun personnage ne peut le lui remettre, et il faut traverser toute la ville pour l'atteindre.\nCe n'est JAMAIS une commission — ni un objet qu'on lui a laissé quelque part, ni un paquet à récupérer, ni quelqu'un à retrouver au comptoir, ni une dette à régler sur place. Si la phrase peut s'accomplir dans le lieu où il se trouve, elle est fausse. Jamais un état d'âme non plus : « comprendre ce qui lui arrive » n'est pas un but.\nPAS DE FORMULE CREUSE : « atteindre un objectif », « un objectif collectif », « son destin », « une flamme », « une dernière chance » ne disent rien. Une chose précise, un gain précis. PAS DE MÉTAPHORE NON PLUS : « renverser des barrières invisibles », « allumer un écran géant », « briser ses chaînes » sont des images, pas des conquêtes. Si l'on ne peut pas dire ce qu'il tient à l'aube et ce qui a changé pour lui, la phrase est fausse.\nIl ignore encore par où ça passe : il ne nomme ni l'augmentation, ni un lieu, ni rien qu'un personnage doit lui apprendre.\nLA TENSION S'Y LIT, SANS SON VOCABULAIRE. Aucun mot du signe, d'un nombre, de l'astrologie ni de la psychologie — ni « besoin de reconnaissance », ni « peur », ni « blessure ». Mais ce que sa vie lui refuse y est dit comme il le vit : ce qu'on lui reproche, ce qu'on lui fait payer, la porte qu'on lui ferme depuis toujours. On y lit un désir ET ce qu'il vient faire cesser — sans cette moitié, c'est un exploit de film d'action qui pourrait être celui de n'importe qui.\n\nCE QUI SE TEND, ET VERS QUOI — `night.tension` et `night.release`, écrits juste après. Ces deux champs ne vont PAS dans la fiction : ils seront montrés au joueur au moment de payer la suite, pour qu'il reconnaisse ce que le jeu a lu de lui. Pars de la `Tension` et de la `Résolution recherchée` du SIGNE, colore-les par ses NOMBRES, et reformule-les pour lui seul, à la deuxième personne, une à deux phrases chacune. `release` ne promet rien : il dit vers quoi la tension tend pour se détendre. NI L'UN NI L'AUTRE NE RÉVÈLENT LA NUIT : le joueur les lit AVANT de payer la suite. Aucun lieu, aucun personnage, aucun objet, aucun événement, aucune étape, rien de ce qu'il fera ni de ce qu'il trouvera. Ils parlent de lui, jamais de l'aventure. Ne nomme jamais le signe, un nombre, l'astrologie ni la numérologie : on doit s'y reconnaître, pas y lire un horoscope.",
       "calculus": {
         "instruction": "L'AVENTURE CALCULÉE — `night.goal` se compose de ces lignes, et d'elles seules. Elles viennent de sa date de naissance et de son nom.\n{{lines}}\nCROISE-LES : ce que sa vie lui refuse est le SENS — la raison pour laquelle cette nuit compte, et ce que l'aventure vient retourner ; l'aventure du signe est le FOND, ce qu'il sort conquérir ; la forme de l'objectif est la NATURE CONCRÈTE de ce qu'il accomplit dans la ville ; la manière d'agir dit COMMENT il s'y prend ; ce que son nom traîne est ce qu'il vient DÉMENTIR en route. Le résultat tient en une phrase À DEUX MOITIÉS, toutes deux obligatoires : ce qu'il conquiert dans la ville, et ce que ça fait cesser dans sa vie — construite comme « cette nuit, tu [conquiers une chose précise], pour que [ce qu'on te fait payer depuis toujours] s'arrête ». Test : retire la moitié qui parle de sa vie ; s'il ne reste rien qui le concerne lui, la phrase est fausse. La phrase ne cite aucune de ces lignes : elle les rend concrètes dans sa vie.",
         "fallback": "L'AVENTURE CALCULÉE — son dossier ne donne ni signe ni nombres. Tire l'aventure de ses tournants de vie et de ses passions, pour sa vie à lui, jamais pour une personne de son entourage."
       },
-      "plan": "LE PLAN DE LA NUIT — `night.acts`, écrit juste après, avant tout le reste de ce JSON.\nRIEN N'EST FIXÉ D'AVANCE DANS LA VILLE. Une rue, des hauteurs, une tour restent possibles — mais parce que CE joueur y mène, jamais par habitude. Le script ne fixe que la MÉCANIQUE ci-dessous — trois actes de trois lieux, ce que chaque acte met à l'épreuve, et ce qu'on obtient dans chaque lieu. Les lieux eux-mêmes, c'est TOI qui les inventes, et ils sortent de CE joueur : sa tension (SIGNE) décide de ce qu'il traverse, ses NOMBRES de la façon dont la ville lui résiste, son dossier de ce qu'il y reconnaît. Deux joueurs ne traversent jamais la même ville.\nLA PROGRESSION : l'acte I le fait avancer encore tout entier pris dans sa tension ; l'acte II lui renvoie ce qu'il en fait ; l'acte III le fait agir contre elle. Les lieux s'éloignent de l'auberge et se rapprochent de ce qu'il est sorti chercher. Le dernier lieu est celui où `night.goal` s'accomplit : son `focal` EST `quest.artifact`, la chose au bout de la nuit.\nC'EST UNE MÉGAPOLE CYBERPUNK, LA NUIT : chaque lieu est une architecture qu'on pourrait dessiner, jamais une idée, et jamais deux fois le même genre de lieu.\nPOUR CHAQUE LIEU :\n  - `title` : son nom de chapitre, 2 à 4 mots avec article, en Majuscules de Titre.\n  - `place` : ce qu'est le lieu, en une phrase.\n  - `focal` : ce qu'on y voit d'abord, en quelques mots — la chose d'où vient ce qu'on y obtient.\n  - `step` : quel morceau de SON but il vient y gagner, et ce que ça lui demande.\n  - `requirement` : la mécanique imposée, redite dans CE lieu, en une phrase courte.\n  - `exit_label` : le nom du passage qui mène au lieu suivant, 2 à 5 mots avec article, en Majuscules de Titre — le joueur le tapera.\nNEUF LIEUX, SIX CHAMPS CHACUN : aucun n'est optionnel, et le dernier lieu du dernier acte n'a pas moins besoin de son `exit_label` que le premier — c'est le champ qu'on oublie en fin de liste, ne le laisse pas vide.\nEt pour chaque acte, `title` : 2 à 4 mots, en Majuscules de Titre.\nChaque lieu reste ouvert : aucun ne nomme un personnage, aucun ne dit comment la scène se résout. Aucun mot du signe, d'un nombre ni de la tension.\nLA MÉCANIQUE IMPOSÉE — un élément de `night.acts` par acte, un élément de `scenes` par lieu, avec ces identifiants exacts :\n{{slots}}",
+      "plan": "LE PLAN DE LA NUIT — `night.acts`, écrit juste après, avant tout le reste de ce JSON.\nRIEN N'EST FIXÉ D'AVANCE DANS LA VILLE. Une rue, des hauteurs, une tour restent possibles — mais parce que CE joueur y mène, jamais par habitude. Le script ne fixe que la MÉCANIQUE ci-dessous — trois actes de deux lieux, ce que chaque acte met à l'épreuve, et ce qu'on obtient dans chaque lieu. Les lieux eux-mêmes, c'est TOI qui les inventes, et ils sortent de CE joueur : sa tension (SIGNE) décide de ce qu'il traverse, ses NOMBRES de la façon dont la ville lui résiste, son dossier de ce qu'il y reconnaît. Deux joueurs ne traversent jamais la même ville.\nLA PROGRESSION : l'acte I le fait avancer encore tout entier pris dans sa tension ; l'acte II lui renvoie ce qu'il en fait ; l'acte III le fait agir contre elle. Les lieux s'éloignent de l'auberge et se rapprochent de ce qu'il est sorti chercher. Le dernier lieu est celui où `night.goal` s'accomplit : son `focal` EST `quest.artifact`, la chose au bout de la nuit.\nC'EST UNE MÉGAPOLE CYBERPUNK, LA NUIT : chaque lieu est une architecture qu'on pourrait dessiner, jamais une idée, et jamais deux fois le même genre de lieu.\nPOUR CHAQUE LIEU :\n  - `title` : son nom de chapitre, 2 à 4 mots avec article, en Majuscules de Titre.\n  - `place` : ce qu'est le lieu, en une phrase.\n  - `focal` : ce qu'on y voit d'abord, en quelques mots — la chose d'où vient ce qu'on y obtient.\n  - `step` : quel morceau de SON but il vient y gagner, et ce que ça lui demande.\n  - `requirement` : la mécanique imposée, redite dans CE lieu, en une phrase courte.\n  - `exit_label` : le nom du passage qui mène au lieu suivant, 2 à 5 mots avec article, en Majuscules de Titre — le joueur le tapera.\nSIX LIEUX, SIX CHAMPS CHACUN : aucun n'est optionnel, et le dernier lieu du dernier acte n'a pas moins besoin de son `exit_label` que le premier — c'est le champ qu'on oublie en fin de liste, ne le laisse pas vide.\nEt pour chaque acte, `title` : 2 à 4 mots, en Majuscules de Titre.\nChaque lieu reste ouvert : aucun ne nomme un personnage, aucun ne dit comment la scène se résout. Aucun mot du signe, d'un nombre ni de la tension.\nLA MÉCANIQUE IMPOSÉE — un élément de `night.acts` par acte, un élément de `scenes` par lieu, avec ces identifiants exacts :\n{{slots}}",
       "fixed": "LA QUÊTE DE LA NUIT EST FIXÉE DEPUIS L'AUBERGE. Ne la réécris pas, ne la contredis pas : cette scène en est une étape.\nCe qu'il est sorti chercher : « {{goal}} »\nTitre de la quête : {{title}} — recopie-le dans `quest.title`.\nCe qui l'attend au bout : {{horizon}} — recopie-le dans `quest.artifact`.\nLe plan, acte par acte :\n{{plan}}\n\nCETTE SCÈNE EST LE LIEU MARQUÉ D'UNE FLÈCHE.\nLieu : {{place}}\nCe qu'on y voit d'abord : {{focal}}\nCe qu'il vient y gagner : {{step}}\nCe qu'il faut y faire : {{requirement}}\nLe passage vers la suite : {{exit_label}}\nLe lieu est décidé : décris-le, ne le remplace pas. C'est sur lui et sur cette étape que tu construis le décor, les personnages et l'objet-clé.",
       "derives": "TOUT LE RESTE SE CONSTRUIT SUR CE BUT. Chaque champ qui suit en est une conséquence, pas une invention à côté :\n  - LA QUÊTE : `objective` est le pas que CETTE scène lui fait faire vers lui — à partir de la deuxième, son lieu du plan rendu concret par l'exigence mécanique. `stakes` est ce qu'il perd de SON but s'il s'arrête ici. `why_leave` dit pourquoi ce but ne peut plus attendre. `restoration` est ce que ce pas remet d'aplomb, dans la ville et chez lui. `artifact` est la chose où le but s'accomplit, au bout de la nuit.\n  - LES PERSONNAGES : leur position face à la tension se lit dans ce qu'ils ont fait d'un but semblable — celui qui l'a poursuivi et l'a payé, celui qui y a renoncé, celui qui dit que ça ne se trouve pas. Ce que chacun sait est un morceau du chemin vers lui.\n  - L'OBJET-CLÉ : `why` dit pourquoi on n'avance pas vers CE but sans lui ; `resolving_action` est le geste qui l'en rapproche ; `hook_story` est l'histoire de quelqu'un qui a voulu la même chose.\n  - L'OBJET SCELLÉ et l'objet à prendre : ce qu'ils révèlent éclaire le chemin vers ce but.\n  - LE LIEU et son décor en portent un écho — une trace, jamais une illustration.\nUn élément de la scène qui ne se rattache pas à ce but est de trop. L'objet à récupérer dans un lieu n'est jamais le but : c'est un moyen."
     },
@@ -337,7 +359,7 @@
     },
     "objective_derivation": {
       "note": "L'objectif d'une scène a deux moitiés : une exigence mécanique, invariable, et une formulation qui n'appartient qu'à ce joueur.",
-      "instruction": "OBJECTIF DE CETTE SCÈNE\nCe qu'il faut mécaniquement accomplir : {{requirement}}\nOù en est le joueur : {{axis}} (étape {{step}} sur 9, acte « {{act}} »).\nFacette qui gouverne cette scène : {{facet}} — {{facet_value}}\n\nLe champ `quest.objective` reformule cette exigence COMME ELLE SE POSE À CE JOUEUR-LÀ : pas « obtenir la carte », mais ce que l'obtenir lui demande de faire, à lui, compte tenu de sa manière d'agir et de la tension de son signe. L'exigence mécanique ne change jamais ; sa formulation, si.\n`quest.stakes` dit ce que ce joueur perd précisément à s'arrêter ici — pas une menace générale sur la ville.\n`quest.restoration` dit ce que cette étape remet d'aplomb de sa tension à lui.\nAucune de ces phrases ne nomme le signe, le nombre, ni la tension : elles la MONTRENT en situation."
+      "instruction": "OBJECTIF DE CETTE SCÈNE\nCe qu'il faut mécaniquement accomplir : {{requirement}}\nOù en est le joueur : {{axis}} (étape {{step}} sur 6, acte « {{act}} »).\nFacette qui gouverne cette scène : {{facet}} — {{facet_value}}\n\nLe champ `quest.objective` reformule cette exigence COMME ELLE SE POSE À CE JOUEUR-LÀ : pas « obtenir la carte », mais ce que l'obtenir lui demande de faire, à lui, compte tenu de sa manière d'agir et de la tension de son signe. L'exigence mécanique ne change jamais ; sa formulation, si.\n`quest.stakes` dit ce que ce joueur perd précisément à s'arrêter ici — pas une menace générale sur la ville.\n`quest.restoration` dit ce que cette étape remet d'aplomb de sa tension à lui.\nAucune de ces phrases ne nomme le signe, le nombre, ni la tension : elles la MONTRENT en situation."
     },
     "sealed_object": {
       "note": "Le second objet d'une scène : ramassé sans qu'on sache ce que c'est, illisible tant qu'on ne l'a pas analysé. Présent dans TOUTES les scènes, pas seulement à l'auberge.",
@@ -579,7 +601,7 @@
         }
       ],
       "key_item": {
-        "instruction": "L'AUGMENTATION — ce n'est PAS un trophée ni l'objet de la quête. C'est un implant, un module, une greffe : une CAPACITÉ que le joueur acquiert et emporte avec lui.\n\nCE QU'ELLE FAIT, littéralement : dehors, les choses ne portent pas de nom lisible. Sans elle, le joueur ne peut rien identifier, donc rien manipuler, donc pas se repérer. Elle déchiffre l'identité des objets.\nET DÉCHIFFRER SERT À QUELQUE CHOSE : `resolving_action` est l'acte que le joueur pourra enfin accomplir une fois les noms lisibles, et c'est cet acte qui règle ce qui doit l'être. Sans lui l'augmentation n'est qu'un gadget ; avec lui, c'est un moyen. Il est TAILLÉ SUR LE JOUEUR : sa manière d'agir (NOMBRES) décide du geste, la tension de son SIGNE décide de ce que ce geste répare. C'est son laissez-passer vers l'extérieur, et la raison pour laquelle franchir le sas sans elle n'aurait aucun sens.\nDécris-la comme un objet cyberpunk concret qui tient dans une main et se porte : lentille, greffe corticale, module d'analyse, filtre optique. Pas un talisman, pas une clé magique.\n\nSON NOM PROPRE — `key_item.name`. C'est la DÉSIGNATION gravée sur la pièce par ceux qui l'ont fabriquée, pas un titre de récit.\nFORME EXIGÉE, sans exception : DEUX OU TROIS MOTS SOUDÉS EN UN SEUL, chacun commençant par une majuscule, rien entre eux. Pas d'espace, pas de trait d'union, pas d'apostrophe, pas d'accent, pas de chiffre, pas d'article. « LentilleSelRacine », « FocaleBraise », « GreffeContrepoids ». Jamais le mot « Augmentation » dans le nom : le premier mot dit la forme de la pièce, pas sa catégorie.\nCE QU'IL ENCODE, et c'est là qu'il n'appartient qu'à CE joueur : le premier mot dit la FORME de la pièce et se dérive de sa MANIÈRE D'AGIR (section NOMBRES) ; le dernier dit ce qu'elle répare et se dérive de la tension de son SIGNE. Deux joueurs différents ne peuvent pas tomber sur le même nom.\nLe nom ne s'explique JAMAIS : personne ne le traduit, aucune parenthèse ne le glose.\nIL DOIT FIGURER MOT POUR MOT DANS `scene_text`, à la lettre près et d'un seul tenant, dès l'ouverture — c'est le barman qui le prononce. Le joueur le LIT EN CLAIR, et c'est la seule chose de la nuit dans ce cas : on ne brouille pas l'outil avec lequel on déchiffre. Sa majuscule soudée est tout le signal — elle dit qu'il y a là quelque chose à obtenir, et le reste de la scène est de trouver qui le porte.\n\nCE QU'ON EN COMPREND — `key_item.observation`, 3 à 4 phrases, révélées dès qu'il l'a en main, dans son inventaire. Trois choses, dans cet ordre : 1. CE QUE LA PIÈCE EST, précisément — sa matière, son usure, une marque, un numéro, la trace de qui s'en est servi avant. 2. CE QU'ELLE A À VOIR AVEC LUI : ce que ses précédents porteurs n'arrivaient pas à tenir, et qui est exactement la tension de son SIGNE vue de l'extérieur. Dit par la chose, jamais adressé au joueur, jamais « tu ». 3. Ce que ça révèle de la quête et que personne n'a dit à voix haute. JAMAIS un mode d'emploi, jamais une consigne : la fenêtre d'explication s'en charge, et elle est écrite ailleurs.\n\nCE QU'ELLE DIT DU JOUEUR — et c'est là qu'elle doit être personnelle : sa forme et son nom dérivent de la MANIÈRE D'AGIR du joueur (section NOMBRES) et de la tension de son SIGNE. Celui qui absorbe ce que ressentent les autres reçoit un filtre ; celui qui fonce reçoit une visée. L'augmentation compense ou prolonge ce qu'il est — jamais un gadget interchangeable.\n\nELLE N'EST PAS DANS LE DÉCOR. Aucun élément de décor, aucun interactable, aucune mention dans le texte de scène. Rien à trouver, rien à voler : elle s'obtient UNIQUEMENT parce qu'un personnage décide de la céder, au fil d'une conversation.\n\nDEUX PERSONNAGES, DEUX RÔLES DISTINCTS, choisis PARMI LES TROIS HABITUÉS — jamais le barman, qui est le premier de la liste. Ils doivent être différents l'un de l'autre.\nET CE CHOIX SE DÉCIDE SUR LE JOUEUR, jamais au hasard. Les trois habitués occupent trois positions face à sa tension : l'un l'a résolue et l'a payée, l'un s'y est brisé, l'un la nie encore.\nLE PORTEUR est celui dont la position répond à la MANIÈRE D'AGIR du joueur (section NOMBRES) : à qui fonce, celui qui a payé — il cède parce qu'il reconnaît la même hâte et sait ce qu'elle coûte ; à qui encaisse, celui qui s'est brisé — il cède parce qu'il reconnaît un semblable ; à qui esquive, celui qui nie — il cède parce qu'il ne croit pas à ce qu'il donne. La remise a donc une RAISON, et cette raison n'appartient qu'à ce joueur-là.\nL'INFORMATEUR est l'un des deux autres : celui dont la position est la plus éloignée de celle du joueur. Il voit de loin ce que le joueur ne voit pas encore, et c'est pour ça qu'il sait qui porte quoi.\nNe nomme jamais le signe, jamais un nombre, jamais la tension : ça se joue dans ce que les gens disent et dans le moment où ils cèdent.\n- `npc_id` : LE PORTEUR. Ne le place JAMAIS en premier dans la liste.\n- `informant_npc_id` : L'INFORMATEUR, un autre habitué. Il ne détient rien mais sait qui porte l'augmentation. `informant_hint` est ce qu'il en dit : de quoi aller voir l'autre, jamais assez pour s'en passer.\n`handover_hint` dit ce que le porteur attend du joueur avant de la céder.\n`hook_story` est l'histoire qu'il raconte : celle de quelqu'un qui est sorti sans elle, et de ce que ça lui a coûté.",
+        "instruction": "L'AUGMENTATION — ce n'est PAS un trophée ni l'objet de la quête. C'est un implant, un module, une greffe : une CAPACITÉ que le joueur acquiert et emporte avec lui.\n\nCE QU'ELLE FAIT, littéralement : dehors, les choses ne portent pas de nom lisible. Sans elle, le joueur ne peut rien identifier, donc rien manipuler, donc pas se repérer. Elle déchiffre l'identité des objets.\nET DÉCHIFFRER SERT À QUELQUE CHOSE : `resolving_action` est l'acte que le joueur pourra enfin accomplir une fois les noms lisibles, et c'est cet acte qui règle ce qui doit l'être. Sans lui l'augmentation n'est qu'un gadget ; avec lui, c'est un moyen. Il est TAILLÉ SUR LE JOUEUR : sa manière d'agir (NOMBRES) décide du geste, la tension de son SIGNE décide de ce que ce geste répare. C'est son laissez-passer vers l'extérieur, et la raison pour laquelle franchir le sas sans elle n'aurait aucun sens.\nDécris-la comme un objet cyberpunk concret qui tient dans une main et se porte : lentille, greffe corticale, module d'analyse, filtre optique. Pas un talisman, pas une clé magique.\n\nSON NOM PROPRE — `key_item.name`. C'est la DÉSIGNATION gravée sur la pièce par ceux qui l'ont fabriquée, pas un titre de récit.\nFORME EXIGÉE, sans exception : DEUX OU TROIS MOTS SOUDÉS EN UN SEUL, chacun commençant par une majuscule, rien entre eux. Pas d'espace, pas de trait d'union, pas d'apostrophe, pas d'accent, pas de chiffre, pas d'article. « LentilleSelRacine », « FocaleBraise », « GreffeContrepoids ». Jamais le mot « Augmentation » dans le nom : le premier mot dit la forme de la pièce, pas sa catégorie.\nCE QU'IL ENCODE, et c'est là qu'il n'appartient qu'à CE joueur : le premier mot dit la FORME de la pièce et se dérive de sa MANIÈRE D'AGIR (section NOMBRES) ; le dernier dit ce qu'elle répare et se dérive de la tension de son SIGNE. Deux joueurs différents ne peuvent pas tomber sur le même nom.\nLe nom ne s'explique JAMAIS : personne ne le traduit, aucune parenthèse ne le glose.\nIL DOIT FIGURER MOT POUR MOT DANS `scene_text`, à la lettre près et d'un seul tenant, dès l'ouverture — c'est le barman qui le prononce. Le joueur le LIT EN CLAIR, et c'est la seule chose de la nuit dans ce cas : on ne brouille pas l'outil avec lequel on déchiffre. Sa majuscule soudée est tout le signal — elle dit qu'il y a là quelque chose à obtenir, et le reste de la scène est de trouver qui le porte.\n\nCE QU'ON EN COMPREND — `key_item.observation`, 3 à 4 phrases, révélées dès qu'il l'a en main, dans son inventaire. Trois choses, dans cet ordre : 1. CE QUE LA PIÈCE EST, précisément — sa matière, son usure, une marque, un numéro, la trace de qui s'en est servi avant. 2. CE QU'ELLE A À VOIR AVEC LUI : ce que ses précédents porteurs n'arrivaient pas à tenir, et qui est exactement la tension de son SIGNE vue de l'extérieur. Dit par la chose, jamais adressé au joueur, jamais « tu ». 3. Ce que ça révèle de la quête et que personne n'a dit à voix haute. JAMAIS un mode d'emploi, jamais une consigne : la fenêtre d'explication s'en charge, et elle est écrite ailleurs.\n\nCE QU'ELLE DIT DU JOUEUR — et c'est là qu'elle doit être personnelle : sa forme et son nom dérivent de la MANIÈRE D'AGIR du joueur (section NOMBRES) et de la tension de son SIGNE. Celui qui absorbe ce que ressentent les autres reçoit un filtre ; celui qui fonce reçoit une visée. L'augmentation compense ou prolonge ce qu'il est — jamais un gadget interchangeable.\n\nELLE N'EST PAS DANS LE DÉCOR. Aucun élément de décor, aucun interactable, aucune mention dans le texte de scène. Rien à trouver, rien à voler : elle s'obtient UNIQUEMENT parce qu'un personnage décide de la céder, au fil d'une conversation.\n\nDEUX PERSONNAGES, DEUX RÔLES DISTINCTS, choisis PARMI LES TROIS HABITUÉS — jamais le barman, qui est le premier de la liste. Ils doivent être différents l'un de l'autre.\nET CE CHOIX SE DÉCIDE SUR LE JOUEUR, jamais au hasard. Les trois habitués occupent trois positions face à sa tension : l'un l'a résolue et l'a payée, l'un s'y est brisé, l'un la nie encore.\nLE PORTEUR est celui dont la position répond à la MANIÈRE D'AGIR du joueur (section NOMBRES) : à qui fonce, celui qui a payé — il cède parce qu'il reconnaît la même hâte et sait ce qu'elle coûte ; à qui encaisse, celui qui s'est brisé — il cède parce qu'il reconnaît un semblable ; à qui esquive, celui qui nie — il cède parce qu'il ne croit pas à ce qu'il donne. La remise a donc une RAISON, et cette raison n'appartient qu'à ce joueur-là.\nL'INFORMATEUR est l'un des deux autres : celui dont la position est la plus éloignée de celle du joueur. Il voit de loin ce que le joueur ne voit pas encore, et c'est pour ça qu'il sait qui porte quoi.\nNe nomme jamais le signe, jamais un nombre, jamais la tension : ça se joue dans ce que les gens disent et dans le moment où ils cèdent.\n- `npc_id` : LE PORTEUR. Ne le place JAMAIS en premier dans la liste.\n- `informant_npc_id` : L'INFORMATEUR, un autre habitué. Il ne détient rien mais sait qui porte l'augmentation. `informant_hint` est ce qu'il en dit : de quoi aller voir l'autre, jamais assez pour s'en passer.\n`handover_hint` est la question que le porteur lui pose avant de la céder : une seule, sur ce qu'il est sorti chercher cette nuit, et n'importe quelle réponse sincère y répond.\n`hook_story` est l'histoire qu'il raconte : celle de quelqu'un qui est sorti sans elle, et de ce que ça lui a coûté.",
         "exchanges_before_handover": 2,
         "acquisition": "informant_then_holder"
       },
@@ -754,145 +776,6 @@
       "is_paywall_gate": false,
       "image_setting": "Un lieu de la mégapole, la nuit — celui que le plan de la nuit a fixé pour cette étape",
       "focal_element": "Ce que le plan désigne comme la première chose qu'on voit en arrivant",
-      "mechanic": "un passage gardé, et une carte d'accès qu'un personnage détient — un autre sait lequel",
-      "naming": {
-        "instruction": "Invente le nom de ce lieu en {{language}}, 2 à 5 mots, avec son article. Le lieu est décidé par LA QUÊTE DE LA NUIT : le nom dit ce qu'il est, tel qu'on le voit en arrivant, sans reprendre mot pour mot son titre de chapitre.\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'élément du décor qui la porte (`focal`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `imprints.aversion` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
-        "sources": [
-          "imprints.aversion"
-        ],
-        "must_reference": [
-          "palette.accent.name",
-          "decor.focal"
-        ]
-      },
-      "decor_slots": [
-        {
-          "id": "focal",
-          "role": "L'élément focal du lieu, tel que le plan le désigne",
-          "source": "imprints.aversion",
-          "visual_weight": "accent",
-          "required": true
-        },
-        {
-          "id": "espace",
-          "role": "Le lieu lui-même, tel que le plan le décrit : sa structure, sa matière, sa lumière",
-          "source": "origin.hometown.traits",
-          "visual_weight": "dominant",
-          "required": false
-        },
-        {
-          "id": "trace",
-          "role": "Une chose qui a duré ici, usée par la main qui s'en est servie",
-          "source": "trajectory.turning_points",
-          "visual_weight": "secondary",
-          "required": false
-        },
-        {
-          "id": "lointain",
-          "role": "Ce qu'on aperçoit ou ce qu'on entend du reste de la ville depuis ici",
-          "source": "misc_facts",
-          "visual_weight": "secondary",
-          "required": false
-        }
-      ],
-      "npcs": {
-        "count": 3,
-        "instruction": "TROIS personnages. LE PREMIER tient le point de passage de ce lieu : il expose la règle et ne cède rien. Les deux autres attendent, et l'un d'eux sait ce que l'autre porte. Celui qui tient le passage n'est JAMAIS ni l'informateur ni le détenteur."
-      },
-      "quest": {
-        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
-        "source": "trajectory.turning_points"
-      },
-      "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.\nIL EST POSÉ DANS LE DÉCOR, jamais dans les mains de quelqu'un : personne ne le tend, personne ne propose de le céder, aucune conversation ne le donne. Le joueur ne peut le repérer QUE par sa Majuscule au milieu du texte — c'est le seul signal qu'il aura, et c'est tout l'intérêt : ce qui s'obtient en parlant et ce qui s'obtient en regardant sont deux choses différentes. Une phrase de la description doit le rendre remarquable sans le désigner : une chose posée là qui n'a pas sa place, un tiroir mal refermé, une trace fraîche sur la poussière.",
-        "always_include": []
-      },
-      "exits": [
-        {
-          "id": "exit_next",
-          "label": "La Suite",
-          "keywords": [
-            "sortir",
-            "sors",
-            "sort",
-            "quitter",
-            "quitte",
-            "partir",
-            "pars",
-            "avancer",
-            "avance",
-            "continuer",
-            "continue",
-            "monter",
-            "monte",
-            "descendre",
-            "descends",
-            "entrer",
-            "entre",
-            "franchir",
-            "franchis",
-            "passer",
-            "passe",
-            "aller",
-            "va",
-            "suivre",
-            "suis",
-            "dehors",
-            "plus loin",
-            "tout droit",
-            "north",
-            "nord",
-            "go",
-            "leave",
-            "exit",
-            "forward",
-            "up",
-            "enter"
-          ],
-          "triggers_paywall": false
-        }
-      ],
-      "key_item": {
-        "acquisition": "informant_then_holder",
-        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — une couleur que ce lieu porte déjà — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la sortie de ce lieu, vers le lieu suivant du plan de la nuit. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
-        "exchanges_before_handover": 2,
-        "holder_stance": "-ru",
-        "informant_stance": "-to"
-      },
-      "objective": {
-        "kind": "advance",
-        "requirement": "Franchir le passage gardé et gagner le lieu suivant"
-      },
-      "theme_focus": {
-        "facet": "drive",
-        "facet_label": "Manière d'agir",
-        "axis": "Le joueur est encore tout entier dans sa tension : elle dicte ses gestes et il ne la voit pas.",
-        "step": 2
-      },
-      "cast_stances": [
-        {
-          "posture": "-zu",
-          "means": "qui nie, qui détourne le regard"
-        },
-        {
-          "posture": "-to",
-          "means": "qui parle, qui met sur la piste"
-        },
-        {
-          "posture": "-ru",
-          "means": "qui garde, qui ne cède pas"
-        }
-      ]
-    },
-    {
-      "id": "a1s3",
-      "title": "Étape 3",
-      "order": 4,
-      "act": "acte1",
-      "is_free": false,
-      "is_paywall_gate": false,
-      "image_setting": "Un lieu de la mégapole, la nuit — celui que le plan de la nuit a fixé pour cette étape",
-      "focal_element": "Ce que le plan désigne comme la première chose qu'on voit en arrivant",
       "mechanic": "une fréquence affichée par l'élément focal, que personne ne détient, et qui donne la direction de la suite",
       "naming": {
         "instruction": "Invente le nom de ce lieu en {{language}}, 2 à 5 mots, avec son article. Le lieu est décidé par LA QUÊTE DE LA NUIT : le nom dit ce qu'il est, tel qu'on le voit en arrivant, sans reprendre mot pour mot son titre de chapitre.\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'élément du décor qui la porte (`focal`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `trajectory.turning_points` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
@@ -993,8 +876,9 @@
       ],
       "key_item": {
         "acquisition": "found",
-        "instruction": "L'OBJET-CLÉ n'est PAS une carte : c'est une FRÉQUENCE, une suite que l'élément focal du lieu affiche et que personne ne peut retenir à l'oeil nu. Le joueur la lit avec son augmentation, et c'est tout ce qu'il emporte.\nElle ne s'obtient d'aucun personnage : elle est SUR L'ÉLÉMENT FOCAL, dans le décor. `npc_id` doit valoir la chaîne \"trouve\".\nElle ne dit pas quoi faire. Elle dit OÙ : la direction du lieu suivant du plan, et rien d'autre. Sa formulation reprend la tension du SIGNE du joueur, sans jamais la nommer.\n`resolving_action` est l'acte que cette fréquence rendra possible plus loin.",
-        "exchanges_before_handover": 2
+        "instruction": "L'OBJET-CLÉ n'est PAS une carte : c'est une FRÉQUENCE, une suite que l'élément focal du lieu affiche et que personne ne peut retenir à l'oeil nu. Le joueur la lit avec son augmentation, et c'est tout ce qu'il emporte.\nElle ne s'obtient d'aucun personnage : elle est SUR L'ÉLÉMENT FOCAL, dans le décor. `npc_id` doit valoir la chaîne \"trouve\".\nElle ne dit pas quoi faire. Elle dit OÙ : la direction du lieu suivant du plan, et rien d'autre. Sa formulation reprend la tension du SIGNE du joueur, sans jamais la nommer.\n`resolving_action` est l'acte que cette fréquence rendra possible plus loin.\nLA VALEUR N'EST PAS À TOI : le jeu la tire, et pose lui-même ses indices sur les choses du lieu. N'écris AUCUN nombre, ni dans le texte ni dans les champs : l'élément focal affiche une fréquence brouillée, c'est tout.\n",
+        "exchanges_before_handover": 2,
+        "puzzle": "frequency"
       },
       "objective": {
         "kind": "advance",
@@ -1004,7 +888,7 @@
         "facet": "drive",
         "facet_label": "Manière d'agir",
         "axis": "Le joueur est encore tout entier dans sa tension : elle dicte ses gestes et il ne la voit pas.",
-        "step": 3
+        "step": 2
       },
       "cast_stances": [
         {
@@ -1019,8 +903,8 @@
     },
     {
       "id": "a2s1",
-      "title": "Étape 4",
-      "order": 5,
+      "title": "Étape 3",
+      "order": 4,
       "act": "acte2",
       "is_free": false,
       "is_paywall_gate": false,
@@ -1126,8 +1010,9 @@
       ],
       "key_item": {
         "acquisition": "found",
-        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — une couleur que ce lieu porte déjà — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la sortie de ce lieu, vers le lieu suivant du plan de la nuit. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\nELLE NE S'OBTIENT D'AUCUN PERSONNAGE : elle est restée dans ce lieu, dans un boîtier ouvert, une trappe de maintenance, la poche d'un équipement abandonné. `npc_id` doit valoir la chaîne \"trouve\". Personne ne la tend, personne ne prétend l'avoir : les gens d'ici peuvent dire OÙ regarder, rien de plus.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce qu'on raconte de cette carte — ce qu'elle a ouvert avant, et pour qui.\n",
-        "exchanges_before_handover": 2
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — une couleur que ce lieu porte déjà — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la sortie de ce lieu, vers le lieu suivant du plan de la nuit. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\nELLE NE S'OBTIENT D'AUCUN PERSONNAGE, ET ELLE EST CACHÉE : le texte sait qu'elle est ici, il ne dit JAMAIS où. Nomme en Majuscule AU MOINS QUATRE endroits où elle pourrait être — éléments de `decor` ou choses à examiner dans `interactables`, avec le verbe « fouiller » —, sans en désigner aucun, sans trace fraîche, sans tiroir mal refermé. Le jeu choisit la cachette et pose lui-même les indices. `npc_id` doit valoir la chaîne \"trouve\". Personne ne la tend, personne ne prétend l'avoir : les gens d'ici peuvent dire OÙ regarder, rien de plus.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce qu'on raconte de cette carte — ce qu'elle a ouvert avant, et pour qui.\n",
+        "exchanges_before_handover": 2,
+        "puzzle": "search"
       },
       "objective": {
         "kind": "advance",
@@ -1137,7 +1022,7 @@
         "facet": "reception",
         "facet_label": "Accueil du monde",
         "axis": "Le joueur commence à voir sa tension de l'extérieur : le monde lui renvoie ce qu'il en fait.",
-        "step": 4
+        "step": 3
       },
       "cast_stances": [
         {
@@ -1152,147 +1037,8 @@
     },
     {
       "id": "a2s2",
-      "title": "Étape 5",
-      "order": 6,
-      "act": "acte2",
-      "is_free": false,
-      "is_paywall_gate": false,
-      "image_setting": "Un lieu de la mégapole, la nuit — celui que le plan de la nuit a fixé pour cette étape",
-      "focal_element": "Ce que le plan désigne comme la première chose qu'on voit en arrivant",
-      "mechanic": "une carte d'accès qu'un personnage détient — un autre sait lequel",
-      "naming": {
-        "instruction": "Invente le nom de ce lieu en {{language}}, 2 à 5 mots, avec son article. Le lieu est décidé par LA QUÊTE DE LA NUIT : le nom dit ce qu'il est, tel qu'on le voit en arrivant, sans reprendre mot pour mot son titre de chapitre.\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'élément du décor qui la porte (`focal`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `imprints.keepsake` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
-        "sources": [
-          "imprints.keepsake"
-        ],
-        "must_reference": [
-          "palette.accent.name",
-          "decor.focal"
-        ]
-      },
-      "decor_slots": [
-        {
-          "id": "focal",
-          "role": "L'élément focal du lieu, tel que le plan le désigne",
-          "source": "imprints.keepsake",
-          "visual_weight": "accent",
-          "required": true
-        },
-        {
-          "id": "espace",
-          "role": "Le lieu lui-même, tel que le plan le décrit : sa structure, sa matière, sa lumière",
-          "source": "origin.hometown.traits",
-          "visual_weight": "dominant",
-          "required": false
-        },
-        {
-          "id": "trace",
-          "role": "Une chose qui a duré ici, usée par la main qui s'en est servie",
-          "source": "trajectory.turning_points",
-          "visual_weight": "secondary",
-          "required": false
-        },
-        {
-          "id": "lointain",
-          "role": "Ce qu'on aperçoit ou ce qu'on entend du reste de la ville depuis ici",
-          "source": "misc_facts",
-          "visual_weight": "secondary",
-          "required": false
-        }
-      ],
-      "npcs": {
-        "count": 3,
-        "instruction": "TROIS personnages installés dans ce lieu. LE PREMIER l'a ouvert au joueur et fait les présentations, sans rien détenir. Parmi les deux autres, l'un sait où mène la suite, l'autre en garde l'accès."
-      },
-      "quest": {
-        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
-        "source": "trajectory.turning_points"
-      },
-      "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.\nIL EST POSÉ DANS LE DÉCOR, jamais dans les mains de quelqu'un : personne ne le tend, personne ne propose de le céder, aucune conversation ne le donne. Le joueur ne peut le repérer QUE par sa Majuscule au milieu du texte — c'est le seul signal qu'il aura, et c'est tout l'intérêt : ce qui s'obtient en parlant et ce qui s'obtient en regardant sont deux choses différentes. Une phrase de la description doit le rendre remarquable sans le désigner : une chose posée là qui n'a pas sa place, un tiroir mal refermé, une trace fraîche sur la poussière.",
-        "always_include": []
-      },
-      "exits": [
-        {
-          "id": "exit_next",
-          "label": "La Suite",
-          "keywords": [
-            "sortir",
-            "sors",
-            "sort",
-            "quitter",
-            "quitte",
-            "partir",
-            "pars",
-            "avancer",
-            "avance",
-            "continuer",
-            "continue",
-            "monter",
-            "monte",
-            "descendre",
-            "descends",
-            "entrer",
-            "entre",
-            "franchir",
-            "franchis",
-            "passer",
-            "passe",
-            "aller",
-            "va",
-            "suivre",
-            "suis",
-            "dehors",
-            "plus loin",
-            "tout droit",
-            "north",
-            "nord",
-            "go",
-            "leave",
-            "exit",
-            "forward",
-            "up",
-            "enter"
-          ],
-          "triggers_paywall": false
-        }
-      ],
-      "key_item": {
-        "acquisition": "informant_then_holder",
-        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — une couleur que ce lieu porte déjà — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la sortie de ce lieu, vers le lieu suivant du plan de la nuit. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce que son détenteur raconte pour la rendre désirable.\n",
-        "exchanges_before_handover": 2,
-        "holder_stance": "-ru",
-        "informant_stance": "-to"
-      },
-      "objective": {
-        "kind": "advance",
-        "requirement": "Trouver qui garde l'accès à la suite, et l'obtenir"
-      },
-      "theme_focus": {
-        "facet": "reception",
-        "facet_label": "Accueil du monde",
-        "axis": "Le joueur commence à voir sa tension de l'extérieur : le monde lui renvoie ce qu'il en fait.",
-        "step": 5
-      },
-      "cast_stances": [
-        {
-          "posture": "-ra",
-          "means": "qui montre, qui éclaire"
-        },
-        {
-          "posture": "-to",
-          "means": "qui parle, qui met sur la piste"
-        },
-        {
-          "posture": "-ru",
-          "means": "qui garde, qui ne cède pas"
-        }
-      ]
-    },
-    {
-      "id": "a2s3",
-      "title": "Étape 6",
-      "order": 7,
+      "title": "Étape 4",
+      "order": 5,
       "act": "acte2",
       "is_free": false,
       "is_paywall_gate": false,
@@ -1398,8 +1144,9 @@
       ],
       "key_item": {
         "acquisition": "found",
-        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — une couleur que ce lieu porte déjà — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la sortie de ce lieu, vers le lieu suivant du plan de la nuit. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\nELLE NE S'OBTIENT D'AUCUN PERSONNAGE : l'élément focal du lieu la DÉLIVRE devant le joueur et la laisse là. `npc_id` doit valoir la chaîne \"trouve\". Personne ne la lui remet, personne ne la garde : les gens d'ici peuvent dire OÙ regarder, rien de plus.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce qu'on raconte de cette carte — ce qu'elle a ouvert avant, et pour qui.\n",
-        "exchanges_before_handover": 2
+        "instruction": "L'OBJET-CLÉ est une CARTE D'ACCÈS. Un rectangle rigide, usé aux angles, dont la tranche est teintée. Sa couleur est celle de l'ACCENT de la palette de cette scène — une couleur que ce lieu porte déjà — et c'est à cette couleur que le joueur la reconnaîtra plus tard : nomme-la par sa couleur, pas par un numéro.\nCe qu'elle ouvre : la sortie de ce lieu, vers le lieu suivant du plan de la nuit. Sans elle, le passage reste fermé, et tout le monde ici le sait.\nSon nom n'est pas lisible à l'oeil nu : il faut l'augmentation pour le déchiffrer. C'est la première chose que le joueur fait avec elle.\nELLE NE S'OBTIENT D'AUCUN PERSONNAGE : l'élément focal du lieu la DÉLIVRE devant le joueur et la laisse là. `npc_id` doit valoir la chaîne \"trouve\". Personne ne la lui remet, personne ne la garde : les gens d'ici peuvent dire OÙ regarder, rien de plus.\n`why` dit ce qu'elle ouvre. `resolving_action` dit l'acte qu'elle rend possible une fois lue. `hook_story` est ce qu'on raconte de cette carte — ce qu'elle a ouvert avant, et pour qui.\nLE LECTEUR : l'élément focal ne délivre la carte qu'à qui présente une carte gagnée PLUS TÔT dans la nuit. Décris sa fente cerclée d'un liseré de couleur, sans nommer ni la couleur ni la carte attendue : c'est le jeu qui choisit laquelle, et qui le dit.\n",
+        "exchanges_before_handover": 2,
+        "puzzle": "lock"
       },
       "objective": {
         "kind": "advance",
@@ -1409,7 +1156,7 @@
         "facet": "reception",
         "facet_label": "Accueil du monde",
         "axis": "Le joueur commence à voir sa tension de l'extérieur : le monde lui renvoie ce qu'il en fait.",
-        "step": 6
+        "step": 4
       },
       "cast_stances": [
         {
@@ -1424,141 +1171,8 @@
     },
     {
       "id": "a3s1",
-      "title": "Étape 7",
-      "order": 8,
-      "act": "acte3",
-      "is_free": false,
-      "is_paywall_gate": false,
-      "image_setting": "Un lieu de la mégapole, la nuit — celui que le plan de la nuit a fixé pour cette étape",
-      "focal_element": "Ce que le plan désigne comme la première chose qu'on voit en arrivant",
-      "mechanic": "un code inscrit dans le lieu, que personne ne détient",
-      "naming": {
-        "instruction": "Invente le nom de ce lieu en {{language}}, 2 à 5 mots, avec son article. Le lieu est décidé par LA QUÊTE DE LA NUIT : le nom dit ce qu'il est, tel qu'on le voit en arrivant, sans reprendre mot pour mot son titre de chapitre.\nLE NOM DOIT TENIR À CE QU'ON VOIT. Il nomme soit la COULEUR D'ACCENT que tu viens de choisir pour la palette, soit l'élément du décor qui la porte (`focal`) — jamais une abstraction, jamais une idée. Un joueur qui regarde l'image doit comprendre d'où vient le nom.\nEt il dérive MÉTAPHORIQUEMENT de `origin.current_location.traits` dans le profil : c'est ce qui fait que deux joueurs ne traversent pas la même ville. Jamais littéralement, jamais une marque, jamais une ville réelle.\nLe lieu précédent est déjà nommé dans le résumé : ne reprends ni son mot, ni sa forme.",
-        "sources": [
-          "origin.current_location.traits"
-        ],
-        "must_reference": [
-          "palette.accent.name",
-          "decor.focal"
-        ]
-      },
-      "decor_slots": [
-        {
-          "id": "focal",
-          "role": "L'élément focal du lieu, tel que le plan le désigne",
-          "source": "imprints.aversion",
-          "visual_weight": "accent",
-          "required": true
-        },
-        {
-          "id": "espace",
-          "role": "Le lieu lui-même, tel que le plan le décrit : sa structure, sa matière, sa lumière",
-          "source": "origin.current_location.traits",
-          "visual_weight": "dominant",
-          "required": false
-        },
-        {
-          "id": "trace",
-          "role": "Une chose qui a duré ici, usée par la main qui s'en est servie",
-          "source": "imprints.ally",
-          "visual_weight": "secondary",
-          "required": false
-        },
-        {
-          "id": "lointain",
-          "role": "Ce qu'on aperçoit ou ce qu'on entend du reste de la ville depuis ici",
-          "source": "misc_facts",
-          "visual_weight": "secondary",
-          "required": false
-        }
-      ],
-      "npcs": {
-        "count": 2,
-        "instruction": "DEUX personnages. Quelqu'un qui garde ce lieu et n'a plus rien à garder, et quelqu'un qui n'aurait pas dû entrer. Ni l'un ni l'autre ne détient ce qu'il faut : c'est le lieu lui-même qui le porte."
-      },
-      "quest": {
-        "instruction": "Reprends la quête EN COURS, celle posée à l'auberge : ne la remplace pas, ne la renomme pas. Cette scène en est une étape. `objective` est ce qu'il faut accomplir ICI, `stakes` ce qu'on perd à s'arrêter là. `artifact` reste l'horizon final, toujours hors de portée.",
-        "source": "trajectory.turning_points"
-      },
-      "interactables": {
-        "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. AU MOINS UN de ces objets DOIT pouvoir être PRIS : son `verb` est alors « prendre » ou « ramasser », et lui seul porte une `observation`. C'est ce que le joueur emporte de cette scène — il n'ouvre rien, il approfondit la quête, et il se déchiffre à la loupe. Sans lui, la scène n'a rien à fouiller. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.\nIL EST POSÉ DANS LE DÉCOR, jamais dans les mains de quelqu'un : personne ne le tend, personne ne propose de le céder, aucune conversation ne le donne. Le joueur ne peut le repérer QUE par sa Majuscule au milieu du texte — c'est le seul signal qu'il aura, et c'est tout l'intérêt : ce qui s'obtient en parlant et ce qui s'obtient en regardant sont deux choses différentes. Une phrase de la description doit le rendre remarquable sans le désigner : une chose posée là qui n'a pas sa place, un tiroir mal refermé, une trace fraîche sur la poussière.",
-        "always_include": []
-      },
-      "exits": [
-        {
-          "id": "exit_next",
-          "label": "La Suite",
-          "keywords": [
-            "sortir",
-            "sors",
-            "sort",
-            "quitter",
-            "quitte",
-            "partir",
-            "pars",
-            "avancer",
-            "avance",
-            "continuer",
-            "continue",
-            "monter",
-            "monte",
-            "descendre",
-            "descends",
-            "entrer",
-            "entre",
-            "franchir",
-            "franchis",
-            "passer",
-            "passe",
-            "aller",
-            "va",
-            "suivre",
-            "suis",
-            "dehors",
-            "plus loin",
-            "tout droit",
-            "north",
-            "nord",
-            "go",
-            "leave",
-            "exit",
-            "forward",
-            "up",
-            "enter"
-          ],
-          "triggers_paywall": false
-        }
-      ],
-      "key_item": {
-        "acquisition": "found",
-        "instruction": "L'OBJET-CLÉ est un CODE, inscrit quelque part dans ce lieu — sur une plaque, un registre, une console oubliée. Il n'est pas lisible sans l'augmentation.\nIl ne s'obtient d'aucun personnage : `npc_id` doit valoir la chaîne \"trouve\".\n`resolving_action` est ce que ce code permet d'atteindre au lieu suivant du plan.",
-        "exchanges_before_handover": 2
-      },
-      "objective": {
-        "kind": "advance",
-        "requirement": "Lire le code inscrit dans ce lieu et franchir le passage"
-      },
-      "theme_focus": {
-        "facet": "destiny",
-        "facet_label": "Forme de l'objectif",
-        "axis": "Le joueur agit CONTRE sa tension : chaque lieu est un pas vers sa résolution.",
-        "step": 7
-      },
-      "cast_stances": [
-        {
-          "posture": "-no",
-          "means": "qui a perdu"
-        },
-        {
-          "posture": "-zu",
-          "means": "qui nie, qui détourne le regard"
-        }
-      ]
-    },
-    {
-      "id": "a3s2",
-      "title": "Étape 8",
-      "order": 9,
+      "title": "Étape 5",
+      "order": 6,
       "act": "acte3",
       "is_free": false,
       "is_paywall_gate": false,
@@ -1677,7 +1291,7 @@
         "facet": "destiny",
         "facet_label": "Forme de l'objectif",
         "axis": "Le joueur agit CONTRE sa tension : chaque lieu est un pas vers sa résolution.",
-        "step": 8
+        "step": 5
       },
       "cast_stances": [
         {
@@ -1695,9 +1309,9 @@
       ]
     },
     {
-      "id": "a3s3",
-      "title": "Étape 9",
-      "order": 10,
+      "id": "a3s2",
+      "title": "Étape 6",
+      "order": 7,
       "act": "acte3",
       "is_free": false,
       "is_paywall_gate": false,
@@ -1803,8 +1417,9 @@
       ],
       "key_item": {
         "acquisition": "found",
-        "instruction": "L'OBJET-CLÉ est la SÉQUENCE D'OPÉRATION affichée par l'élément focal du lieu — la chose où le but de la nuit s'accomplit, celle que nomme `quest.artifact` —, illisible sans l'augmentation. `npc_id` doit valoir la chaîne \"trouve\".\n`resolving_action` EST le dénouement du jeu : l'acte précis que le joueur accomplit ici, qui accomplit ce qu'il est sorti chercher et remet la ville d'aplomb. Il découle de sa MANIÈRE D'AGIR (NOMBRES) et règle, à l'échelle de la ville, la tension de son SIGNE. C'est le geste vers lequel toute la partie tendait — écris-le comme tel, concret et vérifiable, jamais comme une formule.",
-        "exchanges_before_handover": 2
+        "instruction": "L'OBJET-CLÉ est la SÉQUENCE D'OPÉRATION affichée par l'élément focal du lieu — la chose où le but de la nuit s'accomplit, celle que nomme `quest.artifact` —, illisible sans l'augmentation. `npc_id` doit valoir la chaîne \"trouve\".\n`resolving_action` EST le dénouement du jeu : l'acte précis que le joueur accomplit ici, qui accomplit ce qu'il est sorti chercher et remet la ville d'aplomb. Il découle de sa MANIÈRE D'AGIR (NOMBRES) et règle, à l'échelle de la ville, la tension de son SIGNE. C'est le geste vers lequel toute la partie tendait — écris-le comme tel, concret et vérifiable, jamais comme une formule.\n`steps` : les QUATRE gestes qui composent resolving_action, dans l'ordre où ils s'accomplissent. Le jeu les mélange et pose lui-même, sur les choses du lieu, ce qui permet de les remettre en ordre : n'écris JAMAIS cet ordre dans le texte.\n",
+        "exchanges_before_handover": 2,
+        "puzzle": "sequence"
       },
       "objective": {
         "kind": "advance",
@@ -1814,7 +1429,7 @@
         "facet": "destiny",
         "facet_label": "Forme de l'objectif",
         "axis": "Le joueur agit CONTRE sa tension : chaque lieu est un pas vers sa résolution.",
-        "step": 9
+        "step": 6
       },
       "cast_stances": [
         {
@@ -1827,7 +1442,7 @@
     {
       "id": "fin",
       "title": "La Nuit du Bout du Monde",
-      "order": 11,
+      "order": 8,
       "act": "epilogue",
       "is_free": false,
       "is_paywall_gate": false,
@@ -2173,7 +1788,7 @@
       "repair_rate_pct": 15
     },
     "tokens": {
-      "note": "HYPOTHÈSES : aucune facture ne couvre encore la nuit à 11 scènes. L'auberge écrit en plus le plan de la nuit (~1 000 jetons). Plafonds réels : `generation.max_tokens` et `turn.max_tokens`. L'historique est le fil du personnage renvoyé à chaque tour, borné à 6 échanges.",
+      "note": "HYPOTHÈSES : aucune facture ne couvre encore la nuit à 8 scènes. L'auberge écrit en plus le plan de la nuit (~1 000 jetons). Plafonds réels : `generation.max_tokens` et `turn.max_tokens`. L'historique est le fil du personnage renvoyé à chaque tour, borné à 6 échanges.",
       "opening_output": 3000,
       "scene_output": 2500,
       "ending_output": 1200,
@@ -2240,10 +1855,9 @@
       "title": "Acte I",
       "scenes": [
         "a1s1",
-        "a1s2",
-        "a1s3"
+        "a1s2"
       ],
-      "arc": "Le joueur quitte l'auberge encore tout entier pris dans sa tension : elle dicte ses gestes et il ne la voit pas. Ses trois lieux sont ceux du plan de la nuit ; ils l'éloignent de ce qu'il connaît et lui donnent la direction de ce qu'il est sorti chercher.",
+      "arc": "Le joueur quitte l'auberge encore tout entier pris dans sa tension : elle dicte ses gestes et il ne la voit pas. Ses deux lieux sont ceux du plan de la nuit ; ils l'éloignent de ce qu'il connaît et lui donnent la direction de ce qu'il est sorti chercher.",
       "ends_on": "Il sait dans quelle direction aller."
     },
     {
@@ -2251,10 +1865,9 @@
       "title": "Acte II",
       "scenes": [
         "a2s1",
-        "a2s2",
-        "a2s3"
+        "a2s2"
       ],
-      "arc": "La ville commence à lui renvoyer ce qu'il fait de sa tension. Les trois lieux du plan le mettent face à ceux qui l'ont vécue avant lui, et lui livrent l'accès du dernier acte.",
+      "arc": "La ville commence à lui renvoyer ce qu'il fait de sa tension. Les deux lieux du plan le mettent face à ceux qui l'ont vécue avant lui, et lui livrent l'accès du dernier acte.",
       "ends_on": "Il tient l'accès du dernier acte."
     },
     {
@@ -2262,8 +1875,7 @@
       "title": "Acte III",
       "scenes": [
         "a3s1",
-        "a3s2",
-        "a3s3"
+        "a3s2"
       ],
       "arc": "Il agit contre sa tension : chaque lieu du plan le rapproche de la chose où son but s'accomplit, jusqu'à l'opération.",
       "ends_on": "Le but de la nuit s'accomplit, ou ce qu'il en reste."

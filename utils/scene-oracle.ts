@@ -77,7 +77,11 @@ export function buildGuidance(
     // Là où l'objet n'est sur personne, envoyer le joueur faire le tour des
     // habitants est un mensonge : il est inscrit dans le lieu, et c'est la
     // loupe qui l'ouvre.
-    if (item.acquisition === 'found') {
+    if (item.acquisition === 'found' && scene.puzzle) {
+      // L'énigme dit sa nature, pas sa solution : où regarder, et ce que
+      // coûte de s'en passer.
+      lines.push(t(`oracle.puzzle_${scene.puzzle.kind}`))
+    } else if (item.acquisition === 'found') {
       lines.push(t('oracle.found_item'))
     } else if (others.length) {
       lines.push(t('oracle.not_talked', { names: others.map(n => n.name).join(', ') }))
@@ -137,8 +141,16 @@ export function resolveLocally(
   // Observation d'un élément de décor : sa description est déjà écrite.
   if (containsAny(text, look)) {
     const element = scene.decor.find(dec => dec.name && namedIn(text, dec.name, lang))
-    if (element?.description) {
-      return { text: element.description, kind: 'decor' }
+    // LES INDICES DE L'ÉNIGME SE LISENT ICI : posés sur une chose que le récit
+    // nomme, ils viennent avec sa description quand on la regarde. Sur le
+    // décor ou sur une chose qu'on examine sans la prendre — le premier nom
+    // reconnu décide, pour ne pas mêler les indices de deux endroits.
+    const clues = scene.puzzle?.clues ?? []
+    const on = element?.name
+      ?? clues.find(c => namedIn(text, c.on, lang))?.on
+    const here = on ? clues.filter(c => c.on === on).map(c => c.text) : []
+    if (element?.description || here.length) {
+      return { text: [element?.description, ...here].filter(Boolean).join('\n\n'), kind: 'decor' }
     }
   }
 

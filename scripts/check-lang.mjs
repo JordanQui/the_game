@@ -39,7 +39,7 @@ if (!fr) {
 // --- forme d'un pack --------------------------------------------------------
 const GENERATION_FIELDS = ['name_fr', 'directive', 'agreement', 'naming_form', 'caps_note', 'vocabulary', 'address']
 const AGREEMENTS = ['masculin', 'feminin', 'neutre']
-const INPUT_LISTS = ['exit', 'take', 'address', 'guidance', 'look', 'leave', 'world', 'articles', 'stopwords']
+const INPUT_LISTS = ['exit', 'exit_strict', 'take', 'address', 'guidance', 'look', 'leave', 'search', 'world', 'articles', 'stopwords']
 
 for (const [code, pack] of packs) {
   const at = `${code}.json`

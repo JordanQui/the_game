@@ -81,7 +81,7 @@ export interface UserAnthem {
  * 2026-09-09 rendaient au générateur le vocabulaire qu'il avait fourni, quand
  * c'est justement de mots qui ne sont pas les siens qu'il a besoin.
  * Le rêve, lui, est le seul élément du dossier
- * qui a le droit de reparaître aux dix scènes sans lasser : puisqu'il REVIENT,
+ * qui a le droit de reparaître à chaque scène sans lasser : puisqu'il REVIENT,
  * c'est un motif et pas une anecdote.
  */
 export interface UserNights {

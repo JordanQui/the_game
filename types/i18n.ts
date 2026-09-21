@@ -134,6 +134,16 @@ export interface LangGeneration {
 export interface LangInput {
   /** Franchir la sortie. La liste la plus longue : c'est la seule issue. */
   exit: string[]
+  /**
+   * Franchir la sortie, pendant qu'on parle à quelqu'un.
+   *
+   * `exit` ratisse large — « suis », « va », « entre », « la nuit » — et c'est
+   * voulu quand le joueur est seul face au décor. En pleine conversation, les
+   * mêmes mots sont ceux d'une réponse : « je suis prêt à sacrifier ma nuit »
+   * fermait l'échange et partait en sortie bloquée, et le détenteur reposait
+   * sa question sans fin. Ici, seuls les départs sans équivoque.
+   */
+  exit_strict: string[]
   /** Ramasser. Décide du bouton « Ramasser » et de ce qui se chiffre. */
   take: string[]
   /** S'adresser à quelqu'un. Sert à repérer qu'on parle sans nommer personne. */
@@ -150,6 +160,11 @@ export interface LangInput {
    * quitter le lieu, et elle décide qui répond au tour suivant.
    */
   leave: string[]
+  /**
+   * Fouiller un endroit — plonger la main, pas seulement regarder. Seul geste
+   * de la fouille qui coûte la nuit : « regarder » lit l'indice gratuitement.
+   */
+  search: string[]
   /**
    * Verbes qui portent sur le monde et non sur quelqu'un.
    *

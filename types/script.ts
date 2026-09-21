@@ -213,6 +213,13 @@ export interface Continuity {
 
 export interface ScriptDefaults {
   continuity: Continuity
+  /** L'horloge de la nuit, et l'épilogue de celui que l'aube a rattrapé. */
+  night_clock: import('~/utils/night-clock').NightClockConfig & {
+    note?: string
+    dawn_ending: string
+  }
+  /** Ce que les personnages ont le droit de dire d'une énigme, par nature. */
+  puzzles: { note?: string; turn_rules: Record<import('~/types/scene').PuzzleKind, string>; scene_rule: string }
   /** Ce que le récit vise à restaurer, sous la quête apparente. */
   deep_theme: { note?: string; instruction: string }
   /** Ce que le modèle écrit pour la nuit qui se referme sans objet. */
@@ -373,6 +380,11 @@ export interface SceneScript {
     holder_stance?: string
     /** La posture de celui qui met sur la piste, dans un motif à trois rôles. */
     informant_stance?: string
+    /**
+     * L'énigme qui remet l'objet, quand il se trouve. Voir `utils/puzzles.ts`.
+     * Sans elle, le déchiffrer à la loupe suffit.
+     */
+    puzzle?: import('~/types/scene').PuzzleKind
   }
   /** L'acte auquel la scène appartient. Voir `acts` à la racine du script. */
   act?: string

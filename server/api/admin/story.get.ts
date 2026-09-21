@@ -100,7 +100,7 @@ export default defineEventHandler(async () => {
     },
     rules: [
       { id: 'night', title: 'La quête de la nuit — le but', note: d.night.note ?? '', instruction: d.night.instruction },
-      { id: 'plan', title: 'Le plan de la nuit — les 9 lieux', note: '', instruction: d.night.plan },
+      { id: 'plan', title: 'Le plan de la nuit — les 6 lieux', note: '', instruction: d.night.plan },
       { id: 'derives', title: 'Ce qui découle du but', note: '', instruction: d.night.derives },
       { id: 'fixed', title: 'Ce que reçoit une scène après l\'auberge', note: '', instruction: d.night.fixed },
       { id: 'objective', title: 'Objectif d\'une scène', ...note(d.objective_derivation) },

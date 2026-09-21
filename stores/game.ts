@@ -241,6 +241,27 @@ export const useGameStore = defineStore('game', {
      */
     lastEffects: [] as import('~/utils/storylets').StoryletEffect[],
     turnError: null as string | null,
+
+    /**
+     * Minutes de nuit déjà passées, depuis la sortie de l'auberge.
+     *
+     * Appartient à la PARTIE : une scène neuve ne rend pas le temps perdu dans
+     * la précédente. Voir `utils/night-clock.ts`.
+     */
+    nightMinutes: 0,
+    /** L'aube est venue avant la fin : la partie file vers l'épilogue. */
+    dawnBroke: false,
+    /**
+     * L'énigme de la scène a été ouverte — l'objet-clé déchiffré à la loupe.
+     *
+     * Avant, le lire suffisait à l'obtenir. Maintenant le lire la montre : il
+     * reste à la résoudre.
+     */
+    puzzleUnlocked: false,
+    /** Le panneau de l'énigme est à l'écran. */
+    puzzleOpen: false,
+    /** Les endroits déjà fouillés : on ne paie pas deux fois le même. */
+    searchedSpotIds: [] as string[],
   }),
 
   getters: {
@@ -377,6 +398,34 @@ export const useGameStore = defineStore('game', {
       // grossisse pas indéfiniment : le coût d'un tour est déjà le poste qu'on
       // surveille.
       this.npcThreads[npcId] = thread.slice(-12)
+    },
+
+    /**
+     * La nuit avance de `minutes`, sans dépasser l'aube.
+     *
+     * Rend l'avant et l'après : c'est l'appelant qui décide d'annoncer l'heure
+     * qui tombe ou l'aube qui se lève — le store ne parle pas au joueur.
+     */
+    spendNight(minutes: number, length: number): { before: number; after: number; dawn: boolean } {
+      const before = this.nightMinutes
+      if (this.dawnBroke || minutes <= 0) return { before, after: before, dawn: false }
+      this.nightMinutes = Math.min(length, before + minutes)
+      const dawn = this.nightMinutes >= length
+      if (dawn) this.dawnBroke = true
+      return { before, after: this.nightMinutes, dawn }
+    },
+
+    unlockPuzzle() {
+      this.puzzleUnlocked = true
+      this.puzzleOpen = true
+    },
+
+    setPuzzleOpen(open: boolean) {
+      this.puzzleOpen = open && this.puzzleUnlocked
+    },
+
+    recordSearch(spotId: string) {
+      if (!this.searchedSpotIds.includes(spotId)) this.searchedSpotIds.push(spotId)
     },
 
     recordModelTurn() {
@@ -680,6 +729,9 @@ export const useGameStore = defineStore('game', {
       this.lastEffects = []
       this.turnError = null
       this.pendingChallenge = null
+      this.puzzleUnlocked = false
+      this.puzzleOpen = false
+      this.searchedSpotIds = []
     },
 
     resetGame() {
@@ -724,6 +776,11 @@ export const useGameStore = defineStore('game', {
       this.lastMode = null
       this.lastEffects = []
       this.turnError = null
+      this.nightMinutes = 0
+      this.dawnBroke = false
+      this.puzzleUnlocked = false
+      this.puzzleOpen = false
+      this.searchedSpotIds = []
     },
   },
 })

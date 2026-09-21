@@ -184,6 +184,8 @@ interface Carry {
   given?: string[]
   /** Ce que la partie a coûté au modèle. Les plafonds de rythme s'y lisent. */
   spend?: { turns: number; usd: number }
+  /** L'heure de la nuit. Un rechargement ne rend pas le temps perdu. */
+  night?: { minutes: number; dawn: boolean }
   /** Date de la dernière écriture. Au-delà de la fenêtre, tout est oublié. */
   saved_at?: number
 }
@@ -201,6 +203,7 @@ function carryOf(game: GameStore, player: PlayerStore): Carry {
     profile: player.profile,
     given: game.givenItemIds,
     spend: { turns: game.modelTurnsUsed, usd: game.spentUsd },
+    night: { minutes: game.nightMinutes, dawn: game.dawnBroke },
   }
 }
 
@@ -230,6 +233,9 @@ interface SceneProgress {
   resolved: boolean
   conversationHistory: GameStore['conversationHistory']
   npcThreads: GameStore['npcThreads']
+  /** L'énigme ouverte, et ce qui a déjà été fouillé. */
+  puzzleUnlocked?: boolean
+  searchedSpotIds?: string[]
 }
 
 /**
@@ -291,6 +297,8 @@ export function savePlaying(game: GameStore, player: PlayerStore): void {
     resolved: game.resolved,
     conversationHistory: game.conversationHistory,
     npcThreads: game.npcThreads,
+    puzzleUnlocked: game.puzzleUnlocked,
+    searchedSpotIds: game.searchedSpotIds,
   }
   try {
     memory()?.setItem(PROGRESS_KEY, JSON.stringify(progress))
@@ -479,6 +487,12 @@ export function useScene() {
       gameStore.modelTurnsUsed = carry.spend.turns
       gameStore.spentUsd = carry.spend.usd
     }
+    // Le plus avancé des deux : une horloge qui reculerait au rechargement
+    // rendrait du temps qu'on a dépensé.
+    if (carry.night && carry.night.minutes > gameStore.nightMinutes) {
+      gameStore.nightMinutes = carry.night.minutes
+    }
+    if (carry.night?.dawn) gameStore.dawnBroke = true
   }
 
   /**
@@ -502,6 +516,8 @@ export function useScene() {
     gameStore.resolved = progress.resolved
     gameStore.conversationHistory = progress.conversationHistory
     gameStore.npcThreads = progress.npcThreads
+    gameStore.puzzleUnlocked = progress.puzzleUnlocked ?? false
+    gameStore.searchedSpotIds = progress.searchedSpotIds ?? []
     return true
   }
 

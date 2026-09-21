@@ -132,7 +132,44 @@ export interface SceneKeyItem {
    * le lieu, et c'est le déchiffrage de son nom qui le remet au joueur.
    */
   acquisition?: 'informant_then_holder' | 'holder' | 'found'
+  /**
+   * Les gestes du dénouement, DANS L'ORDRE, quand l'énigme est une séquence.
+   *
+   * Le seul morceau d'énigme que le modèle écrit : ce sont les gestes de CE
+   * joueur. L'ordre affiché et les indices, eux, sont tirés à l'assemblage.
+   */
+  steps?: string[]
 }
+
+/** Les énigmes, une par mécanique d'objet trouvé. Voir `utils/puzzles.ts`. */
+export type PuzzleKind = 'frequency' | 'code' | 'sequence' | 'lock' | 'search'
+
+/**
+ * Un indice, posé sur une chose que le récit nomme.
+ *
+ * Il se lit en REGARDANT cette chose — `oracle.look` —, sans tour facturé.
+ */
+export interface PuzzleClue {
+  /** Le nom de la chose, tel que le récit l'écrit en Majuscule. */
+  on: string
+  text: string
+}
+
+/**
+ * L'énigme de la scène, solution comprise.
+ *
+ * La solution voyage jusqu'au navigateur : le jeu est solitaire, la vérifier
+ * sur place est ce qui la rend gratuite.
+ */
+export type ScenePuzzle = { clues: PuzzleClue[] } & (
+  | { kind: 'frequency'; solution: number; min: number; max: number }
+  | { kind: 'code'; solution: string }
+  /** `steps` dans l'ordre d'affichage ; `solution` : leurs indices dans le bon ordre. */
+  | { kind: 'sequence'; steps: string[]; solution: number[] }
+  /** La carte attendue, et le lieu où elle a été prise — c'est ce que dit l'indice. */
+  | { kind: 'lock'; card_id: string; place: string }
+  | { kind: 'search'; spots: Array<{ id: string; label: string }>; solution: string }
+)
 
 /**
  * L'objet scellé de la scène.
@@ -242,8 +279,8 @@ export interface NightAct {
  * La quête de la nuit : la racine de toute la partie.
  *
  * Le script ne fixe plus aucun décor, seulement la mécanique : trois actes de
- * trois lieux. Le dossier d'admission — date de naissance, prénom, nom — fixe
- * le reste : un but, la tension qu'on montrera au paiement, et les neuf lieux.
+ * deux lieux. Le dossier d'admission — date de naissance, prénom, nom — fixe
+ * le reste : un but, la tension qu'on montrera au paiement, et les six lieux.
  * L'auberge les écrit en premier ; ils voyagent ensuite par le journal et
  * chaque scène se construit sur son lieu. Ce n'est jamais l'objet à récupérer
  * dans une salle.
@@ -375,6 +412,13 @@ export interface SceneTextResponse extends GeneratedScene {
   theme: PlayerTheme | null
   /** Objet sans lequel le sas reste fermé. */
   key_item: SceneKeyItem | null
+  /**
+   * L'épreuve qui remet l'objet-clé, là où personne ne le tend.
+   *
+   * Absente ailleurs, et absente aussi quand la scène n'avait pas de quoi la
+   * porter : le déchiffrage à la loupe suffit alors, comme avant.
+   */
+  puzzle?: ScenePuzzle | null
   paywall: ScenePaywall
   /** Trace de la correction d'accent appliquée côté serveur. */
   palette_audit: {
@@ -420,6 +464,8 @@ export interface ScenePacing {
   /** Tarifs, pour convertir des tokens en dollars côté client. */
   price_input_per_1m_usd: number
   price_output_per_1m_usd: number
+  /** L'horloge de la nuit, telle que le script la règle. */
+  night_clock?: import('~/utils/night-clock').NightClockConfig
 }
 
 /** Consommation réelle d'un appel, telle que la rapporte OpenAI. */
