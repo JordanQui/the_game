@@ -427,8 +427,8 @@ export class SceneRuntime {
     // que si le joueur porte quelque chose de troquable. Le schéma proposait
     // `hidden` dans tous les cas : le modèle posait alors une trappe que
     // personne ne pouvait montrer, et la scène partait en 502. C'est l'état
-    // normal en sortant de l'auberge — le joueur n'a que son augmentation, un
-    // objet [OUVRE], qui ne se troque pas.
+    // normal en sortant de l'auberge — le joueur n'a que son augmentation, qui
+    // n'est même pas dans l'inventaire : une greffe ne se troque pas.
     if (!canTrade) {
       const objects = schema.interactables as Array<Record<string, unknown>> | undefined
       if (objects?.length) {

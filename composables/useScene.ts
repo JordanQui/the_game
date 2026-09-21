@@ -170,6 +170,8 @@ interface Carry {
   }>
   decrypted: string[]
   augmentation: boolean
+  /** Son nom et ce qu'on en voit : elle n'est pas dans l'inventaire. */
+  augmentationItem?: GameStore['augmentation']
   primerSeen: boolean
   /** La fenêtre de l'oeil a été lue : le bouton l'ouvre sans elle. */
   eyePrimerSeen?: boolean
@@ -201,6 +203,7 @@ function carryOf(game: GameStore, player: PlayerStore): Carry {
     inventory: game.inventory,
     decrypted: game.decryptedObjectIds,
     augmentation: game.hasAugmentation,
+    augmentationItem: game.augmentation,
     primerSeen: game.primerSeen,
     eyePrimerSeen: game.eyePrimerSeen,
     profile: player.profile,
@@ -483,6 +486,8 @@ export function useScene() {
     if (!gameStore.inventory.length) gameStore.inventory = carry.inventory ?? []
     if (!gameStore.decryptedObjectIds.length) gameStore.decryptedObjectIds = carry.decrypted ?? []
     if (carry.augmentation) gameStore.hasAugmentation = true
+    if (!gameStore.augmentation && carry.augmentationItem) gameStore.augmentation = carry.augmentationItem
+    gameStore.liftLegacyAugmentation()
     if (carry.primerSeen) gameStore.primerSeen = true
     if (carry.eyePrimerSeen) gameStore.eyePrimerSeen = true
     if (!playerStore.profile && carry.profile) playerStore.setProfile(carry.profile)

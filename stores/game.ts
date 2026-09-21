@@ -57,6 +57,20 @@ export const useGameStore = defineStore('game', {
      */
     hasAugmentation: false,
     /**
+     * L'augmentation elle-même : son nom, ce qu'on en voit, et la scène qui
+     * l'a remise.
+     *
+     * ELLE N'EST PAS DANS L'INVENTAIRE. Ce n'est pas un objet qu'on porte, qu'on
+     * tend ou qu'on essaie sur une serrure : c'est une faculté greffée, et sa
+     * seule trace à l'écran est la loupe. Rangée dans la grille, elle se
+     * retrouvait entre deux cartes d'accès, proposée à l'échange et annoncée au
+     * modèle comme un objet [OUVRE].
+     */
+    augmentation: null as null | {
+      name: string; sceneId: string; from?: string
+      observation?: string; icon?: string
+    },
+    /**
      * La fenêtre qui présente l'augmentation a été vue.
      *
      * Elle appartient à la PARTIE, pas à la scène : on ne réexplique pas la
@@ -584,12 +598,29 @@ export const useGameStore = defineStore('game', {
      * c'est la seule preuve qu'un personnage la lui a tendue et qu'il l'a prise.
      */
     syncAugmentation(sceneId: string, grantsAugmentation: boolean) {
+      this.liftLegacyAugmentation()
       if (!grantsAugmentation) return
-      if (this.inventory.some(o => o.id === `cle_${sceneId}`)) return
+      if (this.augmentation?.sceneId === sceneId) return
+      this.augmentation = null
       this.hasAugmentation = false
       this.primerSeen = false
       this.primerOpen = false
       if (this.activeTool === 'lens') this.activeTool = 'eye'
+    },
+
+    /**
+     * Une partie sauvegardée avant que l'augmentation quitte l'inventaire l'y
+     * garde encore, sous l'id de l'objet-clé de sa scène : on l'en sort.
+     */
+    liftLegacyAugmentation() {
+      const legacy = this.inventory.find(o => o.id === 'cle_auberge')
+      if (!legacy) return
+      this.augmentation ??= {
+        name: legacy.label, sceneId: 'auberge', from: legacy.from,
+        observation: legacy.observation, icon: legacy.icon,
+      }
+      this.hasAugmentation = true
+      this.inventory = this.inventory.filter(o => o.id !== legacy.id)
     },
 
     markPrimerSeen() {
@@ -634,9 +665,8 @@ export const useGameStore = defineStore('game', {
 
     /**
      * @param grantsAugmentation vrai quand l'objet-clé de la scène EST
-     * l'augmentation — c'est le cas de l'auberge, et d'elle seule.
-     */
-    /**
+     * l'augmentation — c'est le cas de l'auberge, et d'elle seule. Elle, n'entre
+     * pas dans l'inventaire : voir `augmentation`.
      * @param item l'objet-clé ramassé. Il ENTRE DANS L'INVENTAIRE : une carte
      * d'accès sert souvent plusieurs scènes plus loin, et elle disparaissait
      * avec sa scène — seul un booléen survivait, sans nom ni trace.
@@ -650,17 +680,25 @@ export const useGameStore = defineStore('game', {
     ) {
       this.hasKeyItem = true
       this.pendingKeyItem = false
-      if (grantsAugmentation) this.hasAugmentation = true
+      // L'AUGMENTATION NE VA PAS DANS L'INVENTAIRE : elle se greffe, et la loupe
+      // apparaît. Elle ouvre la sortie comme n'importe quel objet-clé, mais ne
+      // se porte pas, ne se tend pas, ne se range pas avec les cartes.
+      if (grantsAugmentation) {
+        this.hasAugmentation = true
+        if (item?.name) {
+          this.augmentation = {
+            name: item.name,
+            sceneId: item.id?.replace(/^cle_/, '') ?? '',
+            from: item.from,
+            observation: item.observation,
+            icon: item.icon,
+          }
+        }
+        return
+      }
       if (item?.name) {
-        const id = item.id || `cle_${this.inventory.length + 1}`
-        // L'AUGMENTATION SE LIT DÈS QU'ELLE EST EN MAIN. Son nom n'a jamais été
-        // brouillé dans le récit ; sans cette ligne l'inventaire la croyait
-        // scellée et proposait de l'ouvrir à la loupe — c'est-à-dire avec
-        // elle-même. Son observation devient au contraire lisible tout de
-        // suite, et c'est là qu'elle se lit : nulle part ailleurs.
-        if (grantsAugmentation) this.markDecrypted(id)
         this.pickUp({
-          id,
+          id: item.id || `cle_${this.inventory.length + 1}`,
           label: item.name,
           from: item.from,
           kind: 'key',
@@ -757,6 +795,7 @@ export const useGameStore = defineStore('game', {
       // Une partie neuve ne garde ni faculté, ni objets, ni noms déchiffrés :
       // sans ça, le joueur suivant commençait avec l'inventaire du précédent.
       this.hasAugmentation = false
+      this.augmentation = null
       this.primerSeen = false
       this.primerOpen = false
       this.eyePrimerSeen = false

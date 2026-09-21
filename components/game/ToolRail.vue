@@ -23,7 +23,11 @@ const playerStore = usePlayerStore()
 
 const emit = defineEmits<{ inventory: [] }>()
 
-const lensLabel = computed(() => playerStore.scene?.key_item?.name ?? 'Analyse')
+// Le nom de L'AUGMENTATION, pas celui de l'objet-clé de la scène en cours :
+// dès la scène 2, la loupe prenait le nom d'une carte d'accès.
+const lensLabel = computed(() => gameStore.augmentation?.name
+  ?? (playerStore.scene?.grants_augmentation ? playerStore.scene.key_item?.name : null)
+  ?? 'Analyse')
 </script>
 
 <template>

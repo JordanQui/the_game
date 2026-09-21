@@ -62,59 +62,85 @@ function close() {
 </script>
 
 <template>
+  <!--
+    LA FENÊTRE EST PLUS HAUTE QUE L'ÉCRAN, même sur un iPhone 15 : récit, mode
+    d'emploi, note et bouton. Centrée dans un conteneur qui défilait, son haut
+    passait sous le bord et ne se rattrapait plus. Elle est donc plafonnée à la
+    hauteur VISIBLE (dvh, encoches déduites) : le nom reste en tête, le bouton
+    au pied, et seul le texte entre les deux défile.
+  -->
   <div
     v-if="primer"
-    class="fixed inset-0 z-50 flex items-center justify-center px-6 py-8 overflow-y-auto"
+    class="primer-frame fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
     @click.self="close"
   >
     <div class="absolute inset-0 bg-ink-900/92" />
 
     <div
-      class="relative z-10 w-full max-w-md bg-ink-900 border border-neon-600/50 p-7 space-y-6"
+      class="primer-card relative z-10 w-full max-w-md flex flex-col bg-ink-900 border border-neon-600/50"
       style="box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 40px rgb(var(--neon-500) / 0.12)"
     >
       <span class="absolute inset-[5px] border border-neon-500/15 pointer-events-none" />
 
-      <div class="space-y-2">
+      <div class="shrink-0 space-y-1.5 px-5 pt-5 pb-3 sm:px-7 sm:pt-7 sm:pb-4 border-b border-steel-600/30">
         <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.32em] font-display">
           {{ primer.eyebrow }}
         </p>
-        <p class="neon-text font-display uppercase text-xl tracking-[0.05em]">
-          {{ playerStore.scene?.key_item?.name }}
+        <p class="neon-text font-display uppercase text-lg sm:text-xl tracking-[0.05em] break-words">
+          {{ gameStore.augmentation?.name ?? playerStore.scene?.key_item?.name }}
         </p>
       </div>
 
-      <div class="space-y-3">
-        <p v-for="(line, i) in story" :key="i" class="text-ink-200/85 text-sm leading-relaxed">
-          {{ line }}
-        </p>
+      <div class="primer-body relative flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 sm:px-7">
+        <div class="space-y-5 py-4 sm:py-5">
+          <div class="space-y-3">
+            <p v-for="(line, i) in story" :key="i" class="text-ink-200/85 text-[13px] sm:text-sm leading-relaxed">
+              {{ line }}
+            </p>
+          </div>
+
+          <div class="space-y-3 pt-4 border-t border-steel-600/40">
+            <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.28em] font-display">
+              {{ primer.howto_title }}
+            </p>
+            <ol class="space-y-2">
+              <li
+                v-for="(step, i) in steps"
+                :key="i"
+                class="text-ink-200/80 text-[13px] leading-relaxed flex gap-3"
+              >
+                <span class="text-neon-500/70 font-mono shrink-0">{{ i + 1 }}</span>
+                <span>{{ step }}</span>
+              </li>
+            </ol>
+          </div>
+
+          <p v-if="primer.caps_note" class="text-ink-200/80 text-[13px] leading-relaxed">
+            {{ primer.caps_note }}
+          </p>
+
+          <p class="text-steel-400 text-[11px] leading-relaxed italic">
+            {{ primer.footer }}
+          </p>
+        </div>
+        <!-- Le texte continue : un fondu au pied le dit sans barre de défilement. -->
+        <div class="sticky bottom-0 -mx-5 sm:-mx-7 h-8 bg-gradient-to-t from-ink-900 to-transparent pointer-events-none" />
       </div>
 
-      <div class="space-y-3 pt-1 border-t border-steel-600/40">
-        <p class="text-neon-400/80 text-[10px] uppercase tracking-[0.28em] font-display pt-4">
-          {{ primer.howto_title }}
-        </p>
-        <ol class="space-y-2">
-          <li
-            v-for="(step, i) in steps"
-            :key="i"
-            class="text-ink-200/80 text-[13px] leading-relaxed flex gap-3"
-          >
-            <span class="text-neon-500/70 font-mono shrink-0">{{ i + 1 }}</span>
-            <span>{{ step }}</span>
-          </li>
-        </ol>
+      <div class="shrink-0 px-5 pb-5 pt-3 sm:px-7 sm:pb-7 border-t border-steel-600/30">
+        <GlowButton class="w-full" @click="close">{{ primer.cta }}</GlowButton>
       </div>
-
-      <p v-if="primer.caps_note" class="text-ink-200/80 text-[13px] leading-relaxed">
-        {{ primer.caps_note }}
-      </p>
-
-      <p class="text-steel-400 text-[11px] leading-relaxed italic">
-        {{ primer.footer }}
-      </p>
-
-      <GlowButton class="w-full" @click="close">{{ primer.cta }}</GlowButton>
     </div>
   </div>
 </template>
+
+<style scoped>
+.primer-frame {
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.primer-card {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+</style>
