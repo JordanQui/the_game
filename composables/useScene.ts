@@ -597,7 +597,12 @@ export function useScene() {
         return null
       }
 
-      const aborted = err instanceof DOMException && err.name === 'TimeoutError'
+      // `$fetch` emballe l'abandon dans une FetchError : le DOMException est
+      // dans `cause`. Et WebKit le nomme AbortError (« Fetch is aborted »)
+      // même quand c'est le timeout qui a tranché.
+      const cause = (err as { cause?: unknown })?.cause ?? err
+      const aborted = cause instanceof DOMException
+        && (cause.name === 'TimeoutError' || cause.name === 'AbortError')
       // Sur un 502, `err.message` ne dit que « 502 Bad Gateway » : la raison
       // réelle — troncature, JSON invalide, scène refusée par la validation —
       // voyage dans `data.statusMessage`. Sans elle, une panne de génération
