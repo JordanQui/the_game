@@ -51,7 +51,15 @@ export function loadUserFixture(): Promise<UserProfile> {
  * aussi. Seule la ligne d'accord change de langue — elle est faite d'exemples
  * que le modèle doit reproduire tels quels.
  */
-export function describeUser(user: UserProfile): string {
+export function describeUser(
+  user: UserProfile,
+  /**
+   * La lecture de l'auberge existe : la réponse sur ses nuits et son animal
+   * ne voyagent plus en clair, seul ce qu'on en a lu passe. Voir
+   * `defaults.night.reading`.
+   */
+  read = false,
+): string {
   const lines: string[] = []
 
   lines.push(`Nom : ${user.identity.name}`)
@@ -85,7 +93,11 @@ export function describeUser(user: UserProfile): string {
       `Le film qui lui a fait le plus peur : « ${marks.fear_film} » — n'en cite jamais le titre, `
       + `ni un personnage, ni une réplique, ni une scène connue. N'en garde que la MANIÈRE dont il fait peur.`)
   }
-  if (marks?.animal) lines.push(`Son animal préféré : ${marks.animal}`)
+  if (marks?.animal && !read) {
+    lines.push(
+      `Son animal préféré : ${marks.animal} — à LIRE pour sa signification (voir SA LECTURE), `
+      + `jamais à montrer en clair.`)
+  }
 
   const imprints = user.imprints
   if (imprints?.keepsake) lines.push(`Objet auquel il tient : ${imprints.keepsake}`)
@@ -112,11 +124,25 @@ export function describeUser(user: UserProfile): string {
   // personne : on garde ses mots tels quels plutôt que de les retourner à la
   // troisième, parce que c'est la seule partie du dossier qu'il a écrite en
   // entier et que sa formulation vaut autant que son contenu.
+  // Ses nuits se LISENT : l'auberge en tire un portrait (voir
+  // `defaults.night.reading`), et c'est ce portrait qui voyage ensuite. Un
+  // joueur qui retrouve ses propres mots comprend qu'on l'a recopié.
   const nights = user.nights
-  if (nights?.awake_note) lines.push(`Les nuits où il ne dort pas : ${nights.awake_note}`)
+  if (nights?.awake_note && !read) {
+    lines.push(
+      `Les nuits où il ne dort pas : ${nights.awake_note} — un symptôme à LIRE (voir SA LECTURE), `
+      + `jamais une anecdote à replacer : aucun de ces mots ne revient dans le texte.`)
+  }
   if (nights?.dream_note) lines.push(`Le rêve qui lui revient : ${nights.dream_note}`)
 
   if (user.misc_facts?.length) lines.push(`Divers : ${user.misc_facts.join(' ; ')}`)
+
+  // Le principe de tout le dossier, dit une fois : il nourrit une trame
+  // symbolique, il ne se recrache pas. Retrouver ses mots de but en blanc,
+  // c'est découvrir qu'on a été recopié.
+  lines.push(
+    'CE DOSSIER SE LIT, IL NE SE RECOPIE PAS : chaque réponse est transposée, symbolisée, '
+    + 'rendue en situation — aucune de ses formules ne revient telle quelle dans le texte.')
 
   return lines.join('\n')
 }
@@ -437,7 +463,8 @@ export class SceneRuntime {
     return `${this.languageBlock}
 
 PROFIL DU JOUEUR
-${describeUser(user)}
+${describeUser(user, this.hasReading(journal))}
+${this.describeReading(journal)}
 ${this.describeResolution(theme, nightOf(journal))}
 ${this.describeTouchstones(user, true)}
 
@@ -622,13 +649,14 @@ ${JSON.stringify(s.generation.output_schema, null, 2)}`
     return `${this.languageBlock}
 
 PROFIL DU JOUEUR
-${describeUser(user)}
+${describeUser(user, this.hasReading(journal))}
 ${themeBlock}
 ${this.describeTouchstones(user)}
 ${story}
 
 LA QUÊTE DE LA NUIT
 ${this.describeNight(theme, journal)}
+${this.describeReading(journal)}
 
 ${this.describeCarried(carried)}
 ${canTrade ? `\nCE QU'UN PERSONNAGE PEUT EN VOULOIR\n${this.script.defaults.exchange.instruction}\n` : ''}
@@ -762,7 +790,7 @@ ${list(o.posture)}`
     const n = this.script.defaults.night
 
     if (this.isStart) {
-      return `${n.instruction}\n\n${this.describeCalculus(theme)}\n\n${interpolate(n.plan, { slots: this.describeSlots(theme) })}\n\n${n.derives}`
+      return `${n.instruction}\n\n${this.describeCalculus(theme)}\n\n${n.reading}\n\n${interpolate(n.plan, { slots: this.describeSlots(theme) })}\n\n${n.derives}`
     }
 
     // Sans plan — un saut direct à une scène, un vieux journal — il ne reste
@@ -790,6 +818,28 @@ ${list(o.posture)}`
       requirement: here.requirement,
       exit_label: here.exit_label,
     })}\n\n${n.derives}`
+  }
+
+  /** L'auberge a-t-elle lu le dossier ? Alors les réponses brutes ne voyagent plus. */
+  private hasReading(journal: JournalEntry[]): boolean {
+    const plan = nightOf(journal)
+    return !this.isStart && Boolean(plan?.portrait?.trim() && plan?.totem?.trim())
+  }
+
+  /**
+   * Ce que l'auberge a lu du dossier, rendu aux scènes suivantes.
+   *
+   * Vide tant qu'il n'y a pas de lecture — un vieux journal, un saut direct :
+   * le profil garde alors la réponse brute, avec sa consigne de lecture.
+   * Borné : le plan revient du navigateur, comme le reste du journal.
+   */
+  private describeReading(journal: JournalEntry[]): string {
+    if (!this.hasReading(journal)) return ''
+    const plan = nightOf(journal)!
+    return interpolate(this.script.defaults.night.reading_fixed, {
+      portrait: plan.portrait!.slice(0, 900),
+      totem: plan.totem!.slice(0, 600),
+    })
   }
 
   /**

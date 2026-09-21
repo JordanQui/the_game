@@ -263,6 +263,10 @@ export interface ScriptDefaults {
     plan: string
     fixed: string
     derives: string
+    /** Portrait et totem : ce que l'auberge lit du dossier, pour toute la nuit. */
+    reading: string
+    /** La même lecture, rendue aux scènes suivantes. Interpole `{{portrait}}`, `{{totem}}`. */
+    reading_fixed: string
   }
   /** L'objet scellé, hérité par les scènes qui n'en déclarent pas. */
   sealed_object: { note?: string; instruction: string }

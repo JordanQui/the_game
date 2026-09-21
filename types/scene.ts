@@ -299,6 +299,16 @@ export interface NightPlan {
   tension: string
   /** Ce vers quoi elle tend pour se détendre. Hors fiction, elle aussi. */
   release: string
+  /**
+   * Ce que ses nuits disent de lui : un portrait, écrit à l'auberge.
+   *
+   * Notes d'auteur, jamais montrées. Les scènes suivantes le reçoivent À LA
+   * PLACE de la réponse du formulaire : un joueur qui retrouve ses propres
+   * mots comprend qu'on l'a recopié, pas qu'on l'a lu.
+   */
+  portrait?: string
+  /** La qualité que porte son animal, sans la bête. Même régime que `portrait`. */
+  totem?: string
   acts: NightAct[]
   /** Reportés depuis la quête de l'auberge quand on la consigne : ils ne se réécrivent plus. */
   title?: string
