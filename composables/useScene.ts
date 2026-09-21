@@ -171,6 +171,8 @@ interface Carry {
   decrypted: string[]
   augmentation: boolean
   primerSeen: boolean
+  /** La fenêtre de l'oeil a été lue : le bouton l'ouvre sans elle. */
+  eyePrimerSeen?: boolean
   /**
    * Le profil du joueur, tel que Meta l'a donné et que le classifieur l'a rangé.
    *
@@ -200,6 +202,7 @@ function carryOf(game: GameStore, player: PlayerStore): Carry {
     decrypted: game.decryptedObjectIds,
     augmentation: game.hasAugmentation,
     primerSeen: game.primerSeen,
+    eyePrimerSeen: game.eyePrimerSeen,
     profile: player.profile,
     given: game.givenItemIds,
     spend: { turns: game.modelTurnsUsed, usd: game.spentUsd },
@@ -481,6 +484,7 @@ export function useScene() {
     if (!gameStore.decryptedObjectIds.length) gameStore.decryptedObjectIds = carry.decrypted ?? []
     if (carry.augmentation) gameStore.hasAugmentation = true
     if (carry.primerSeen) gameStore.primerSeen = true
+    if (carry.eyePrimerSeen) gameStore.eyePrimerSeen = true
     if (!playerStore.profile && carry.profile) playerStore.setProfile(carry.profile)
     if (!gameStore.givenItemIds.length) gameStore.givenItemIds = carry.given ?? []
     if (carry.spend && !gameStore.modelTurnsUsed) {

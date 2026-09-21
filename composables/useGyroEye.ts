@@ -303,7 +303,16 @@ export function useGyroEye() {
     raf = requestAnimationFrame(loop)
   }
 
-  async function enable(): Promise<boolean> {
+  /**
+   * `auto` : réouverture sans geste, à l'arrivée dans une nouvelle scène.
+   *
+   * La permission d'iOS et le contexte audio ont été obtenus dans la scène
+   * d'avant et valent pour toute la page. Si quelque chose manque quand même,
+   * l'oeil reste simplement fermé, bouton affiché, sans « Accès refusé » ni
+   * « Indisponible » pour un échec que le joueur n'a pas provoqué.
+   */
+  async function enable(opts: { auto?: boolean } = {}): Promise<boolean> {
+    const auto = !!opts.auto
     // Ce clic est le geste dont le contexte audio a besoin : on le saisit ici
     // plutôt que d'espérer qu'un survol suffise plus tard. L'ouverture est
     // SYNCHRONE — attendre le chargement de Tone consommerait le geste.
@@ -311,17 +320,17 @@ export function useGyroEye() {
     void unlockAudio()
 
     if (!input.usesTouch.value) return openWithMouse()
-    if (!supported.value) return fallBack()
+    if (!supported.value) return auto ? false : fallBack()
 
     const ctor = window.DeviceOrientationEvent as OrientationEventCtor
     if (typeof ctor.requestPermission === 'function') {
       try {
         if ((await ctor.requestPermission()) !== 'granted') {
-          denied.value = true
+          if (!auto) denied.value = true
           return false
         }
       } catch {
-        denied.value = true
+        if (!auto) denied.value = true
         return false
       }
     }
@@ -337,7 +346,7 @@ export function useGyroEye() {
       watchdog = null
       if (sensed) return
       disable()
-      fallBack()
+      if (!auto) fallBack()
     }, SENSOR_TIMEOUT_MS)
     return true
   }

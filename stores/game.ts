@@ -126,6 +126,22 @@ export const useGameStore = defineStore('game', {
      * c'est le bouton « Ouvrir l'œil » qui l'allume, partout.
      */
     eyeActive: false,
+    /**
+     * La fenêtre de l'oeil a été lue.
+     *
+     * Elle appartient à la PARTIE : on ne réexplique pas l'oeil à chaque lieu.
+     * Une fois lue, le bouton ouvre l'oeil directement.
+     */
+    eyePrimerSeen: false,
+    /**
+     * L'oeil était ouvert quand la scène précédente s'est démontée.
+     *
+     * GameShell disparaît le temps du chargement de la scène suivante, et
+     * l'oeil avec lui : sans ce drapeau, il fallait le rouvrir à chaque lieu.
+     * Il ne survit pas au rechargement — iOS redemande alors un geste pour le
+     * gyroscope, et le contexte audio aussi.
+     */
+    eyeWasOpen: false,
     /** Position de l'oeil, en fraction de l'écran. Au repos, en haut. */
     eyePos: { x: 0.5, y: 0.25 },
     /** Le nom en cours de lecture. Le reste du texte s'efface pendant ce temps. */
@@ -505,6 +521,7 @@ export const useGameStore = defineStore('game', {
 
     setEyeActive(active: boolean) {
       this.eyeActive = active
+      if (active) this.eyeWasOpen = true
       if (!active) this.revealing = null
     },
 
@@ -742,6 +759,8 @@ export const useGameStore = defineStore('game', {
       this.hasAugmentation = false
       this.primerSeen = false
       this.primerOpen = false
+      this.eyePrimerSeen = false
+      this.eyeWasOpen = false
       this.inventory = []
       this.givenItemIds = []
       this.decryptedObjectIds = []

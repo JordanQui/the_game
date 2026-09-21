@@ -24,10 +24,25 @@ const { usesTouch, enabled, denied, unavailable, enable } = useGyroEye()
  */
 const showPrimer = ref(false)
 
+/** La fenêtre ne se lit qu'une fois par partie : ensuite le bouton ouvre l'oeil. */
+function onButton() {
+  if (gameStore.eyePrimerSeen) void enable()
+  else showPrimer.value = true
+}
+
 async function confirmPrimer() {
   showPrimer.value = false
+  gameStore.eyePrimerSeen = true
   await enable()
 }
+
+// Nouvelle scène, même page : l'oeil ouvert dans la précédente le reste. Le
+// bouton est tu pendant ce temps, sinon il clignote le temps de la permission.
+const reopening = ref(gameStore.eyeWasOpen)
+onMounted(async () => {
+  if (reopening.value) await enable({ auto: true })
+  reopening.value = false
+})
 
 const style = computed(() => ({
   left: `${gameStore.eyePos.x * 100}%`,
@@ -46,11 +61,11 @@ const style = computed(() => ({
     <!-- Avant activation : le bouton, partout. Au tactile, c'est aussi le geste
          que la permission d'iOS exige. -->
     <button
-      v-if="!enabled && !gameStore.eyeHidden"
+      v-if="!enabled && !reopening && !gameStore.eyeHidden"
       class="fixed top-3 left-3 z-40 flex items-center gap-2 px-3 py-2
              font-display text-[10px] uppercase tracking-[0.18em]
              text-neon-300 bg-ink-900/90 border border-neon-600/50"
-      @click="showPrimer = true"
+      @click="onButton"
     >
       <svg viewBox="0 0 24 16" class="w-5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M1 8s4-6.5 11-6.5S23 8 23 8s-4 6.5-11 6.5S1 8 1 8Z" />
