@@ -44,9 +44,9 @@ const jsonLd = {
       // page est la même pour tout le monde, c'est le jeu qui change de langue.
       inLanguage: LANG_CODES,
       description:
-        "Un jeu de rôle textuel en français. Le joueur déclare qui il est dans un "
+        "Un jeu de rôle textuel, jouable en douze langues. Le joueur déclare qui il est dans un "
         + "formulaire d'admission, et la ville qu'il traverse — ses lieux, ses habitants, "
-        + "sa quête — est bâtie sur ses réponses. Dix scènes illustrées, une par lieu, "
+        + "sa quête — est bâtie sur ses réponses. Huit scènes illustrées, du comptoir à l'aube, "
         + "dans une mégapole verticale battue par la pluie. On y joue en tapant ce qu'on "
         + 'veut faire, et la nuit ne se rejoue pas.',
       genre: ['Jeu de rôle', 'Fiction interactive', 'Aventure textuelle'],

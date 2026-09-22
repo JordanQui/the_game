@@ -77,7 +77,8 @@ const sceneIndex = script.progression.order.map((id: string) => {
  *
  * Un seul écran, une seule URL : tout le référencement tient ici et dans
  * `app.vue`, qui y ajoute les adresses absolues (canonique, image sociale) et
- * les données structurées. Le texte est en français, comme le jeu.
+ * les données structurées. Le texte est en français ; le jeu, lui, se joue
+ * en douze langues, et la description ne le restreint plus à une seule.
  */
 const SITE_NAME = 'La Nuit du Bout du Monde'
 const CREATOR = 'Jordan Quiqueret'
@@ -85,7 +86,7 @@ const SEO_TITLE = `${SITE_NAME} — jeu de rôle textuel`
 
 /** 150 caractères : au-delà, les moteurs coupent. */
 const SEO_DESCRIPTION
-  = "Jeu de rôle textuel en français. Vos réponses au formulaire "
+  = "Jeu de rôle textuel. Vos réponses au formulaire "
   + `d'admission bâtissent une ville et une quête qui n'appartiennent qu'à vous. Par ${CREATOR}.`
 
 /** Les réseaux tolèrent plus long : on y ajoute ce que le jeu fait vraiment. */
