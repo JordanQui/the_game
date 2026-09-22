@@ -244,7 +244,15 @@ export function drawPuzzle(
     const cards = (opts.carried ?? [])
       .filter(c => c.kind === 'key' && c.id !== 'cle_auberge' && c.from && c.color)
     if (cards.length < 2) return null
-    const card = cards[Math.floor(rand() * cards.length)]!
+    // LA RÉPONSE EST UNE CARTE QU'UN LIEU A DÉLIVRÉE. Sa couleur est l'accent
+    // de ce lieu, et c'est ce que l'indice rappelle ; les cartes ramassées en
+    // plus ont une autre couleur, elles sont là pour qu'il faille choisir. Une
+    // couleur portée deux fois ne peut pas être la réponse : l'indice ne
+    // saurait pas laquelle désigner.
+    const twice = (c: CarriedItem) => cards.filter(o => fold(o.color!) === fold(c.color!)).length > 1
+    const answers = cards.filter(c => c.id.startsWith('cle_') && !twice(c))
+    if (!answers.length) return null
+    const card = answers[Math.floor(rand() * answers.length)]!
     const focal = surfaces.find(s => s.id === 'decor:focal') ?? surfaces[0]!
     // LE LECTEUR DÉCRIT, IL NE NOMME PAS. Ce que le joueur a vu dominer ce
     // lieu-là, s'il reste au journal ; sinon le nom du lieu, comme avant. Le

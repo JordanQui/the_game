@@ -274,7 +274,9 @@
             "id": "string",
             "label": "string (en Majuscules de Titre s'il compte)",
             "verb": "string",
-            "item_kind": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. \"echange\" si quelqu'un, ici ou plus loin, pourrait vouloir se le procurer — un objet qui a de la valeur pour un autre que le joueur ; \"recit\" si sa valeur est ce qu'il apprend. Dans le doute, \"recit\". Vide pour tout le reste)",
+            "item_kind": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. \"echange\" si quelqu'un, ici ou plus loin, pourrait vouloir se le procurer — un objet qui a de la valeur pour un autre que le joueur ; \"recit\" si sa valeur est ce qu'il apprend. Dans le doute, \"recit\". \"carte\" UNIQUEMENT pour la carte de plus que réclame UNE CARTE DE PLUS. Vide pour tout le reste)",
+            "card_color": "string (UNIQUEMENT si item_kind vaut \"carte\" : sa couleur, un mot en Majuscule. Vide sinon)",
+            "card_hex": "string (UNIQUEMENT si item_kind vaut \"carte\" : sa couleur en #RRGGBB. Vide sinon)",
             "hidden": "true UNIQUEMENT pour un élément qu'un échange révèle. Il N'APPARAÎT PAS dans `scene_text` — ni son nom, ni l'endroit où il se trouve : personne ne le voit avant. Il doit être désigné par le `reveals_id` d'un personnage, sinon il est inatteignable. Absent partout ailleurs",
             "lock_color": "string (si cet élément est verrouillé, la couleur affichée par sa serrure ou son lecteur — le joueur saura quelle carte présenter. Vide sinon)",
             "observation": "string (UNIQUEMENT pour un objet qu'on peut PRENDRE. 1 à 2 phrases révélées après analyse à la loupe : ce que l'objet EST précisément, puis ce qu'il laisse entendre de la quête — jamais son usage, jamais une consigne. Vide pour tout ce qui se contente d'être examiné, lu ou écouté)",
@@ -402,6 +404,10 @@
     "locks": {
       "note": "Cartes et serrures. Chaque carte a une couleur, chaque serrure affiche la sienne : c'est ainsi que le joueur sait laquelle présenter, sans qu'on le lui dise. Inspiré des clés colorées de DOOM.",
       "instruction": "SERRURES ET CARTES — LA COULEUR EST LA CLÉ.\nToute carte d'accès a UNE COULEUR, et c'est par elle qu'on la désigne — jamais par un numéro, jamais par un code. Elle se nomme en Majuscules de Titre, couleur comprise : « la Carte Ambre », « la Carte Indigo ».\nTOUTE SERRURE, TOUT LECTEUR, TOUT TERMINAL VERROUILLÉ AFFICHE UNE COULEUR. Dis-la dans la description : une fente cerclée d'ambre, un voyant indigo, une gâche peinte. Sans elle, le joueur ne peut pas savoir quelle carte présenter, et sa collection ne sert à rien.\nLa couleur de la carte de CETTE scène est celle de l'ACCENT de sa palette : l'image et le texte disent la même chose.\nL'INDICE se donne par la conversation ou par le décor, jamais par une consigne : quelqu'un mentionne la couleur qu'il a vue sur le lecteur, une trace de peinture est restée sur le chambranle, un ancien panneau garde la couleur d'un accès supprimé.\nSi le joueur porte déjà une carte de la bonne couleur (voir CE QU'IL PORTE), la serrure d'ici peut être de CETTE couleur-là — c'est ce qui donne son sens à l'inventaire. Ne le lui dis jamais : montre la couleur, il fera le rapprochement."
+    },
+    "spare_card": {
+      "note": "Une carte de plus à ramasser dans chaque lieu qui précède le lecteur (a2s2) : c'est ce qui fait du lecteur un vrai choix. Elle n'ouvre rien ici ; le jeu refuse une couleur déjà portée ou celle de l'accent, et la rétrograde alors en objet de récit.",
+      "instruction": "UNE CARTE DE PLUS. Parmi les objets à PRENDRE, EXACTEMENT UN est une CARTE D'ACCÈS qui n'est pas l'objet-clé : `item_kind` vaut \"carte\". Elle traîne là, perdue, oubliée, ou gardée par habitude — elle n'ouvre rien ICI, et personne ne dit ce qu'elle ouvre. Elle se nomme par sa couleur, comme toute carte : « la Carte Ocre ».\n`card_color` est cette couleur, un seul mot en Majuscule. Elle n'est JAMAIS celle de l'accent de ta palette — l'accent est réservé à la carte que ce lieu délivre —, et JAMAIS celle d'une carte que le joueur porte déjà (voir CE QU'IL PORTE). `card_hex` est cette couleur en #RRGGBB.\nSon `observation` dit d'où elle vient et qui s'en servait, sans jamais dire quelle porte elle ouvre."
     },
     "augmentation_primer": {
       "note": "La fenêtre qui s'ouvre au PREMIER passage à la loupe, une seule fois. Celui qui l'a cédée en a dit deux mots dans la conversation ; celle-ci dit le reste, au moment où le joueur a l'outil en main et quelque chose à en faire. Le récit est brodé à partir des champs DÉJÀ générés de l'objet — nom, description, port, ce qu'elle permet, l'acte qu'elle rend possible — donc rien n'est régénéré et ça ne coûte pas un token. Le mode d'emploi, lui, est fixe : c'est une mécanique, pas de la fiction. `caps_note` est la règle d'observation : elle dit au joueur que la Majuscule est le signal d'interaction et que le décor garde des objets que personne ne lui donnera. Fixe elle aussi.",
@@ -559,7 +565,8 @@
             "verb": "sortir",
             "triggers_paywall": true
           }
-        ]
+        ],
+        "spare_card": true
       },
       "exits": [
         {
@@ -709,7 +716,8 @@
       },
       "interactables": {
         "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. DEUX À TROIS de ces objets DOIVENT pouvoir être PRIS : leur `verb` est alors « prendre » ou « ramasser », et eux seuls portent une `observation`. C'est ce que le joueur emporte de cette scène — ils n'ouvrent rien, ils approfondissent la quête, et ils se déchiffrent à la loupe. Sans eux, la scène n'a rien à fouiller. Comme dans les vieux jeux d'aventure, le lieu doit être plein de choses qu'on a envie d'empocher : on n'y revient jamais, et ce qu'on y laisse est perdu. Chacun diffère des autres — une matière, un usage, une époque —, et aucun ne double un objet que le joueur porte déjà. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.\nILS SONT POSÉS DANS LE DÉCOR, jamais dans les mains de quelqu'un : personne ne les tend, personne ne propose de les céder, aucune conversation ne les donne. Le joueur ne peut les repérer QUE par leur Majuscule au milieu du texte — c'est le seul signal qu'il aura, et c'est tout l'intérêt : ce qui s'obtient en parlant et ce qui s'obtient en regardant sont deux choses différentes. Une phrase de la description doit rendre chacun remarquable sans le désigner : une chose posée là qui n'a pas sa place, un tiroir mal refermé, une trace fraîche sur la poussière.",
-        "always_include": []
+        "always_include": [],
+        "spare_card": true
       },
       "exits": [
         {
@@ -843,7 +851,8 @@
       },
       "interactables": {
         "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. DEUX À TROIS de ces objets DOIVENT pouvoir être PRIS : leur `verb` est alors « prendre » ou « ramasser », et eux seuls portent une `observation`. C'est ce que le joueur emporte de cette scène — ils n'ouvrent rien, ils approfondissent la quête, et ils se déchiffrent à la loupe. Sans eux, la scène n'a rien à fouiller. Comme dans les vieux jeux d'aventure, le lieu doit être plein de choses qu'on a envie d'empocher : on n'y revient jamais, et ce qu'on y laisse est perdu. Chacun diffère des autres — une matière, un usage, une époque —, et aucun ne double un objet que le joueur porte déjà. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.\nILS SONT POSÉS DANS LE DÉCOR, jamais dans les mains de quelqu'un : personne ne les tend, personne ne propose de les céder, aucune conversation ne les donne. Le joueur ne peut les repérer QUE par leur Majuscule au milieu du texte — c'est le seul signal qu'il aura, et c'est tout l'intérêt : ce qui s'obtient en parlant et ce qui s'obtient en regardant sont deux choses différentes. Une phrase de la description doit rendre chacun remarquable sans le désigner : une chose posée là qui n'a pas sa place, un tiroir mal refermé, une trace fraîche sur la poussière.",
-        "always_include": []
+        "always_include": [],
+        "spare_card": true
       },
       "exits": [
         {
@@ -977,7 +986,8 @@
       },
       "interactables": {
         "instruction": "Liste les objets manipulables nommés dans la description, avec le verbe attendu. N'y fais JAMAIS figurer l'objet-clé de la scène. DEUX À TROIS de ces objets DOIVENT pouvoir être PRIS : leur `verb` est alors « prendre » ou « ramasser », et eux seuls portent une `observation`. C'est ce que le joueur emporte de cette scène — ils n'ouvrent rien, ils approfondissent la quête, et ils se déchiffrent à la loupe. Sans eux, la scène n'a rien à fouiller. Comme dans les vieux jeux d'aventure, le lieu doit être plein de choses qu'on a envie d'empocher : on n'y revient jamais, et ce qu'on y laisse est perdu. Chacun diffère des autres — une matière, un usage, une époque —, et aucun ne double un objet que le joueur porte déjà. Ce qu'on se contente d'examiner, de lire ou d'écouter garde son verbe et laisse `observation` vide.\nILS SONT POSÉS DANS LE DÉCOR, jamais dans les mains de quelqu'un : personne ne les tend, personne ne propose de les céder, aucune conversation ne les donne. Le joueur ne peut les repérer QUE par leur Majuscule au milieu du texte — c'est le seul signal qu'il aura, et c'est tout l'intérêt : ce qui s'obtient en parlant et ce qui s'obtient en regardant sont deux choses différentes. Une phrase de la description doit rendre chacun remarquable sans le désigner : une chose posée là qui n'a pas sa place, un tiroir mal refermé, une trace fraîche sur la poussière.",
-        "always_include": []
+        "always_include": [],
+        "spare_card": true
       },
       "exits": [
         {

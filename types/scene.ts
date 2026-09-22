@@ -217,10 +217,16 @@ export interface Interactable {
    * Ce qu'il devient une fois ramassé, pour un objet qu'on peut PRENDRE.
    *
    * `echange` : quelqu'un le voudra, et il quittera l'inventaire ce jour-là.
-   * `recit` (défaut) : il ne vaut que par ce qu'il apprend. Les cartes et
-   * l'augmentation ne passent pas par ici — elles arrivent en objet-clé.
+   * `recit` (défaut) : il ne vaut que par ce qu'il apprend.
+   * `carte` : une carte d'accès qui n'est pas l'objet-clé. Elle n'ouvre rien
+   * ici ; elle donne du choix au lecteur de fin d'acte. L'augmentation et la
+   * carte que le lieu délivre, elles, arrivent en objet-clé.
    */
-  item_kind?: 'echange' | 'recit'
+  item_kind?: 'echange' | 'recit' | 'carte'
+  /** Sa couleur, pour une `carte` : un mot, jamais l'accent du lieu. */
+  card_color?: string
+  /** Cette couleur en #RRGGBB, pour la pastille de l'inventaire. */
+  card_hex?: string
   /**
    * Il n'existe qu'après un échange : personne ne l'a nommé avant.
    *

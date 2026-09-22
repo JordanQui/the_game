@@ -231,6 +231,8 @@ export interface ScriptDefaults {
   game_over: { note?: string; instruction: string }
   /** Cartes et serrures : la couleur dit laquelle présenter. */
   locks: { note?: string; instruction: string }
+  /** La carte de plus à ramasser, dans les lieux qui précèdent le lecteur. */
+  spare_card: { note?: string; instruction: string }
   /** Le pictogramme que chaque objet porté reçoit à sa génération. */
   item_icons: { note?: string; instruction: string }
   /** La fenêtre du bouton de l'oeil. Texte fixe : ce n'est pas de la fiction. */
@@ -377,7 +379,12 @@ export interface SceneScript {
   decor_slots: DecorSlot[]
   npcs: { count: number; instruction: string; source: string; knowledge?: SceneKnowledge }
   quest: { instruction: string; source: string; structure: Record<string, string> }
-  interactables: { instruction: string; always_include: AlwaysIncludeInteractable[] }
+  interactables: {
+    instruction: string
+    always_include: AlwaysIncludeInteractable[]
+    /** Ce lieu pose une carte de plus parmi les objets à prendre. */
+    spare_card?: boolean
+  }
   exits: SceneExit[]
   /** Règle de conception de l'augmentation sans laquelle on ne peut pas sortir. */
   key_item: {

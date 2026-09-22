@@ -446,6 +446,15 @@ export class SceneRuntime {
         schema.interactables = [fields]
       }
     }
+
+    // La couleur d'une carte de plus ne se demande que là où il y en a une.
+    if (!this.scene.interactables.spare_card) {
+      const objects = schema.interactables as Array<Record<string, unknown>> | undefined
+      if (objects?.length) {
+        const { card_color: _c, card_hex: _h, ...fields } = objects[0]!
+        schema.interactables = [fields]
+      }
+    }
     return schema
   }
 
@@ -709,7 +718,7 @@ ${s.sealed_object
   ? `OBJET SCELLÉ\n${interpolate(s.sealed_object.instruction, { quest_title: 'la quête' })}\n`
   : ''}
 OBJETS MANIPULABLES
-${s.interactables.instruction}
+${s.interactables.instruction}${s.interactables.spare_card ? `\n${this.script.defaults.spare_card.instruction}` : ''}
 Le verbe de l'objet à prendre s'écrit exactement ainsi : ${this.takeVerbs}.
 
 ${this.script.defaults.item_icons.instruction}
@@ -1406,7 +1415,26 @@ ${lines}`)
     // désigne dans la scène avec. `wants.item_id`, lui, vise ce qu'il PORTE.
     const worn = new Set(carried.map(c => c.id))
     const fresh = (id: string) => (id && worn.has(id) ? `${id}_${this.scene.id}` : id)
-    const iconed = interactables.map(i => drawn({ ...i, id: fresh(i.id) }))
+    // UNE CARTE DE PLUS NE DOIT JAMAIS SE CONFONDRE. Même couleur que l'accent
+    // d'ici, que la carte de ce lieu ou qu'une carte déjà en poche : au lecteur,
+    // deux cartes pareilles rendraient l'indice ambigu. Elle reste ramassable,
+    // mais redevient un objet de récit. Hors des lieux qui en posent une, le
+    // modèle n'a rien à y mettre.
+    const taken = new Set([
+      palette.accent.name, generated.key_item?.color,
+      ...carried.filter(c => c.kind === 'key').map(c => c.color),
+    ].filter((c): c is string => Boolean(c?.trim())).map(fold))
+    const carded = interactables.map((i) => {
+      if (i.item_kind !== 'carte') return i
+      const color = i.card_color?.trim()
+      if (!this.scene.interactables.spare_card || !color || taken.has(fold(color))) {
+        const { card_color: _c, card_hex: _h, ...rest } = i
+        return { ...rest, item_kind: 'recit' as const }
+      }
+      taken.add(fold(color))
+      return { ...i, card_color: color, card_hex: i.card_hex && HEX_RE.test(i.card_hex) ? i.card_hex : undefined }
+    })
+    const iconed = carded.map(i => drawn({ ...i, id: fresh(i.id) }))
     const npcs = (scene.npcs ?? []).map(n => !n.wants ? n : {
       ...n,
       wants: {

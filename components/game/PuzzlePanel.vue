@@ -68,15 +68,21 @@ function pick(i: number) {
 }
 
 // --- lecteur ----------------------------------------------------------------
-/** Les cartes qu'on peut présenter : ce qui ouvre ET porte une couleur. */
-const cards = computed(() => gameStore.inventory.filter(o => o.kind === 'key' && o.hex && o.id !== 'cle_auberge'))
-/** La teinte du lecteur : celle de la carte attendue, figée au ramassage. */
-const ring = computed(() => props.puzzle.kind === 'lock'
-  ? gameStore.inventory.find(o => o.id === props.puzzle.card_id)?.hex ?? null
-  : null)
-function cardLabel(o: { id: string; label: string }) {
-  return gameStore.decryptedObjectIds.includes(o.id) ? o.label : t('game.sealed_object')
-}
+/**
+ * Les cartes qu'on peut présenter : ce qui ouvre ET porte une couleur — le
+ * même tri que le serveur. Une fréquence ou une séquence ouvrent aussi, et
+ * reçoivent la teinte de leur lieu, mais ce ne sont pas des cartes.
+ */
+const cards = computed(() => gameStore.inventory.filter(o => o.kind === 'key' && o.color && o.id !== 'cle_auberge'))
+const known = (id: string) => gameStore.decryptedObjectIds.includes(id)
+
+/*
+ * LE PANNEAU NE MONTRE AUCUNE COULEUR. Ni l'anneau, ni les cartes : avec la
+ * teinte attendue au-dessus et une pastille par carte en dessous, l'énigme se
+ * résolvait en comparant deux carrés, sans avoir rien lu. La couleur est dans
+ * l'indice, posé sur l'élément focal, et dans la mémoire du joueur — c'est à
+ * lui de se souvenir où il a vu cette teinte.
+ */
 </script>
 
 <template>
@@ -157,10 +163,9 @@ function cardLabel(o: { id: string; label: string }) {
       <!-- Le lecteur : sa teinte, et les cartes qu'on a sur soi -->
       <div v-else-if="puzzle.kind === 'lock'" class="space-y-4">
         <div class="flex justify-center" :class="failed && 'animate-deco-pulse'">
-          <span
-            class="w-16 h-16 rounded-full border-4 flex items-center justify-center"
-            :style="{ borderColor: ring ?? 'rgb(var(--steel-500))', boxShadow: ring ? `0 0 24px ${ring}66` : 'none' }"
-          ><span class="w-6 h-1 bg-ink-100/60" /></span>
+          <span class="w-16 h-16 rounded-full border-4 border-steel-500 flex items-center justify-center">
+            <span class="w-6 h-1 bg-ink-100/60" />
+          </span>
         </div>
         <p v-if="!cards.length" class="text-center text-steel-400 text-xs">{{ t('puzzle.no_cards') }}</p>
         <div class="space-y-2">
@@ -170,9 +175,10 @@ function cardLabel(o: { id: string; label: string }) {
             class="w-full flex items-center gap-3 px-3 py-2 border border-steel-600/60 hover:border-neon-500 text-left"
             @click="propose(card.id)"
           >
-            <span class="w-4 h-4 shrink-0 rounded-sm" :style="{ background: card.hex }" />
-            <span class="flex-1 min-w-0 truncate text-sm text-ink-200">{{ cardLabel(card) }}</span>
-            <span v-if="card.from" class="shrink-0 text-[10px] text-steel-400 truncate max-w-[40%]">{{ card.from }}</span>
+            <ItemIcon :icon="card.icon" kind="key" :known="known(card.id)" class="w-5 h-5 shrink-0 text-steel-300" />
+            <span class="flex-1 min-w-0 truncate text-sm text-ink-200">{{ known(card.id) ? card.label : t('game.sealed_object') }}</span>
+            <!-- Scellée, elle n'a plus que son lieu pour la distinguer de l'autre. -->
+            <span v-if="!known(card.id) && card.from" class="shrink-0 text-[10px] text-steel-400 truncate max-w-[40%]">{{ card.from }}</span>
           </button>
         </div>
       </div>

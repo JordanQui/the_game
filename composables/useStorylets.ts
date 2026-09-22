@@ -236,7 +236,9 @@ export function useStorylets() {
           // La scène a dit en le posant s'il valait pour quelqu'un d'autre :
           // c'est ce qui décide qu'un personnage pourra le réclamer, ici ou
           // trois scènes plus loin. Dans le doute, il n'éclaire que la quête.
-          kind: obj.item_kind === 'echange' ? 'trade' : 'lore',
+          kind: obj.item_kind === 'carte' ? 'key' : obj.item_kind === 'echange' ? 'trade' : 'lore',
+          // Une carte garde sa couleur : c'est par elle qu'un lecteur la réclame.
+          ...(obj.item_kind === 'carte' ? { color: obj.card_color, hex: obj.card_hex } : {}),
           observation: observationOf(
             playerStore.scene, gameStore.inventory, obj.id,
             playerStore.language, gameStore.revealedInteractableIds),
