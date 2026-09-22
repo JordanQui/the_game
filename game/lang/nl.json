@@ -363,6 +363,7 @@
     "game.received": "{{label}} wordt je overhandigd.",
     "game.exit_opens": "De sluis gaat open",
     "game.dawn": "De dag breekt aan boven de stad...",
+    "game.dawn_download": "De dageraad bewaren",
     "game.loading_default": "Het lot spint zijn draad",
     "seo.title": "Far Night — een tekstrollenspel",
     "game.player_fallback": "Zwerver",

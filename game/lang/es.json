@@ -399,6 +399,7 @@
     "game.received": "{{label}} pasa a tus manos.",
     "game.exit_opens": "La esclusa se abre",
     "game.dawn": "Amanece sobre la ciudad...",
+    "game.dawn_download": "Guardar el alba",
     "game.loading_default": "El destino teje su hilo",
     "seo.title": "Far Night — juego de rol textual",
     "game.player_fallback": "Caminante",

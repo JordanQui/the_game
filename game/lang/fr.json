@@ -393,6 +393,7 @@
     "game.received": "{{label}} t'est remis.",
     "game.exit_opens": "Le sas s'ouvre",
     "game.dawn": "Le jour se lève sur la ville...",
+    "game.dawn_download": "Garder l'aube",
     "game.loading_default": "Le destin tisse son fil",
     "seo.title": "La Nuit du Bout du Monde — jeu de rôle textuel",
     "game.player_fallback": "Aventurier",

@@ -369,6 +369,7 @@
     "game.received": "{{label}} переходит к тебе.",
     "game.exit_opens": "Шлюз открывается",
     "game.dawn": "Над городом занимается день...",
+    "game.dawn_download": "Сохранить рассвет",
     "game.loading_default": "Судьба прядёт свою нить",
     "seo.title": "Far Night — текстовая ролевая игра",
     "game.player_fallback": "Странник",

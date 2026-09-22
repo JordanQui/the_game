@@ -385,6 +385,7 @@
     "game.received": "{{label}} wird dir überreicht.",
     "game.exit_opens": "Die Schleuse öffnet sich",
     "game.dawn": "Der Tag bricht über der Stadt an...",
+    "game.dawn_download": "Die Morgendämmerung behalten",
     "game.loading_default": "Das Schicksal spinnt seinen Faden",
     "seo.title": "Far Night — ein Text-Rollenspiel",
     "game.player_fallback": "Wanderer",

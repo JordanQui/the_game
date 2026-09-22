@@ -360,6 +360,7 @@
     "game.received": "{{label}} sana veriliyor.",
     "game.exit_opens": "Hava kilidi açılıyor",
     "game.dawn": "Şehrin üzerinde gün doğuyor...",
+    "game.dawn_download": "Şafağı sakla",
     "game.loading_default": "Kader ipliğini örüyor",
     "seo.title": "Far Night — metin tabanlı rol yapma oyunu",
     "game.player_fallback": "Yolcu",

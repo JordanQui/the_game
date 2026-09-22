@@ -406,6 +406,7 @@
     "game.received": "{{label}} ti viene consegnato.",
     "game.exit_opens": "La paratia si apre",
     "game.dawn": "Il giorno si leva sulla città...",
+    "game.dawn_download": "Conserva l'alba",
     "game.loading_default": "Il destino tesse il suo filo",
     "seo.title": "Far Night — gioco di ruolo testuale",
     "game.player_fallback": "Viandante",

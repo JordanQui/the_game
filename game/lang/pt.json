@@ -394,6 +394,7 @@
     "game.received": "{{label}} passa para as tuas mãos.",
     "game.exit_opens": "A comporta se abre",
     "game.dawn": "O dia nasce sobre a cidade...",
+    "game.dawn_download": "Guardar a aurora",
     "game.loading_default": "O destino tece o seu fio",
     "seo.title": "Far Night — RPG de texto",
     "game.player_fallback": "Andarilho",

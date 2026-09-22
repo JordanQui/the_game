@@ -351,6 +351,7 @@
     "game.received": "{{label}} is handed to you.",
     "game.exit_opens": "The airlock opens",
     "game.dawn": "Day is breaking over the city...",
+    "game.dawn_download": "Keep the dawn",
     "game.loading_default": "Fate is weaving its thread",
     "seo.title": "Far Night — a text role-playing game",
     "game.player_fallback": "Wanderer",

@@ -67,6 +67,47 @@ onMounted(async () => {
     // Sans image, le texte tient debout tout seul sur le fond de la palette.
   }
 })
+
+/**
+ * L'image de l'aube, emportée comme récompense.
+ *
+ * Seulement si la nuit a été menée à son terme : quand l'aube l'a rattrapé,
+ * il n'y a rien à garder. L'image arrive en data URL (gpt-image ne renvoie que
+ * du base64) ; on la repasse par un Blob, sinon certains navigateurs refusent
+ * de télécharger une URL de plusieurs mégaoctets. Sur mobile, la feuille de
+ * partage permet de l'enregistrer dans la photothèque, ce qu'un téléchargement
+ * n'offre pas sur iOS.
+ */
+const canDownload = computed(() => !!image.value && !!ending.value && !error.value && !gameStore.dawnBroke)
+
+async function downloadImage() {
+  if (!image.value) return
+  const blob = await (await fetch(image.value)).blob()
+  const ext = blob.type.split('/')[1]?.replace('jpeg', 'jpg') || 'webp'
+  const name = `${t('seo.title').split(' — ')[0]} — ${ending.value?.scene_title ?? ''}`.trim()
+  const filename = `${name.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ')}.${ext}`
+  const file = new File([blob], filename, { type: blob.type })
+
+  const touch = window.matchMedia('(pointer: coarse)').matches
+  if (touch && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] })
+      return
+    } catch (err) {
+      // Feuille fermée par le joueur : il n'a rien demandé d'autre.
+      if ((err as Error).name === 'AbortError') return
+    }
+  }
+
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 </script>
 
 <template>
@@ -89,6 +130,10 @@ onMounted(async () => {
       <p v-else class="text-ink-200/70 font-mono text-sm animate-pulse">
         {{ t('game.dawn') }}
       </p>
+
+      <button v-if="canDownload" type="button" class="keep" @click="downloadImage">
+        {{ t('game.dawn_download') }}
+      </button>
     </div>
   </div>
 </template>
@@ -165,6 +210,28 @@ onMounted(async () => {
   border-top: 1px solid rgb(var(--neon-600) / 0.45);
   border-left: 2px solid rgb(var(--neon-500) / 0.6);
   color: rgb(var(--ink-100));
+}
+
+.keep {
+  display: block;
+  margin: 2.25rem auto 0;
+  padding: 0.7rem 1.4rem;
+  font-family: Futura, 'Avenir Next', 'Century Gothic', 'Trebuchet MS', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  color: rgb(var(--neon-200));
+  border: 1px solid rgb(var(--neon-500) / 0.7);
+  background: rgb(var(--ink-900) / 0.6);
+  box-shadow: 0 0 14px rgb(var(--neon-500) / 0.35);
+  transition: box-shadow 0.2s, color 0.2s;
+}
+
+.keep:hover,
+.keep:focus-visible {
+  color: rgb(var(--neon-100));
+  box-shadow: 0 0 22px rgb(var(--neon-500) / 0.6);
+  outline: none;
 }
 
 .prose :deep(em) {

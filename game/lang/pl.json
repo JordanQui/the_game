@@ -366,6 +366,7 @@
     "game.received": "{{label}} trafia w twoje ręce.",
     "game.exit_opens": "Śluza się otwiera",
     "game.dawn": "Nad miastem wstaje dzień...",
+    "game.dawn_download": "Zachowaj świt",
     "game.loading_default": "Los przędzie swoją nić",
     "seo.title": "Far Night — tekstowa gra fabularna",
     "game.player_fallback": "Wędrowiec",
