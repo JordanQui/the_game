@@ -270,6 +270,16 @@ export class SceneRuntime {
   }
 
   /**
+   * L'objet-clé est-il une carte d'accès ? Tout lieu qui fait avancer en donne
+   * une, sauf ceux dont l'objet est une valeur — fréquence, code, séquence.
+   */
+  private get keyItemIsCard(): boolean {
+    const puzzle = this.scene.key_item?.puzzle
+    return this.scene.objective?.kind === 'advance'
+      && puzzle !== 'frequency' && puzzle !== 'code' && puzzle !== 'sequence'
+  }
+
+  /**
    * Les verbes que `isTakeable` reconnaîtra, dits au modèle.
    *
    * Le client décide qu'un objet se ramasse en comparant son `verb` à la liste
@@ -1445,6 +1455,26 @@ ${lines}`)
       release: generated.night?.release ?? '',
     }
 
+    // Tirée APRÈS le recalage des majuscules : les indices se posent sur les
+    // noms tels que le joueur les lira.
+    const puzzle = drawPuzzle(this.scene.key_item.puzzle, {
+      scene_id: this.scene.id,
+      scene_text: naming.text,
+      decor: scene.decor,
+      interactables: iconed,
+      key_item: generated.key_item,
+    }, { lang: this.lang, carried, journal })
+    // L'ÉNIGME DE FIN D'ACTE NE DOIT PAS TOMBER EN SILENCE. Sans elle, la scène
+    // retombe sur la lecture à la loupe et le joueur ne voit jamais le panneau :
+    // on veut le savoir, sinon rien ne distingue une scène ratée d'une scène
+    // qui n'en avait pas.
+    if (this.scene.key_item.puzzle && !puzzle) {
+      const cards = carried.filter(c => c.kind === 'key' && c.id !== 'cle_auberge')
+      console.warn(`[puzzle] ${this.scene.id} : « ${this.scene.key_item.puzzle} » non tiré, retour à la loupe`
+        + ` (cartes en poche : ${cards.map(c => `${c.id}${c.color ? `/${c.color}` : '/sans couleur'}`).join(', ') || 'aucune'}`
+        + `, gestes : ${generated.key_item?.steps?.length ?? 0})`)
+    }
+
     return {
       ...scene,
       scene_text: naming.text,
@@ -1479,17 +1509,14 @@ ${lines}`)
       interface_palette: this.scene.interface_palette?.mode ?? 'from_scene',
       pacing: this.pacing,
       theme,
-      // Tirée APRÈS le recalage des majuscules : les indices se posent sur les
-      // noms tels que le joueur les lira.
-      puzzle: drawPuzzle(this.scene.key_item.puzzle, {
-        scene_id: this.scene.id,
-        scene_text: naming.text,
-        decor: scene.decor,
-        interactables: iconed,
-        key_item: generated.key_item,
-      }, { lang: this.lang, carried, journal }),
+      puzzle,
       key_item: {
         ...drawn(generated.key_item),
+        // UNE CARTE A TOUJOURS SA COULEUR. C'est par elle que le lecteur de fin
+        // d'acte la réclame : une carte sans couleur ne peut plus y entrer, et
+        // l'énigme tombait. Le modèle l'oublie parfois ; la couleur d'une carte
+        // est l'accent de son lieu, on la lui rend.
+        color: generated.key_item?.color?.trim() || (this.keyItemIsCard ? palette.accent.name : generated.key_item?.color),
         exchanges_before_handover: this.scene.key_item.exchanges_before_handover,
         // Comment il s'obtient voyage avec la scène : le client doit savoir
         // qu'ici personne ne le tend, et que c'est le déchiffrage qui le donne.
